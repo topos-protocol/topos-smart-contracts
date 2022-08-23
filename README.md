@@ -79,6 +79,8 @@ For ease of linting an npm configuration file `package.json` is provided. It con
 
 For formatting this project uses `prettier` with the `prettier-plugin-solidity` plugin. For general style guide and security checks this project uses `Solhint`.
 
+For linting the Python test files this project uses `Flake8` to check for any style, syntax, naming and complexity issues. This project also uses `Black` for formatting the Python tests.
+
 To install the packages:
 ```
 $ yarn install
@@ -91,7 +93,7 @@ $ yarn lint
 
 To fix the format:
 ```
-$ yarn lint:prettier:fix
+$ yarn lint:fix
 ```
 
 ## Deployment
