@@ -7,7 +7,7 @@
   "main": "",
   "scripts": {
     "test": "brownie test",
-    "lint": "yarn lint:sol && npm run lint:prettier",
+    "lint": "yarn lint:sol && yarn lint:prettier",
     "lint:sol": "yarn solhint 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
     "lint:prettier": "yarn prettier -c 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
     "lint:prettier:fix": "yarn prettier --write 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'"
