@@ -71,7 +71,7 @@ Brownie utilizes the `pytest` framework for unit testing.
 
 To run the tests:
 ```
-$ npm run test
+$ yarn test
 ```
 
 ## Linting
@@ -81,17 +81,17 @@ For formatting this project uses `prettier` with the `prettier-plugin-solidity` 
 
 To install the packages:
 ```
-$ npm install
+$ yarn install
 ```
 
 To run linter:
 ```
-$ npm run lint
+$ yarn lint
 ```
 
 To fix the format:
 ```
-$ npm run lint:prettier:fix
+$ yarn lint:prettier:fix
 ```
 
 ## Deployment
