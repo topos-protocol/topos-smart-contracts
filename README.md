@@ -69,13 +69,15 @@ $ brownie compile
 
 Brownie utilizes the `pytest` framework for unit testing.
 
+Note: run `yarn install` to install `ganache` which is used by Brownie as a default local RPC client to launch.
+
 To run the tests:
 ```
 $ yarn test
 ```
 
 ## Linting
-For ease of linting an npm configuration file `package.json` is provided. It contains the necessary dependencies and scripts to run the linting tools.
+For ease of linting a configuration file `package.json` is provided. It contains the necessary dependencies and scripts to run the linting tools.
 
 For formatting this project uses `prettier` with the `prettier-plugin-solidity` plugin. For general style guide and security checks this project uses `Solhint`.
 
