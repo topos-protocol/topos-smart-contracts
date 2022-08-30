@@ -17,11 +17,19 @@ contract ToposCoreContract {
         uint256 amount;
     }
 
+    struct Token {
+        uint256 tokenId;
+        address contractAddr;
+        string symbol;
+    }
+
     // Types of cross-subnet messages
     enum IsTypeOf {
         Inbound,
         Outbound
     }
+
+    Token[] public knownTokens;
 
     // Subnet Id this contract was deployed for
     uint64 public subnetId;
@@ -30,7 +38,14 @@ contract ToposCoreContract {
     mapping(address => mapping(address => uint256)) public balances;
 
     // Event to be stored on the blockchain with the data
-    event Sent(uint64 terminalSubnetId, address terminalContractAddr, address recipientAddr, uint256 amount);
+    event Sent(
+        uint64 terminalSubnetId,
+        uint256 terminalTokenId,
+        address terminalContractAddr,
+        address senderAddr,
+        address recipientAddr,
+        uint256 amount
+    );
 
     // Event to get the response of the low level call
     event Response(bool success, bytes data);
@@ -47,6 +62,7 @@ contract ToposCoreContract {
     function sendToken(
         address _sourceTokenAddr,
         uint64 _terminalSubnetId,
+        uint256 _terminalTokenId,
         address _terminalContractAddr,
         address _recipientAddr,
         uint256 _amount
@@ -62,7 +78,7 @@ contract ToposCoreContract {
         // except if there are re-orgs on the blockchain.
         // This should not be a problem if the blockchain
         // employes a finality gadget like Grandpa.
-        emit Sent(_terminalSubnetId, _terminalContractAddr, _recipientAddr, _amount);
+        emit Sent(_terminalSubnetId, _terminalTokenId, _terminalContractAddr, msg.sender, _recipientAddr, _amount);
     }
 
     // Mint the amount on the receivers end
