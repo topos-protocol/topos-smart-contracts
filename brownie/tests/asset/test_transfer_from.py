@@ -177,11 +177,11 @@ def test_current_allowance_max(alice, bob, charlie, token):
     token.burn(amount, {"from": alice})
 
     # Mint max total supple for bob
-    max = 2**256 - 1
-    token.mint(bob, max)
+    max_amount = 2**256 - 1
+    token.mint(bob, max_amount)
 
-    token.approve(alice, max, {"from": bob})
-    token.transferFrom(bob, charlie, max, {"from": alice})
+    token.approve(alice, max_amount, {"from": bob})
+    token.transferFrom(bob, charlie, max_amount, {"from": alice})
 
     # https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L331
-    assert token.allowance(bob, alice) == max
+    assert token.allowance(bob, alice) == max_amount
