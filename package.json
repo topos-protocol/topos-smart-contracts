@@ -7,14 +7,12 @@
   "main": "",
   "scripts": {
     "test": "brownie test",
-    "lint": "yarn lint:sol && yarn lint:sol:ethlint && yarn lint:prettier",
-    "lint:sol": "solhint 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
-    "lint:sol:ethlint": "solium -d brownie",
-    "lint:prettier": "prettier -c 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
-    "lint:prettier:fix": "prettier --write 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'"
+    "lint": "yarn lint:sol && yarn lint:prettier",
+    "lint:sol": "yarn solhint 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
+    "lint:prettier": "yarn prettier -c 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
+    "lint:prettier:fix": "yarn prettier --write 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'"
   },
   "devDependencies": {
-    "ethlint": "^1.2.5",
     "prettier": "^2.7.1",
     "prettier-plugin-solidity": "^1.0.0-beta.24",
     "solhint": "^3.3.7"
