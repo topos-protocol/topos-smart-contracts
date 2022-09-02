@@ -7,7 +7,6 @@ def test_amount_zero_reverts(
     alice_balance = asset_sending.balanceOf(alice)
     amount = alice_balance // 4
     asset_sending.approve(token.address, amount, {"from": alice})
-
     with brownie.reverts("Amount cannot be zero"):
         token.sendToken(
             asset_sending.address,
@@ -24,7 +23,6 @@ def test_sent_event_fires(
 ):
     alice_balance = asset_sending.balanceOf(alice)
     amount = alice_balance // 4
-
     asset_sending.approve(token.address, amount, {"from": alice})
     tx = token.sendToken(
         asset_sending.address,
@@ -34,7 +32,6 @@ def test_sent_event_fires(
         amount,
         {"from": alice},
     )
-
     assert len(tx.events) == 3  # ["Approval"], ["Transfer"], ["Sent"]
     assert tx.events["Sent"].values() == [
         terminal_subnet_id,

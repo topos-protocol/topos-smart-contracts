@@ -23,16 +23,13 @@ def test_recipient_balance_decreases(
 ):
     alice_balance = asset_sending.balanceOf(alice)
     amount = alice_balance // 4
-
     cross_subnet_message = [
         initial_subnet_id,
         [[terminal_subnet_id, asset_recipient.address, bob, amount]],
         cross_subnet_msg_inbound,
     ]
-
     token.mint(certificate, cross_subnet_message, {"from": alice})
     token.claimTransfer(asset_recipient.address, {"from": bob})
-
     assert token.balances(asset_recipient.address, bob) == 0
 
 
@@ -49,16 +46,13 @@ def test_transfer_event_fires(
 ):
     alice_balance = asset_sending.balanceOf(alice)
     amount = alice_balance // 4
-
     cross_subnet_message = [
         initial_subnet_id,
         [[terminal_subnet_id, asset_recipient.address, bob, amount]],
         cross_subnet_msg_inbound,
     ]
-
     token.mint(certificate, cross_subnet_message, {"from": alice})
     tx = token.claimTransfer(asset_recipient.address, {"from": bob})
-
     assert len(tx.events) == 1
     assert tx.events["Transfer"].values() == [
         brownie.ZERO_ADDRESS,
