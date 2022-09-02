@@ -35,8 +35,10 @@ compiler:
             runs: 200
         remappings:
             - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.7.3"
+            - "@openzeppelin/contracts-upgradeable=OpenZeppelin/openzeppelin-contracts-upgradeable@4.7.3"
     vyper:
         version: null
 
 dependencies:
     - OpenZeppelin/openzeppelin-contracts@4.7.3
+    - OpenZeppelin/openzeppelin-contracts-upgradeable@4.7.3
