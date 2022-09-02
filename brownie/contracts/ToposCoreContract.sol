@@ -66,10 +66,13 @@ contract ToposCoreContract {
     }
 
     // Mint the amount on the receivers end
-    function mint(bytes memory _cert, CrossSubnetMessage memory _crossSubnetMessage) public {
+    function mint(
+        bytes memory, /*_cert*/
+        CrossSubnetMessage memory _crossSubnetMessage
+    ) public {
         require(_crossSubnetMessage.subnetId == subnetId, "Subnet ID is invalid");
         require(_crossSubnetMessage.isTypeOf == uint256(IsTypeOf.Inbound), "Type of cross-subnet message is invalid");
-        require(_validateCert(_cert) == true, "Certificate is invalid");
+        // Todo: require(_validateCert(_cert) == true, "Certificate is invalid");
 
         for (uint256 i = 0; i < _crossSubnetMessage.inputs.length; i++) {
             address terminalContractAddr = _crossSubnetMessage.inputs[i].terminalContractAddr;
@@ -86,12 +89,5 @@ contract ToposCoreContract {
         require(amount > 0, "No amount to claim");
         balances[token][msg.sender] -= amount;
         IAsset(token).mint(msg.sender, amount);
-    }
-
-    // Place holder for the certificate validation function
-    function _validateCert(bytes memory cert) internal pure returns (bool) {
-        bytes memory emptyCert;
-        cert = emptyCert; // avoid unused variable
-        return true;
     }
 }

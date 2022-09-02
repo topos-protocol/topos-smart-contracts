@@ -5,9 +5,11 @@
 node_modules
 
 # Brownie
-/brownie/scripts/__pycache__
 /brownie/.env
 /brownie/.history
 /brownie/.hypothesis/
 /brownie/build/
 /brownie/reports/
+
+# Python
+/**/__pycache__
