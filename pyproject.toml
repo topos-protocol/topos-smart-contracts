@@ -1,0 +1,4 @@
+# Configuration file for black Python formatter
+
+[tool.black]
+line-length = 79
