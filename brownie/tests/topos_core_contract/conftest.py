@@ -11,21 +11,36 @@ def isolate(fn_isolation):
 
 @pytest.fixture(scope="module")
 def token(ToposCoreContract, accounts):
+    # Alice is the owner of ToposCoreContract
     return ToposCoreContract.deploy(1, {"from": accounts[0]})
 
 
 @pytest.fixture(scope="module")
-def asset_sending(Asset, accounts):
-    return Asset.deploy(
-        "Test Token Sending", "TSTS", 1e23, {"from": accounts[0]}
+def asset_sending(Asset, token, accounts):
+    asset = Asset.deploy({"from": accounts[0]})
+    asset.initialize(
+        "Test Token Sending",
+        "TSTS",
+        1e23,
+        accounts[0],
+        token.address,
+        {"from ": accounts[0]},
     )
+    return asset
 
 
 @pytest.fixture(scope="module")
-def asset_recipient(Asset, accounts):
-    return Asset.deploy(
-        "Test Token Recipient", "TSTR", 1e23, {"from": accounts[0]}
+def asset_recipient(Asset, token, accounts):
+    asset = Asset.deploy({"from": accounts[0]})
+    asset.initialize(
+        "Test Token Recipient",
+        "TSTR",
+        1e23,
+        accounts[0],
+        token.address,
+        {"from ": accounts[0]},
     )
+    return asset
 
 
 @pytest.fixture(scope="session")
@@ -44,8 +59,13 @@ def initial_subnet_id():
 
 
 @pytest.fixture(scope="session")
-def terminal_subnet_id():
+def recipient_subnet_id():
     yield 2
+
+
+@pytest.fixture(scope="session")
+def recipient_asset_id():
+    yield "RECIPIENT_ASSET"
 
 
 @pytest.fixture(scope="session")

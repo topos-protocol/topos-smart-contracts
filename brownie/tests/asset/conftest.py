@@ -11,7 +11,16 @@ def isolate(fn_isolation):
 
 @pytest.fixture(scope="module")
 def token(Asset, accounts):
-    return Asset.deploy("Test Token", "TST", 1e23, {"from": accounts[0]})
+    asset = Asset.deploy({"from": accounts[0]})
+    asset.initialize(
+        "Test Token",
+        "TST",
+        1e23,
+        accounts[0],
+        accounts[0],
+        {"from": accounts[0]},
+    )  # Alice is made the default owner of the deployed contract
+    return asset
 
 
 @pytest.fixture(scope="session")

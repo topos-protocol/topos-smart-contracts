@@ -33,3 +33,10 @@ def test_transfer_event_fires(alice, token):
         alice,
         amount,
     ]
+
+
+def test_mint_from_non_validator_fails(alice, bob, token):
+    alice_balance = token.balanceOf(alice)
+    amount = alice_balance // 4
+    with brownie.reverts("onlyValidator: bad role"):
+        token.mint(alice, amount, {"from": bob})

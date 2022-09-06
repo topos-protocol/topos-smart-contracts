@@ -144,7 +144,7 @@ def test_insufficient_current_allowance_reverts(alice, bob, charlie, token):
 def test_current_allowance_max(alice, bob, charlie, token):
     # Make total supply zero
     amount = token.balanceOf(alice)
-    token.burn(amount, {"from": alice})
+    token.burn(alice, amount, {"from": alice})
     # Mint max total supple for bob
     max_amount = 2**256 - 1
     token.mint(bob, max_amount)

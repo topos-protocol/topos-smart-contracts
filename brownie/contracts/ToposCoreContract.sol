@@ -46,7 +46,7 @@ contract ToposCoreContract is Ownable {
     mapping(address => mapping(address => uint256)) public claimableBalances;
 
     // Event to store cross-subnet message data on the blockchain
-    event Sent(uint256 terminalSubnetId, string assetId, address recipientAddr, uint256 amount);
+    event Sent(uint256 terminalSubnetId, string assetId, address senderAddr, address recipientAddr, uint256 amount);
 
     // Event to know if the certificate was applied successfully
     event CertificateApplied(bool success);
@@ -62,6 +62,7 @@ contract ToposCoreContract is Ownable {
         address _sourceAssetAddr,
         uint256 _recipientSubnetId,
         string memory _assetId,
+        address _senderAddr,
         address _recipientAddr,
         uint256 _amount
     ) public payable {
@@ -76,7 +77,7 @@ contract ToposCoreContract is Ownable {
         // except if there are re-orgs on the blockchain.
         // This should not be a problem if the blockchain
         // employes a finality gadget like Grandpa.
-        emit Sent(_recipientSubnetId, _assetId, _recipientAddr, _amount);
+        emit Sent(_recipientSubnetId, _assetId, _senderAddr, _recipientAddr, _amount);
     }
 
     // Mint the amount on the receivers end
@@ -89,17 +90,19 @@ contract ToposCoreContract is Ownable {
         // Todo: require(_validateCert(_cert) == true, "Certificate is invalid");
 
         for (uint256 i = 0; i < _crossSubnetMessage.inputs.length; i++) {
+            address recipientAddr = _crossSubnetMessage.inputs[i].recipientAddr;
             if (knownAssets[_crossSubnetMessage.inputs[i].assetId].isPresent == false) {
-                address recipientAddr = _crossSubnetMessage.inputs[i].recipientAddr;
                 address recipientContractAddr = deployContract(
                     "TEST",
                     "TST",
-                    2**256 - 1,
-                    _crossSubnetMessage.inputs[i].assetId
+                    2**100,
+                    _crossSubnetMessage.inputs[i].assetId,
+                    msg.sender, // the validator becomes the admin of the deployed contract
+                    address(this) // The mint & burn functions are to be called by this contract only
                 );
                 claimableBalances[recipientContractAddr][recipientAddr] += _crossSubnetMessage.inputs[i].amount;
             } else {
-                address recipientContractAddr = _getAssetAddress(_crossSubnetMessage.inputs[i].assetId);
+                address recipientContractAddr = getAssetAddress(_crossSubnetMessage.inputs[i].assetId);
                 claimableBalances[recipientContractAddr][recipientAddr] += _crossSubnetMessage.inputs[i].amount;
             }
         }
@@ -112,6 +115,7 @@ contract ToposCoreContract is Ownable {
         uint256 amount = claimableBalances[_assetContractAddr][msg.sender];
         require(amount > 0, "No amount to claim");
         claimableBalances[_assetContractAddr][msg.sender] -= amount;
+        // console.log("ToposCoreContract.claimTransfer: Receiver %s",msg.sender);
         IAsset(_assetContractAddr).mint(msg.sender, amount);
     }
 
@@ -120,10 +124,12 @@ contract ToposCoreContract is Ownable {
         string memory _name,
         string memory _symbol,
         uint256 _initialSupply,
-        string memory _assetId
-    ) private returns (address) {
+        string memory _assetId,
+        address _deployer,
+        address _validator
+    ) public returns (address) {
         address assetCloneAddr = Clones.clone(_assetImplementation);
-        Asset(assetCloneAddr).initialize(_name, _symbol, _initialSupply);
+        Asset(assetCloneAddr).initialize(_name, _symbol, _initialSupply, _deployer, _validator);
         AssetContainer memory asset = AssetContainer(_assetId, assetCloneAddr, _symbol, true);
         knownAssets[_assetId] = asset;
         return assetCloneAddr;
@@ -131,7 +137,7 @@ contract ToposCoreContract is Ownable {
 
     // Function to be used internally to fetch the asset's contract address (if any)
     // if the assetId is provided
-    function _getAssetAddress(string memory _assetId) private view returns (address) {
+    function getAssetAddress(string memory _assetId) public view returns (address) {
         AssetContainer memory asset = knownAssets[_assetId];
         return asset.contractAddr;
     }
