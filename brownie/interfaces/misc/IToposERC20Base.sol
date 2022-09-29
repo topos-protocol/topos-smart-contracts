@@ -2,48 +2,18 @@
 pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../contracts/topos-core-contracts/CrossSubnetInterface.sol";
 
 interface IToposERC20Base is IERC20 {
-    /// @notice A container for the cross-subnet asset transfer transaction
-    struct CrossSubnetAssetTransfer {
-        uint64 toSubnetId;
-        address toTokenAddr;
-        address to;
-        address from;
-        uint256 amount;
-    }
+    function sendToSubnet(CrossSubnetInterface.CrossSubnetMessage memory xsMsg) external;
 
-    /// @notice A container for the cross-subnet remote call transaction
-    struct CrossSubnetRemoteCall {
-        uint64 toSubnetId;
-        address toTokenAddr;
-        bytes call;
-        bytes[] arguments;
-    }
+    function mintFromXsMsg(bytes calldata certId, bytes calldata xsMsgId) external;
 
-    /// @notice A container for the fee payment information
-    struct CrossSubnetFee {
-        address feePayerAddr;
-        address feeTokenAddr;
-        uint256 feeAmount;
-    }
+    function transferXsMsgFee(
+        bytes calldata certId,
+        bytes calldata xsMsgId,
+        address receiver
+    ) external;
 
-    /// @notice A unified container to put the collective cross-subnet transaction info
-    struct CrossSubnetMessage {
-        bytes xsMsgId;
-        CrossSubnetAssetTransfer xsAssetTransfer;
-        CrossSubnetRemoteCall xsRemoteCall;
-        CrossSubnetFee xsFee;
-        TransactionType transferType;
-    }
-
-    /// @notice Type of cross-subnet transactions
-    enum TransactionType {
-        AssetTransfer,
-        RemoteContractCall
-    }
-
-    function sendToSubnet(CrossSubnetMessage memory xsMsg) external;
-
-    function mintFromxsMsg(bytes calldata certId, bytes calldata xsMsgId) external;
+    function addProcessedXsMessage(bytes32 xSMsgHash) external;
 }
