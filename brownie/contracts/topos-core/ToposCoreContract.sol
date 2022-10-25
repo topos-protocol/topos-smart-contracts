@@ -18,6 +18,18 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         External
     }
 
+    /// @notice Mapping to store validated certificates
+    /// @dev certId => certificate
+    mapping(bytes => bytes) validatedCerts;
+
+    /// @notice The subnet ID of the subnet this contract is deployed on
+    /// @dev Must be set in the constructor
+    uint64 networkSubnetId;
+
+    /// @notice Validator role
+    /// 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a
+    bytes32 internal constant VALIDATOR = keccak256(abi.encodePacked("VALIDATOR"));
+
     /// @dev Removed slots; Should avoid re-using
     // bytes32 internal constant KEY_ALL_TOKENS_FROZEN = keccak256('all-tokens-frozen');
     // bytes32 internal constant PREFIX_TOKEN_FROZEN = keccak256('token-frozen');
@@ -53,13 +65,15 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     constructor(
         address, /*authModule*/
-        address tokenDeployerImplementation
+        address tokenDeployerImplementation,
+        uint64 _networkSubnetId
     ) {
         // if (authModule.code.length == 0) revert InvalidAuthModule();
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
 
         _authModule = address(0); /*authModule*/
         _tokenDeployerImplementation = tokenDeployerImplementation;
+        networkSubnetId = _networkSubnetId;
     }
 
     /**********************\
@@ -504,6 +518,14 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         return false;
     }
 
+    function verifyCertificate(bytes calldata cert) public onlyAdmin {
+        bytes memory certId;
+        bytes memory storedCert = validatedCerts[certId];
+        require(storedCert.length != 0, "Certificate already verified");
+        require(_validateCertificate(cert), "Invalid certificate");
+        validatedCerts[certId] = cert;
+    }
+
     function tokenDailyMintLimit(string memory symbol) public view override returns (uint256) {
         return getUint(_getTokenDailyMintLimitKey(symbol));
     }
@@ -707,6 +729,12 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     /********************\
     |* Internal Methods *|
     \********************/
+
+    function _validateCertificate(
+        bytes calldata /*cert*/
+    ) internal pure returns (bool) {
+        return true;
+    }
 
     function _getIsContractCallApprovedKey(
         bytes32 commandId,
