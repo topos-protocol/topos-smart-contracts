@@ -33,7 +33,7 @@ interface IToposCoreContract {
     event TokenSent(
         address indexed sender,
         subnetId destinationSubnetId,
-        string destinationAddress,
+        address destinationContractAddress,
         string symbol,
         uint256 amount
     );
@@ -41,7 +41,7 @@ interface IToposCoreContract {
     event ContractCall(
         address indexed sender,
         subnetId destinationSubnetId,
-        string destinationContractAddress,
+        address destinationContractAddress,
         bytes32 indexed payloadHash,
         bytes payload
     );
@@ -49,7 +49,7 @@ interface IToposCoreContract {
     event ContractCallWithToken(
         address indexed sender,
         subnetId destinationSubnetId,
-        string destinationContractAddress,
+        address destinationContractAddress,
         bytes32 indexed payloadHash,
         bytes payload,
         string symbol,
@@ -62,9 +62,9 @@ interface IToposCoreContract {
 
     event ContractCallApproved(
         bytes32 indexed commandId,
-        subnetId sourceSubnetId,
-        string sourceAddress,
-        address indexed contractAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
+        address indexed sender,
         bytes32 indexed payloadHash,
         bytes32 sourceTxHash,
         uint256 sourceEventIndex
@@ -72,9 +72,9 @@ interface IToposCoreContract {
 
     event ContractCallApprovedWithMint(
         bytes32 indexed commandId,
-        subnetId sourceSubnetId,
-        string sourceAddress,
-        address indexed contractAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
+        address indexed sender,
         bytes32 indexed payloadHash,
         string symbol,
         uint256 amount,
@@ -94,20 +94,20 @@ interface IToposCoreContract {
 
     function sendToken(
         subnetId destinationSubnetId,
-        string calldata destinationAddress,
+        address destinationContractAddress,
         string calldata symbol,
         uint256 amount
     ) external;
 
     function callContract(
         subnetId destinationSubnetId,
-        string calldata contractAddress,
+        address destinationContractAddress,
         bytes calldata payload
     ) external;
 
     function callContractWithToken(
         subnetId destinationSubnetId,
-        string calldata contractAddress,
+        address destinationContractAddress,
         bytes calldata payload,
         string calldata symbol,
         uint256 amount
@@ -115,16 +115,16 @@ interface IToposCoreContract {
 
     function isContractCallApproved(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string calldata sourceAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
         address contractAddress,
         bytes32 payloadHash
     ) external view returns (bool);
 
     function isContractCallAndMintApproved(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string calldata sourceAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
         address contractAddress,
         bytes32 payloadHash,
         string calldata symbol,
@@ -133,15 +133,15 @@ interface IToposCoreContract {
 
     function validateContractCall(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string calldata sourceAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
         bytes32 payloadHash
     ) external returns (bool);
 
     function validateContractCallAndMint(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string calldata sourceAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
         bytes32 payloadHash,
         string calldata symbol,
         uint256 amount
@@ -171,6 +171,8 @@ interface IToposCoreContract {
 
     function admins(uint256 epoch) external view returns (address[] memory);
 
+    function getValidatedCert(bytes calldata certId) external view returns (bytes memory);
+
     /*******************\
     |* Admin Functions *|
     \*******************/
@@ -182,6 +184,12 @@ interface IToposCoreContract {
         bytes32 newImplementationCodeHash,
         bytes calldata setupParams
     ) external;
+
+    function verifyCertificate(bytes calldata cert) external;
+
+    function approveContractCall(bytes calldata params, bytes32 commandId) external;
+
+    function approveContractCallWithMint(bytes calldata params, bytes32 commandId) external;
 
     /**********************\
     |* External Functions *|

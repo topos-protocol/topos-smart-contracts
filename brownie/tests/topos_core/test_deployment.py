@@ -40,7 +40,9 @@ deploy_token_calldata = [
 def test_constant_address_deployment():
     LOGGER.info("Switching to subnet network A")
     switch_network("A")
-    _, topos_core_contract_A, _ = deploy_token_deployer(1)
+    _, topos_core_contract_A, _ = deploy_token_deployer(
+        brownie.convert.to_bytes("0x01", "bytes32")  # subnet Id
+    )
     tokenAParams = eth_abi.encode_abi(
         deploy_token_params, deploy_token_calldata
     )
@@ -52,7 +54,9 @@ def test_constant_address_deployment():
 
     LOGGER.info("Switching to subnet network B")
     switch_network("B")
-    _, topos_core_contract_B, _ = deploy_token_deployer(2)
+    _, topos_core_contract_B, _ = deploy_token_deployer(
+        brownie.convert.to_bytes("0x02", "bytes32")
+    )
     tokenBParams = eth_abi.encode_abi(
         deploy_token_params, deploy_token_calldata
     )
@@ -81,7 +85,10 @@ def deploy_token_deployer(networkSubnetId):
     ]
     LOGGER.info(f"TokenDeployer address: {token_deployer_address}")
     topos_core_contract = ToposCoreContract.deploy(
-        brownie.ZERO_ADDRESS, token_deployer_address, networkSubnetId, {"from": accounts[0]}
+        brownie.ZERO_ADDRESS,
+        token_deployer_address,
+        networkSubnetId,
+        {"from": accounts[0]},
     )
     LOGGER.info(f"ToposCoreContract address: {topos_core_contract.address}")
     return (

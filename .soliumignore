@@ -10,3 +10,4 @@ brownie/contracts/topos-core/MintableCappedERC20.sol
 brownie/contracts/topos-core/Ownable.sol
 brownie/contracts/topos-core/TokenDeployer.sol
 brownie/contracts/topos-core/ConstAddressDeployer.sol
+brownie/contracts/executables/ToposExecutable.sol

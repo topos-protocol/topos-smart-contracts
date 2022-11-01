@@ -24,7 +24,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
-    uint64 networkSubnetId;
+    subnetId networkSubnetId;
 
     /// @notice Validator role
     /// 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a
@@ -66,7 +66,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     constructor(
         address, /*authModule*/
         address tokenDeployerImplementation,
-        uint64 _networkSubnetId
+        subnetId _networkSubnetId
     ) {
         // if (authModule.code.length == 0) revert InvalidAuthModule();
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
@@ -82,23 +82,14 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function setup(bytes calldata params) external override {
         // Prevent setup from being called on a non-proxy (the implementation).
-        if (implementation() == address(0)) revert NotProxy();
+        // if (implementation() == address(0)) revert NotProxy();
 
-        (address[] memory adminAddresses, uint256 newAdminThreshold, bytes memory newOperatorsData) = abi.decode(
-            params,
-            (address[], uint256, bytes)
-        );
+        (address[] memory adminAddresses, uint256 newAdminThreshold) = abi.decode(params, (address[], uint256));
 
         // NOTE: Admin epoch is incremented to easily invalidate current admin-related state.
         uint256 newAdminEpoch = _adminEpoch() + uint256(1);
         _setAdminEpoch(newAdminEpoch);
         _setAdmins(newAdminEpoch, adminAddresses, newAdminThreshold);
-
-        if (newOperatorsData.length > 0) {
-            IAuth(_authModule).transferOperatorship(newOperatorsData);
-
-            emit OperatorshipTransferred(newOperatorsData);
-        }
     }
 
     function execute(bytes calldata input) external override {
@@ -143,10 +134,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
                 commandSelector = ToposCoreContract.deployToken.selector;
             } else if (commandHash == SELECTOR_MINT_TOKEN) {
                 commandSelector = ToposCoreContract.mintToken.selector;
-            } else if (commandHash == SELECTOR_APPROVE_CONTRACT_CALL) {
-                commandSelector = ToposCoreContract.approveContractCall.selector;
-            } else if (commandHash == SELECTOR_APPROVE_CONTRACT_CALL_WITH_MINT) {
-                commandSelector = ToposCoreContract.approveContractCallWithMint.selector;
             } else if (commandHash == SELECTOR_BURN_TOKEN) {
                 commandSelector = ToposCoreContract.burnToken.selector;
             } else if (commandHash == SELECTOR_TRANSFER_OPERATORSHIP) {
@@ -287,62 +274,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         }
     }
 
-    function approveContractCall(bytes calldata params, bytes32 commandId) external onlySelf {
-        (
-            subnetId sourceSubnetId,
-            string memory sourceAddress,
-            address contractAddress,
-            bytes32 payloadHash,
-            bytes32 sourceTxHash,
-            uint256 sourceEventIndex
-        ) = abi.decode(params, (subnetId, string, address, bytes32, bytes32, uint256));
-
-        _setContractCallApproved(commandId, sourceSubnetId, sourceAddress, contractAddress, payloadHash);
-        emit ContractCallApproved(
-            commandId,
-            sourceSubnetId,
-            sourceAddress,
-            contractAddress,
-            payloadHash,
-            sourceTxHash,
-            sourceEventIndex
-        );
-    }
-
-    function approveContractCallWithMint(bytes calldata params, bytes32 commandId) external onlySelf {
-        (
-            subnetId sourceSubnetId,
-            string memory sourceAddress,
-            address contractAddress,
-            bytes32 payloadHash,
-            string memory symbol,
-            uint256 amount,
-            bytes32 sourceTxHash,
-            uint256 sourceEventIndex
-        ) = abi.decode(params, (subnetId, string, address, bytes32, string, uint256, bytes32, uint256));
-
-        _setContractCallApprovedWithMint(
-            commandId,
-            sourceSubnetId,
-            sourceAddress,
-            contractAddress,
-            payloadHash,
-            symbol,
-            amount
-        );
-        emit ContractCallApprovedWithMint(
-            commandId,
-            sourceSubnetId,
-            sourceAddress,
-            contractAddress,
-            payloadHash,
-            symbol,
-            amount,
-            sourceTxHash,
-            sourceEventIndex
-        );
-    }
-
     function transferOperatorship(bytes calldata newOperatorsData, bytes32) external onlySelf {
         IAuth(_authModule).transferOperatorship(newOperatorsData);
 
@@ -355,17 +286,17 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function sendToken(
         subnetId destinationSubnetId,
-        string calldata destinationAddress,
+        address destinationContractAddress,
         string calldata symbol,
         uint256 amount
     ) external {
         _burnTokenFrom(msg.sender, symbol, amount);
-        emit TokenSent(msg.sender, destinationSubnetId, destinationAddress, symbol, amount);
+        emit TokenSent(msg.sender, destinationSubnetId, destinationContractAddress, symbol, amount);
     }
 
     function callContract(
         subnetId destinationSubnetId,
-        string calldata destinationContractAddress,
+        address destinationContractAddress,
         bytes calldata payload
     ) external {
         emit ContractCall(msg.sender, destinationSubnetId, destinationContractAddress, keccak256(payload), payload);
@@ -373,7 +304,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function callContractWithToken(
         subnetId destinationSubnetId,
-        string calldata destinationContractAddress,
+        address destinationContractAddress,
         bytes calldata payload,
         string calldata symbol,
         uint256 amount
@@ -392,27 +323,33 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function validateContractCall(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string calldata sourceAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
         bytes32 payloadHash
     ) external override returns (bool valid) {
-        bytes32 key = _getIsContractCallApprovedKey(commandId, sourceSubnetId, sourceAddress, msg.sender, payloadHash);
+        bytes32 key = _getIsContractCallApprovedKey(
+            commandId,
+            destinationSubnetId,
+            destinationContractAddress,
+            msg.sender,
+            payloadHash
+        );
         valid = getBool(key);
         if (valid) _setBool(key, false);
     }
 
     function validateContractCallAndMint(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string calldata sourceAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
         bytes32 payloadHash,
         string calldata symbol,
         uint256 amount
     ) external override returns (bool valid) {
         bytes32 key = _getIsContractCallApprovedWithMintKey(
             commandId,
-            sourceSubnetId,
-            sourceAddress,
+            destinationSubnetId,
+            destinationContractAddress,
             msg.sender,
             payloadHash,
             symbol,
@@ -428,21 +365,27 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function isContractCallApproved(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string calldata sourceAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
         address contractAddress,
         bytes32 payloadHash
     ) external view override returns (bool) {
         return
             getBool(
-                _getIsContractCallApprovedKey(commandId, sourceSubnetId, sourceAddress, contractAddress, payloadHash)
+                _getIsContractCallApprovedKey(
+                    commandId,
+                    destinationSubnetId,
+                    destinationContractAddress,
+                    contractAddress,
+                    payloadHash
+                )
             );
     }
 
     function isContractCallAndMintApproved(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string calldata sourceAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
         address contractAddress,
         bytes32 payloadHash,
         string calldata symbol,
@@ -452,8 +395,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             getBool(
                 _getIsContractCallApprovedWithMintKey(
                     commandId,
-                    sourceSubnetId,
-                    sourceAddress,
+                    destinationSubnetId,
+                    destinationContractAddress,
                     contractAddress,
                     payloadHash,
                     symbol,
@@ -524,6 +467,66 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         require(storedCert.length != 0, "Certificate already verified");
         require(_validateCertificate(cert), "Invalid certificate");
         validatedCerts[certId] = cert;
+    }
+
+    function approveContractCall(bytes calldata params, bytes32 commandId) public onlyAdmin {
+        (
+            subnetId destinationSubnetId,
+            address destinationContractAddr,
+            address sender,
+            bytes32 payloadHash,
+            bytes32 sourceTxHash,
+            uint256 sourceEventIndex
+        ) = abi.decode(params, (subnetId, address, address, bytes32, bytes32, uint256));
+
+        _setContractCallApproved(commandId, destinationSubnetId, destinationContractAddr, sender, payloadHash);
+        emit ContractCallApproved(
+            commandId,
+            destinationSubnetId,
+            destinationContractAddr,
+            sender,
+            payloadHash,
+            sourceTxHash,
+            sourceEventIndex
+        );
+    }
+
+    function approveContractCallWithMint(bytes calldata params, bytes32 commandId) public onlyAdmin {
+        (
+            subnetId destinationSubnetId,
+            address destinationContractAddr,
+            address sender,
+            bytes32 payloadHash,
+            string memory symbol,
+            uint256 amount,
+            bytes32 sourceTxHash,
+            uint256 sourceEventIndex
+        ) = abi.decode(params, (subnetId, address, address, bytes32, string, uint256, bytes32, uint256));
+
+        _setContractCallApprovedWithMint(
+            commandId,
+            destinationSubnetId,
+            destinationContractAddr,
+            sender,
+            payloadHash,
+            symbol,
+            amount
+        );
+        emit ContractCallApprovedWithMint(
+            commandId,
+            destinationSubnetId,
+            destinationContractAddr,
+            sender,
+            payloadHash,
+            symbol,
+            amount,
+            sourceTxHash,
+            sourceEventIndex
+        );
+    }
+
+    function getValidatedCert(bytes calldata certId) public view returns (bytes memory validatedCert) {
+        validatedCert = validatedCerts[certId];
     }
 
     function tokenDailyMintLimit(string memory symbol) public view override returns (uint256) {
@@ -656,22 +659,22 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function _setContractCallApproved(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string memory sourceAddress,
-        address contractAddress,
+        subnetId destinationSubnetId,
+        address destinationAddress,
+        address sender,
         bytes32 payloadHash
     ) internal {
         _setBool(
-            _getIsContractCallApprovedKey(commandId, sourceSubnetId, sourceAddress, contractAddress, payloadHash),
+            _getIsContractCallApprovedKey(commandId, destinationSubnetId, destinationAddress, sender, payloadHash),
             true
         );
     }
 
     function _setContractCallApprovedWithMint(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string memory sourceAddress,
-        address contractAddress,
+        subnetId destinationSubnetId,
+        address destinationAddress,
+        address sender,
         bytes32 payloadHash,
         string memory symbol,
         uint256 amount
@@ -679,9 +682,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         _setBool(
             _getIsContractCallApprovedWithMintKey(
                 commandId,
-                sourceSubnetId,
-                sourceAddress,
-                contractAddress,
+                destinationSubnetId,
+                destinationAddress,
+                sender,
                 payloadHash,
                 symbol,
                 amount
@@ -738,9 +741,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function _getIsContractCallApprovedKey(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string memory sourceAddress,
-        address contractAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
+        address sender,
         bytes32 payloadHash
     ) internal pure returns (bytes32) {
         return
@@ -748,9 +751,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
                 abi.encode(
                     PREFIX_CONTRACT_CALL_APPROVED,
                     commandId,
-                    sourceSubnetId,
-                    sourceAddress,
-                    contractAddress,
+                    destinationSubnetId,
+                    destinationContractAddress,
+                    sender,
                     payloadHash
                 )
             );
@@ -758,9 +761,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function _getIsContractCallApprovedWithMintKey(
         bytes32 commandId,
-        subnetId sourceSubnetId,
-        string memory sourceAddress,
-        address contractAddress,
+        subnetId destinationSubnetId,
+        address destinationContractAddress,
+        address sender,
         bytes32 payloadHash,
         string memory symbol,
         uint256 amount
@@ -770,9 +773,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
                 abi.encode(
                     PREFIX_CONTRACT_CALL_APPROVED_WITH_MINT,
                     commandId,
-                    sourceSubnetId,
-                    sourceAddress,
-                    contractAddress,
+                    destinationSubnetId,
+                    destinationContractAddress,
+                    sender,
                     payloadHash,
                     symbol,
                     amount
