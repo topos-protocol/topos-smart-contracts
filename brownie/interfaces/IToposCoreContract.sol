@@ -25,6 +25,7 @@ interface IToposCoreContract {
     error MintFailed(string symbol);
     error InvalidSetDailyMintLimitsParams();
     error ExceedDailyMintLimit(string symbol);
+    error InvalidCallData();
 
     /**********\
     |* Events *|
@@ -33,7 +34,7 @@ interface IToposCoreContract {
     event TokenSent(
         address indexed sender,
         subnetId destinationSubnetId,
-        address destinationContractAddress,
+        address receiver,
         string symbol,
         uint256 amount
     );

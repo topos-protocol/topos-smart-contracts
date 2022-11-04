@@ -27,7 +27,7 @@ command_id = brownie.convert.to_bytes("0x0001", "bytes32")
 dummy_cert_id = brownie.convert.to_bytes("0xefaa", "bytes")
 
 
-def test_constant_address_deployment():
+def test_cross_subnet_arbitrary_call():
     # Network A
     LOGGER.info("Switching to subnet network A")
     switch_network("A")

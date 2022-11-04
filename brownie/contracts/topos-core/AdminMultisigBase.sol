@@ -42,6 +42,7 @@ contract AdminMultisigBase is EternalStorage {
         // Do not proceed with operation execution if insufficient votes.
         if (adminVoteCount < _getAdminThreshold(adminEpoch)) return;
 
+        // Run the function before clearing out vote count and voted booleans.
         _;
 
         // Clear vote count and voted booleans.

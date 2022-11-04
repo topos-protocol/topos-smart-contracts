@@ -239,7 +239,14 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         emit TokenDeployed(symbol, tokenAddress);
     }
 
-    function mintToken(bytes calldata params, bytes32) external onlySelf {
+    function mintToken(
+        bytes calldata, /*certId*/
+        bytes calldata, /*xs_subnet_tx*/
+        bytes calldata, /*xs_subnet_inclusion_proof*/
+        bytes calldata params,
+        bytes32
+    ) external onlyAdmin {
+        // if (_validateCallData(certId) == false) revert InvalidCallData();
         (string memory symbol, address account, uint256 amount) = abi.decode(params, (string, address, uint256));
 
         _mintToken(symbol, account, amount);
@@ -286,12 +293,12 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function sendToken(
         subnetId destinationSubnetId,
-        address destinationContractAddress,
+        address receiver,
         string calldata symbol,
         uint256 amount
     ) external {
         _burnTokenFrom(msg.sender, symbol, amount);
-        emit TokenSent(msg.sender, destinationSubnetId, destinationContractAddress, symbol, amount);
+        emit TokenSent(msg.sender, destinationSubnetId, receiver, symbol, amount);
     }
 
     function callContract(
@@ -700,6 +707,12 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     /********************\
     |* Internal Getters *|
     \********************/
+
+    function _validateCallData(bytes calldata certId) internal view returns (bool isOk) {
+        isOk = true;
+        bytes memory storedCert = getValidatedCert(certId);
+        if (storedCert.length == 0) isOk = false;
+    }
 
     function _getTokenType(string memory symbol) internal view returns (TokenType) {
         return TokenType(getUint(_getTokenTypeKey(symbol)));
