@@ -1,5 +1,7 @@
 name: Publish Package to Github Package NPM Registry
 on:
+  pull_request:
+    branches: [main]
   release:
     types: [created]
 jobs:
