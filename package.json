@@ -1,30 +1,31 @@
 {
-    "name": "topos-smart-contracts",
-    "author": "Toposware",
-    "license": "MIT",
-    "version": "1.0.0",
-    "description": "Topos Smart Contracts",
-    "main": "",
-    "scripts": {
-        "test": "brownie test",
-        "lint": "yarn lint:sol && yarn lint:sol:ethlint && yarn lint:prettier && yarn lint:flake8",
-        "lint:sol": "solhint 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
-        "lint:sol:ethlint": "solium -d brownie/contracts/",
-        "lint:prettier": "prettier -c 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
-        "lint:flake8": "flake8 'brownie/tests'",
-        "lint:fix": "yarn lint:prettier:fix && yarn lint:black:fix",
-        "lint:prettier:fix": "prettier --write 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
-        "lint:black:fix": "black brownie/tests",
-        "coverage": "brownie test -C",
-        "install": "yarn install:flake8 && yarn install:black",
-        "install:flake8": "pip3 install flake8",
-        "install:black": "pip3 install black"
-    },
-    "devDependencies": {
-        "ethlint": "^1.2.5",
-        "ganache": "^7.4.1",
-        "prettier": "^2.7.1",
-        "prettier-plugin-solidity": "^1.0.0-beta.24",
-        "solhint": "^3.3.7"
-    }
+  "name": "@toposware/topos-smart-contracts",
+  "author": "Toposware",
+  "license": "MIT",
+  "version": "1.0.0",
+  "description": "Topos Smart Contracts",
+  "main": "",
+  "scripts": {
+    "build": "brownie compile",
+    "test": "brownie test",
+    "lint": "yarn lint:sol && yarn lint:sol:ethlint && yarn lint:prettier && yarn lint:flake8",
+    "lint:sol": "solhint 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
+    "lint:sol:ethlint": "solium -d brownie/contracts/",
+    "lint:prettier": "prettier -c 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
+    "lint:flake8": "flake8 'brownie/tests'",
+    "lint:fix": "yarn lint:prettier:fix && yarn lint:black:fix",
+    "lint:prettier:fix": "prettier --write 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
+    "lint:black:fix": "black brownie/tests",
+    "coverage": "brownie test -C",
+    "install": "yarn install:flake8 && yarn install:black",
+    "install:flake8": "pip3 install flake8",
+    "install:black": "pip3 install black"
+  },
+  "devDependencies": {
+    "ethlint": "^1.2.5",
+    "ganache": "^7.4.1",
+    "prettier": "^2.7.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.24",
+    "solhint": "^3.3.7"
+  }
 }

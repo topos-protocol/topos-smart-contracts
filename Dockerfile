@@ -6,20 +6,20 @@ RUN apt update && apt install -y python3 python3-pip
     
 RUN pip3 install eth-brownie
 
-COPY package.json yarn.lock ./
+COPY package*.json .
 
-RUN yarn install
+RUN npm install
 
 COPY . .
 
 FROM base as test
 
-RUN yarn test
+RUN npm run test
 
 FROM base as lint
 
-RUN yarn lint
+RUN npm run lint
 
 FROM base as build
 
-RUN brownie compile
+RUN npm run build
