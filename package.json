@@ -8,6 +8,7 @@
   "scripts": {
     "build": "brownie compile",
     "test": "brownie test",
+    "deploy": "brownie run deploy",
     "lint": "yarn lint:sol && yarn lint:sol:ethlint && yarn lint:prettier && yarn lint:flake8",
     "lint:sol": "solhint 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
     "lint:sol:ethlint": "solium -d brownie/contracts/",
