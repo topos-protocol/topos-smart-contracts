@@ -85,7 +85,6 @@ def deploy_token_deployer(networkSubnetId):
     ]
     LOGGER.info(f"TokenDeployer address: {token_deployer_address}")
     topos_core_contract = ToposCoreContract.deploy(
-        brownie.ZERO_ADDRESS,
         token_deployer_address,
         networkSubnetId,
         {"from": accounts[0]},

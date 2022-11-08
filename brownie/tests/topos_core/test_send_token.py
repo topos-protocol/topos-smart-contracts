@@ -78,7 +78,6 @@ def deploy_initial_contracts(network_subnet_id):
 
     # deploy ToposCoreContract
     topos_core_contract = ToposCoreContract.deploy(
-        brownie.ZERO_ADDRESS,
         token_deployer_address,
         network_subnet_id,
         {"from": accounts[0]},

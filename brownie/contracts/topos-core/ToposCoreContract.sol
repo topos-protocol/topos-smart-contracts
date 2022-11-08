@@ -2,12 +2,10 @@
 pragma solidity ^0.8.9;
 
 import {IToposCoreContract, subnetId} from "./../../interfaces/IToposCoreContract.sol";
-import {IAuth} from "./../../interfaces/IAuth.sol";
 import {IERC20} from "./../../interfaces/IERC20.sol";
 import {IBurnableMintableCappedERC20} from "./../../interfaces/IBurnableMintableCappedERC20.sol";
 import {ITokenDeployer} from "./../../interfaces/ITokenDeployer.sol";
 
-import {ECDSA} from "./ECDSA.sol";
 import {DepositHandler} from "./DepositHandler.sol";
 import {AdminMultisigBase} from "./AdminMultisigBase.sol";
 
@@ -30,14 +28,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     /// 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a
     bytes32 internal constant VALIDATOR = keccak256(abi.encodePacked("VALIDATOR"));
 
-    /// @dev Removed slots; Should avoid re-using
-    // bytes32 internal constant KEY_ALL_TOKENS_FROZEN = keccak256('all-tokens-frozen');
-    // bytes32 internal constant PREFIX_TOKEN_FROZEN = keccak256('token-frozen');
-
-    /// @dev Storage slot with the address of the current factory. `keccak256('eip1967.proxy.implementation') - 1`.
-    bytes32 internal constant KEY_IMPLEMENTATION =
-        bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc);
-
     // AUDIT: slot names should be prefixed with some standard string
     bytes32 internal constant PREFIX_COMMAND_EXECUTED = keccak256("command-executed");
     bytes32 internal constant PREFIX_TOKEN_ADDRESS = keccak256("token-address");
@@ -52,9 +42,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     bytes32 internal constant SELECTOR_MINT_TOKEN = keccak256("mintToken");
     bytes32 internal constant SELECTOR_APPROVE_CONTRACT_CALL = keccak256("approveContractCall");
     bytes32 internal constant SELECTOR_APPROVE_CONTRACT_CALL_WITH_MINT = keccak256("approveContractCallWithMint");
-    bytes32 internal constant SELECTOR_TRANSFER_OPERATORSHIP = keccak256("transferOperatorship");
 
-    address internal immutable _authModule;
     address internal immutable _tokenDeployerImplementation;
 
     modifier onlySelf() {
@@ -63,15 +51,10 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         _;
     }
 
-    constructor(
-        address, /*authModule*/
-        address tokenDeployerImplementation,
-        subnetId _networkSubnetId
-    ) {
+    constructor(address tokenDeployerImplementation, subnetId _networkSubnetId) {
         // if (authModule.code.length == 0) revert InvalidAuthModule();
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
 
-        _authModule = address(0); /*authModule*/
         _tokenDeployerImplementation = tokenDeployerImplementation;
         networkSubnetId = _networkSubnetId;
     }
@@ -81,9 +64,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     \**********************/
 
     function setup(bytes calldata params) external override {
-        // Prevent setup from being called on a non-proxy (the implementation).
-        // if (implementation() == address(0)) revert NotProxy();
-
         (address[] memory adminAddresses, uint256 newAdminThreshold) = abi.decode(params, (address[], uint256));
 
         // NOTE: Admin epoch is incremented to easily invalidate current admin-related state.
@@ -93,12 +73,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     }
 
     function execute(bytes calldata input) external override {
-        (bytes memory data, bytes memory proof) = abi.decode(input, (bytes, bytes));
-
-        bytes32 messageHash = ECDSA.toEthSignedMessageHash(keccak256(data));
-
-        // TEST auth and getaway separately
-        bool currentOperators = IAuth(_authModule).validateProof(messageHash, proof);
+        bytes memory data = abi.decode(input, (bytes));
 
         uint256 chainId;
         bytes32[] memory commandIds;
@@ -134,12 +109,12 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
                 commandSelector = ToposCoreContract.deployToken.selector;
             } else if (commandHash == SELECTOR_MINT_TOKEN) {
                 commandSelector = ToposCoreContract.mintToken.selector;
+            } else if (commandHash == SELECTOR_APPROVE_CONTRACT_CALL) {
+                commandSelector = ToposCoreContract.approveContractCall.selector;
+            } else if (commandHash == SELECTOR_APPROVE_CONTRACT_CALL_WITH_MINT) {
+                commandSelector = ToposCoreContract.approveContractCallWithMint.selector;
             } else if (commandHash == SELECTOR_BURN_TOKEN) {
                 commandSelector = ToposCoreContract.burnToken.selector;
-            } else if (commandHash == SELECTOR_TRANSFER_OPERATORSHIP) {
-                if (!currentOperators) continue;
-
-                commandSelector = ToposCoreContract.transferOperatorship.selector;
             } else {
                 continue; /* Ignore if unknown command received */
             }
@@ -169,29 +144,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
             _setTokenDailyMintLimit(symbol, limit);
         }
-    }
-
-    function upgrade(
-        address newImplementation,
-        bytes32 newImplementationCodeHash,
-        bytes calldata setupParams
-    ) external override onlyAdmin {
-        if (newImplementationCodeHash != newImplementation.codehash) revert InvalidCodeHash();
-
-        emit Upgraded(newImplementation);
-
-        // AUDIT: If `newImplementation.setup` performs `selfdestruct`, it will result in the loss of _this_ implementation (thereby losing the gateway)
-        //        if `upgrade` is entered within the context of _this_ implementation itself.
-        if (setupParams.length != 0) {
-            // solhint-disable-next-line avoid-low-level-calls
-            (bool success, ) = newImplementation.delegatecall(
-                abi.encodeWithSelector(IToposCoreContract.setup.selector, setupParams)
-            );
-
-            if (!success) revert SetupFailed();
-        }
-
-        _setImplementation(newImplementation);
     }
 
     /******************\
@@ -281,12 +233,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         }
     }
 
-    function transferOperatorship(bytes calldata newOperatorsData, bytes32) external onlySelf {
-        IAuth(_authModule).transferOperatorship(newOperatorsData);
-
-        emit OperatorshipTransferred(newOperatorsData);
-    }
-
     /******************\
     |* Public Methods *|
     \******************/
@@ -325,6 +271,62 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             payload,
             symbol,
             amount
+        );
+    }
+
+    function approveContractCall(bytes calldata params, bytes32 commandId) external onlyAdmin {
+        (
+            subnetId destinationSubnetId,
+            address destinationContractAddr,
+            address sender,
+            bytes32 payloadHash,
+            bytes32 sourceTxHash,
+            uint256 sourceEventIndex
+        ) = abi.decode(params, (subnetId, address, address, bytes32, bytes32, uint256));
+
+        _setContractCallApproved(commandId, destinationSubnetId, destinationContractAddr, sender, payloadHash);
+        emit ContractCallApproved(
+            commandId,
+            destinationSubnetId,
+            destinationContractAddr,
+            sender,
+            payloadHash,
+            sourceTxHash,
+            sourceEventIndex
+        );
+    }
+
+    function approveContractCallWithMint(bytes calldata params, bytes32 commandId) external onlyAdmin {
+        (
+            subnetId destinationSubnetId,
+            address destinationContractAddr,
+            address sender,
+            bytes32 payloadHash,
+            string memory symbol,
+            uint256 amount,
+            bytes32 sourceTxHash,
+            uint256 sourceEventIndex
+        ) = abi.decode(params, (subnetId, address, address, bytes32, string, uint256, bytes32, uint256));
+
+        _setContractCallApprovedWithMint(
+            commandId,
+            destinationSubnetId,
+            destinationContractAddr,
+            sender,
+            payloadHash,
+            symbol,
+            amount
+        );
+        emit ContractCallApprovedWithMint(
+            commandId,
+            destinationSubnetId,
+            destinationContractAddr,
+            sender,
+            payloadHash,
+            symbol,
+            amount,
+            sourceTxHash,
+            sourceEventIndex
         );
     }
 
@@ -460,76 +462,12 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* Getters *|
     \***********/
 
-    function allTokensFrozen() external pure override returns (bool) {
-        return false;
-    }
-
-    function tokenFrozen(string memory) external pure override returns (bool) {
-        return false;
-    }
-
     function verifyCertificate(bytes calldata cert) public onlyAdmin {
         bytes memory certId;
         bytes memory storedCert = validatedCerts[certId];
         require(storedCert.length != 0, "Certificate already verified");
         require(_validateCertificate(cert), "Invalid certificate");
         validatedCerts[certId] = cert;
-    }
-
-    function approveContractCall(bytes calldata params, bytes32 commandId) public onlyAdmin {
-        (
-            subnetId destinationSubnetId,
-            address destinationContractAddr,
-            address sender,
-            bytes32 payloadHash,
-            bytes32 sourceTxHash,
-            uint256 sourceEventIndex
-        ) = abi.decode(params, (subnetId, address, address, bytes32, bytes32, uint256));
-
-        _setContractCallApproved(commandId, destinationSubnetId, destinationContractAddr, sender, payloadHash);
-        emit ContractCallApproved(
-            commandId,
-            destinationSubnetId,
-            destinationContractAddr,
-            sender,
-            payloadHash,
-            sourceTxHash,
-            sourceEventIndex
-        );
-    }
-
-    function approveContractCallWithMint(bytes calldata params, bytes32 commandId) public onlyAdmin {
-        (
-            subnetId destinationSubnetId,
-            address destinationContractAddr,
-            address sender,
-            bytes32 payloadHash,
-            string memory symbol,
-            uint256 amount,
-            bytes32 sourceTxHash,
-            uint256 sourceEventIndex
-        ) = abi.decode(params, (subnetId, address, address, bytes32, string, uint256, bytes32, uint256));
-
-        _setContractCallApprovedWithMint(
-            commandId,
-            destinationSubnetId,
-            destinationContractAddr,
-            sender,
-            payloadHash,
-            symbol,
-            amount
-        );
-        emit ContractCallApprovedWithMint(
-            commandId,
-            destinationSubnetId,
-            destinationContractAddr,
-            sender,
-            payloadHash,
-            symbol,
-            amount,
-            sourceTxHash,
-            sourceEventIndex
-        );
     }
 
     function getValidatedCert(bytes calldata certId) public view returns (bytes memory validatedCert) {
@@ -542,10 +480,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function tokenDailyMintAmount(string memory symbol) public view override returns (uint256) {
         return getUint(_getTokenDailyMintAmountKey(symbol, block.timestamp / 1 days));
-    }
-
-    function implementation() public view override returns (address) {
-        return getAddress(KEY_IMPLEMENTATION);
     }
 
     function tokenAddresses(string memory symbol) public view override returns (address) {
@@ -698,10 +632,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             ),
             true
         );
-    }
-
-    function _setImplementation(address newImplementation) internal {
-        _setAddress(KEY_IMPLEMENTATION, newImplementation);
     }
 
     /********************\

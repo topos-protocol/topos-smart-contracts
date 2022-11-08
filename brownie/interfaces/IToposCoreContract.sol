@@ -9,10 +9,6 @@ interface IToposCoreContract {
     \**********/
 
     error NotSelf();
-    error NotProxy();
-    error InvalidCodeHash();
-    error SetupFailed();
-    error InvalidAuthModule();
     error InvalidTokenDeployer();
     error InvalidAmount();
     error InvalidChainId();
@@ -85,10 +81,6 @@ interface IToposCoreContract {
 
     event TokenDailyMintLimitUpdated(string symbol, uint256 limit);
 
-    event OperatorshipTransferred(bytes newOperatorsData);
-
-    event Upgraded(address indexed implementation);
-
     /********************\
     |* Public Functions *|
     \********************/
@@ -156,13 +148,7 @@ interface IToposCoreContract {
 
     function tokenDailyMintAmount(string memory symbol) external view returns (uint256);
 
-    function allTokensFrozen() external view returns (bool);
-
-    function implementation() external view returns (address);
-
     function tokenAddresses(string memory symbol) external view returns (address);
-
-    function tokenFrozen(string memory symbol) external view returns (bool);
 
     function isCommandExecuted(bytes32 commandId) external view returns (bool);
 
@@ -179,12 +165,6 @@ interface IToposCoreContract {
     \*******************/
 
     function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
-
-    function upgrade(
-        address newImplementation,
-        bytes32 newImplementationCodeHash,
-        bytes calldata setupParams
-    ) external;
 
     function verifyCertificate(bytes calldata cert) external;
 
