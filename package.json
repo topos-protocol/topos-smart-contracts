@@ -4,6 +4,13 @@
   "license": "MIT",
   "version": "1.0.0",
   "description": "Topos Smart Contracts",
+  "files": [
+    "brownie/build"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toposware/topos-smart-contracts.git"
+  },
   "main": "",
   "scripts": {
     "build": "brownie compile",
