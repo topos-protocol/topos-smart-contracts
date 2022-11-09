@@ -7,80 +7,221 @@ import {IToposExecutable} from "./../../interfaces/IToposExecutable.sol";
 
 contract ToposExecutable is IToposExecutable {
     IToposCoreContract public immutable toposCoreContract;
+    mapping(bytes32 => bool) private _boolStorage;
+    mapping(bytes32 => uint256) private _uint256Storage;
+
+    bytes32 internal constant PREFIX_ADMIN = keccak256("admin");
+    bytes32 internal constant PREFIX_CONTRACT_CALL_EXECUTED = keccak256("contract-call-executed");
+    bytes32 internal constant PREFIX_CONTRACT_CALL_EXECUTED_WITH_MINT = keccak256("contract-call-executed-with-mint");
+    bytes32 internal constant PREFIX_AUTHORIZED_ORIGINS = keccak256("authorized-origins");
+
+    modifier onlyAdmin() {
+        if (!_isAdmin(msg.sender)) revert NotAdmin();
+        _;
+    }
 
     constructor(address toposCoreContract_) {
         if (toposCoreContract_ == address(0)) revert InvalidAddress();
 
         toposCoreContract = IToposCoreContract(toposCoreContract_);
+        // deployer becomes admin
+        _setAdmin(msg.sender);
+    }
+
+    function authorizeOrigin(
+        subnetId originSubnetId,
+        address originAddress,
+        bytes32 selector,
+        uint256 minimumCertHeight
+    ) external onlyAdmin {
+        _setAuthorizedOrigin(originSubnetId, originAddress, selector, minimumCertHeight);
+        emit OriginAuthorized(originSubnetId, originAddress, selector, minimumCertHeight);
     }
 
     function execute(
-        bytes calldata, /*certId*/
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        bytes calldata payload
+        bytes calldata certId,
+        bytes calldata crossSubnetTx,
+        bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        // if (_validateCallData(certId) == false) revert InvalidCallData();
-        bytes32 payloadHash = keccak256(payload);
-        if (
-            !toposCoreContract.validateContractCall(
-                commandId,
-                destinationSubnetId,
-                destinationContractAddress,
-                payloadHash
-            )
-        ) revert NotApprovedByToposCoreContract();
-        _execute(destinationSubnetId, destinationContractAddress, payload);
+        ContractCallData memory contractCallData = abi.decode(crossSubnetTx, (ContractCallData));
+        if (!toposCoreContract.verifyContractCallData(certId, contractCallData.destinationSubnetId))
+            revert InvalidCallData();
+        if (!_isContractCallExecuted(contractCallData)) revert ContractCallAlreadyExecuted();
+        uint256 minimumCertHeight = _isAuthorizedOrigin(
+            contractCallData.originSubnetId,
+            contractCallData.originAddress,
+            contractCallData.selector
+        );
+        if (minimumCertHeight == 0) revert UnauthorizedOrigin();
+
+        // prevent re-entrancy
+        _setContractCallExecuted(contractCallData);
+        _execute(
+            contractCallData.destinationSubnetId,
+            contractCallData.destinationContractAddress,
+            contractCallData.payload
+        );
     }
 
     function executeWithToken(
         bytes calldata certId,
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        bytes calldata payload,
-        string calldata tokenSymbol,
-        uint256 amount
+        bytes calldata crossSubnetTx,
+        bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        if (_validateCallData(certId) == false) revert InvalidCallData();
-        bytes32 payloadHash = keccak256(payload);
-        if (
-            !toposCoreContract.validateContractCallAndMint(
-                commandId,
-                destinationSubnetId,
-                destinationContractAddress,
-                payloadHash,
-                tokenSymbol,
-                amount
-            )
-        ) revert NotApprovedByToposCoreContract();
+        ContractCallWithTokenData memory contractCallWithTokenData = abi.decode(
+            crossSubnetTx,
+            (ContractCallWithTokenData)
+        );
+        if (!toposCoreContract.verifyContractCallData(certId, contractCallWithTokenData.destinationSubnetId))
+            revert InvalidCallData();
+        if (!_isContractCallAndMintExecuted(contractCallWithTokenData)) revert ContractCallAlreadyExecuted();
+        uint256 minimumCertHeight = _isAuthorizedOrigin(
+            contractCallWithTokenData.originSubnetId,
+            contractCallWithTokenData.originAddress,
+            contractCallWithTokenData.selector
+        );
+        if (minimumCertHeight == 0) revert UnauthorizedOrigin();
 
-        _executeWithToken(destinationSubnetId, destinationContractAddress, payload, tokenSymbol, amount);
+        // prevent re-entrancy
+        _setContractCallExecutedWithMint(contractCallWithTokenData);
+        _executeWithToken(
+            contractCallWithTokenData.destinationSubnetId,
+            contractCallWithTokenData.destinationContractAddress,
+            contractCallWithTokenData.payload,
+            contractCallWithTokenData.symbol,
+            contractCallWithTokenData.amount
+        );
+    }
+
+    function getBool(bytes32 key) public view returns (bool) {
+        return _boolStorage[key];
+    }
+
+    function getUint256(bytes32 key) public view returns (uint256) {
+        return _uint256Storage[key];
     }
 
     function _execute(
         subnetId destinationSubnetId,
         address destinationContractAddress,
-        bytes calldata payload
+        bytes memory payload
     ) internal virtual {}
 
     function _executeWithToken(
         subnetId destinationSubnetId,
         address destinationContractAddress,
-        bytes calldata payload,
-        string calldata tokenSymbol,
+        bytes memory payload,
+        string memory tokenSymbol,
         uint256 amount
     ) internal virtual {}
 
-    function _validateCallData(bytes calldata certId) internal view returns (bool isOk) {
-        isOk = true;
-        bytes memory storedCert = toposCoreContract.getValidatedCert(certId);
-        if (storedCert.length == 0) isOk = false;
+    function _setBool(bytes32 key, bool value) internal {
+        _boolStorage[key] = value;
+    }
+
+    function _setUint256(bytes32 key, uint256 value) internal {
+        _uint256Storage[key] = value;
+    }
+
+    function _setAdmin(address adminAddr) internal {
+        _setBool(_getAdminKey(adminAddr), true);
+    }
+
+    function _setContractCallExecuted(ContractCallData memory contractCallData) internal {
+        _setBool(_getIsContractCallExecutedKey(contractCallData), true);
+    }
+
+    function _setContractCallExecutedWithMint(ContractCallWithTokenData memory contractCallWithTokenData) internal {
+        _setBool(_getIsContractCallExecutedWithMintKey(contractCallWithTokenData), true);
+    }
+
+    function _setAuthorizedOrigin(
+        subnetId originSubnetId,
+        address originAddress,
+        bytes32 selector,
+        uint256 minimumCertHeight
+    ) internal {
+        _setUint256(_getAuthorizedOriginsKey(originSubnetId, originAddress, selector), minimumCertHeight);
+    }
+
+    function _isAdmin(address account) internal view returns (bool) {
+        return getBool(_getAdminKey(account));
+    }
+
+    function _isContractCallExecuted(ContractCallData memory contractCallData) internal view returns (bool) {
+        return getBool(_getIsContractCallExecutedKey(contractCallData));
+    }
+
+    function _isContractCallAndMintExecuted(ContractCallWithTokenData memory contractCallWithTokenData)
+        internal
+        view
+        returns (bool)
+    {
+        return getBool(_getIsContractCallExecutedWithMintKey(contractCallWithTokenData));
+    }
+
+    function _isAuthorizedOrigin(
+        subnetId originSubnetId,
+        address originAddress,
+        bytes32 selector
+    ) internal view returns (uint256) {
+        return getUint256(_getAuthorizedOriginsKey(originSubnetId, originAddress, selector));
     }
 
     function char(bytes1 b) internal pure returns (bytes1 c) {
         if (uint8(b) < 10) return bytes1(uint8(b) + 0x30);
         else return bytes1(uint8(b) + 0x57);
+    }
+
+    function _getIsContractCallExecutedKey(ContractCallData memory contractCallData) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    PREFIX_CONTRACT_CALL_EXECUTED,
+                    contractCallData.txHash,
+                    contractCallData.originSubnetId,
+                    contractCallData.originAddress,
+                    contractCallData.destinationSubnetId,
+                    contractCallData.destinationContractAddress,
+                    contractCallData.payloadHash,
+                    contractCallData.payload,
+                    contractCallData.selector
+                )
+            );
+    }
+
+    function _getIsContractCallExecutedWithMintKey(ContractCallWithTokenData memory contractCallWithTokenData)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return
+            keccak256(
+                abi.encode(
+                    PREFIX_CONTRACT_CALL_EXECUTED_WITH_MINT,
+                    contractCallWithTokenData.txHash,
+                    contractCallWithTokenData.originSubnetId,
+                    contractCallWithTokenData.originAddress,
+                    contractCallWithTokenData.destinationSubnetId,
+                    contractCallWithTokenData.destinationContractAddress,
+                    contractCallWithTokenData.payloadHash,
+                    contractCallWithTokenData.payload,
+                    contractCallWithTokenData.symbol,
+                    contractCallWithTokenData.amount,
+                    contractCallWithTokenData.selector
+                )
+            );
+    }
+
+    function _getAdminKey(address adminAddr) internal pure returns (bytes32) {
+        return keccak256(abi.encode(PREFIX_ADMIN, adminAddr));
+    }
+
+    function _getAuthorizedOriginsKey(
+        subnetId originSubnetId,
+        address originAddress,
+        bytes32 selector
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encode(PREFIX_AUTHORIZED_ORIGINS, originSubnetId, originAddress, selector));
     }
 }

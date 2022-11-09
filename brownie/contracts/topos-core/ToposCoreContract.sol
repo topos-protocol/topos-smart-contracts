@@ -16,47 +16,35 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         External
     }
 
-    /// @notice Mapping to store validated certificates
+    /// @notice Mapping to store verfied certificates
     /// @dev certId => certificate
-    mapping(bytes => bytes) validatedCerts;
+    mapping(bytes => bytes) verifiedCerts;
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
-    subnetId networkSubnetId;
+    subnetId immutable _networkSubnetId;
 
     /// @notice Validator role
     /// 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a
     bytes32 internal constant VALIDATOR = keccak256(abi.encodePacked("VALIDATOR"));
 
     // AUDIT: slot names should be prefixed with some standard string
-    bytes32 internal constant PREFIX_COMMAND_EXECUTED = keccak256("command-executed");
     bytes32 internal constant PREFIX_TOKEN_ADDRESS = keccak256("token-address");
     bytes32 internal constant PREFIX_TOKEN_TYPE = keccak256("token-type");
-    bytes32 internal constant PREFIX_CONTRACT_CALL_APPROVED = keccak256("contract-call-approved");
-    bytes32 internal constant PREFIX_CONTRACT_CALL_APPROVED_WITH_MINT = keccak256("contract-call-approved-with-mint");
+    bytes32 internal constant PREFIX_CONTRACT_CALL_EXECUTED = keccak256("contract-call-executed");
+    bytes32 internal constant PREFIX_CONTRACT_CALL_EXECUTED_WITH_MINT = keccak256("contract-call-executed-with-mint");
+    bytes32 internal constant PREFIX_SEND_TOKEN_EXECUTED = keccak256("send-token-executed");
     bytes32 internal constant PREFIX_TOKEN_DAILY_MINT_LIMIT = keccak256("token-daily-mint-limit");
     bytes32 internal constant PREFIX_TOKEN_DAILY_MINT_AMOUNT = keccak256("token-daily-mint-amount");
 
-    bytes32 internal constant SELECTOR_BURN_TOKEN = keccak256("burnToken");
-    bytes32 internal constant SELECTOR_DEPLOY_TOKEN = keccak256("deployToken");
-    bytes32 internal constant SELECTOR_MINT_TOKEN = keccak256("mintToken");
-    bytes32 internal constant SELECTOR_APPROVE_CONTRACT_CALL = keccak256("approveContractCall");
-    bytes32 internal constant SELECTOR_APPROVE_CONTRACT_CALL_WITH_MINT = keccak256("approveContractCallWithMint");
-
+    /// @notice Internal token deployer (ERCBurnableMintable by default)
     address internal immutable _tokenDeployerImplementation;
 
-    modifier onlySelf() {
-        if (msg.sender != address(this)) revert NotSelf();
-
-        _;
-    }
-
-    constructor(address tokenDeployerImplementation, subnetId _networkSubnetId) {
-        // if (authModule.code.length == 0) revert InvalidAuthModule();
+    constructor(address tokenDeployerImplementation, subnetId networkSubnetId) {
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
 
         _tokenDeployerImplementation = tokenDeployerImplementation;
-        networkSubnetId = _networkSubnetId;
+        _networkSubnetId = networkSubnetId;
     }
 
     /**********************\
@@ -70,63 +58,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         uint256 newAdminEpoch = _adminEpoch() + uint256(1);
         _setAdminEpoch(newAdminEpoch);
         _setAdmins(newAdminEpoch, adminAddresses, newAdminThreshold);
-    }
-
-    function execute(bytes calldata input) external override {
-        bytes memory data = abi.decode(input, (bytes));
-
-        uint256 chainId;
-        bytes32[] memory commandIds;
-        string[] memory commands;
-        bytes[] memory params;
-
-        try ToposCoreContract(this)._unpackLegacyCommands(data) returns (
-            uint256 chainId_,
-            bytes32[] memory commandIds_,
-            string[] memory commands_,
-            bytes[] memory params_
-        ) {
-            (chainId, commandIds, commands, params) = (chainId_, commandIds_, commands_, params_);
-        } catch {
-            (chainId, commandIds, commands, params) = abi.decode(data, (uint256, bytes32[], string[], bytes[]));
-        }
-
-        if (chainId != block.chainid) revert InvalidChainId();
-
-        uint256 commandsLength = commandIds.length;
-
-        if (commandsLength != commands.length || commandsLength != params.length) revert InvalidCommands();
-
-        for (uint256 i; i < commandsLength; ++i) {
-            bytes32 commandId = commandIds[i];
-
-            if (isCommandExecuted(commandId)) continue; /* Ignore if duplicate commandId received */
-
-            bytes4 commandSelector;
-            bytes32 commandHash = keccak256(abi.encodePacked(commands[i]));
-
-            if (commandHash == SELECTOR_DEPLOY_TOKEN) {
-                commandSelector = ToposCoreContract.deployToken.selector;
-            } else if (commandHash == SELECTOR_MINT_TOKEN) {
-                commandSelector = ToposCoreContract.mintToken.selector;
-            } else if (commandHash == SELECTOR_APPROVE_CONTRACT_CALL) {
-                commandSelector = ToposCoreContract.approveContractCall.selector;
-            } else if (commandHash == SELECTOR_APPROVE_CONTRACT_CALL_WITH_MINT) {
-                commandSelector = ToposCoreContract.approveContractCallWithMint.selector;
-            } else if (commandHash == SELECTOR_BURN_TOKEN) {
-                commandSelector = ToposCoreContract.burnToken.selector;
-            } else {
-                continue; /* Ignore if unknown command received */
-            }
-
-            // Prevent a re-entrancy from executing this command before it can be marked as successful.
-            _setCommandExecuted(commandId, true);
-            // solhint-disable-next-line avoid-low-level-calls
-            (bool success, ) = address(this).call(abi.encodeWithSelector(commandSelector, params[i], commandId));
-
-            if (success) emit Executed(commandId);
-            else _setCommandExecuted(commandId, false);
-        }
     }
 
     /*******************\
@@ -191,46 +122,24 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         emit TokenDeployed(symbol, tokenAddress);
     }
 
-    function mintToken(
-        bytes calldata, /*certId*/
-        bytes calldata, /*xs_subnet_tx*/
-        bytes calldata, /*xs_subnet_inclusion_proof*/
-        bytes calldata params,
-        bytes32
-    ) external onlyAdmin {
-        // if (_validateCallData(certId) == false) revert InvalidCallData();
-        (string memory symbol, address account, uint256 amount) = abi.decode(params, (string, address, uint256));
-
-        _mintToken(symbol, account, amount);
-    }
-
-    function burnToken(bytes calldata params, bytes32) external onlySelf {
-        (string memory symbol, bytes32 salt) = abi.decode(params, (string, bytes32));
-
-        address tokenAddress = tokenAddresses(symbol);
-
-        if (tokenAddress == address(0)) revert TokenDoesNotExist(symbol);
-
-        if (_getTokenType(symbol) == TokenType.External) {
-            DepositHandler depositHandler = new DepositHandler{salt: salt}();
-
-            (bool success, bytes memory returnData) = depositHandler.execute(
-                tokenAddress,
-                abi.encodeWithSelector(
-                    IERC20.transfer.selector,
-                    address(this),
-                    IERC20(tokenAddress).balanceOf(address(depositHandler))
-                )
-            );
-
-            if (!success || (returnData.length != uint256(0) && !abi.decode(returnData, (bool))))
-                revert BurnFailed(symbol);
-
-            // NOTE: `depositHandler` must always be destroyed in the same runtime context that it is deployed.
-            depositHandler.destroy(address(this));
-        } else {
-            IBurnableMintableCappedERC20(tokenAddress).burn(salt);
-        }
+    function executeAssetTransfer(
+        bytes calldata certId,
+        bytes calldata crossSubnetTx,
+        bytes calldata crossSubnetTxProof
+    ) external {
+        if (verifyAssetTransferData(certId, crossSubnetTx, crossSubnetTxProof) == false) revert();
+        (
+            bytes memory txHash,
+            address sender,
+            subnetId originSubnetId,
+            subnetId destinationSubnetId,
+            address receiver,
+            string memory symbol,
+            uint256 amount
+        ) = abi.decode(crossSubnetTx, (bytes, address, subnetId, subnetId, address, string, uint256));
+        // prevent re-entrancy
+        _setSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount);
+        _mintToken(symbol, receiver, amount);
     }
 
     /******************\
@@ -244,7 +153,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         uint256 amount
     ) external {
         _burnTokenFrom(msg.sender, symbol, amount);
-        emit TokenSent(msg.sender, destinationSubnetId, receiver, symbol, amount);
+        emit TokenSent(msg.sender, _networkSubnetId, destinationSubnetId, receiver, symbol, amount);
     }
 
     function callContract(
@@ -252,7 +161,14 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         address destinationContractAddress,
         bytes calldata payload
     ) external {
-        emit ContractCall(msg.sender, destinationSubnetId, destinationContractAddress, keccak256(payload), payload);
+        emit ContractCall(
+            _networkSubnetId,
+            msg.sender,
+            destinationSubnetId,
+            destinationContractAddress,
+            keccak256(payload),
+            payload
+        );
     }
 
     function callContractWithToken(
@@ -264,6 +180,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     ) external {
         _burnTokenFrom(msg.sender, symbol, amount);
         emit ContractCallWithToken(
+            _networkSubnetId,
             msg.sender,
             destinationSubnetId,
             destinationContractAddress,
@@ -272,146 +189,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             symbol,
             amount
         );
-    }
-
-    function approveContractCall(bytes calldata params, bytes32 commandId) external onlyAdmin {
-        (
-            subnetId destinationSubnetId,
-            address destinationContractAddr,
-            address sender,
-            bytes32 payloadHash,
-            bytes32 sourceTxHash,
-            uint256 sourceEventIndex
-        ) = abi.decode(params, (subnetId, address, address, bytes32, bytes32, uint256));
-
-        _setContractCallApproved(commandId, destinationSubnetId, destinationContractAddr, sender, payloadHash);
-        emit ContractCallApproved(
-            commandId,
-            destinationSubnetId,
-            destinationContractAddr,
-            sender,
-            payloadHash,
-            sourceTxHash,
-            sourceEventIndex
-        );
-    }
-
-    function approveContractCallWithMint(bytes calldata params, bytes32 commandId) external onlyAdmin {
-        (
-            subnetId destinationSubnetId,
-            address destinationContractAddr,
-            address sender,
-            bytes32 payloadHash,
-            string memory symbol,
-            uint256 amount,
-            bytes32 sourceTxHash,
-            uint256 sourceEventIndex
-        ) = abi.decode(params, (subnetId, address, address, bytes32, string, uint256, bytes32, uint256));
-
-        _setContractCallApprovedWithMint(
-            commandId,
-            destinationSubnetId,
-            destinationContractAddr,
-            sender,
-            payloadHash,
-            symbol,
-            amount
-        );
-        emit ContractCallApprovedWithMint(
-            commandId,
-            destinationSubnetId,
-            destinationContractAddr,
-            sender,
-            payloadHash,
-            symbol,
-            amount,
-            sourceTxHash,
-            sourceEventIndex
-        );
-    }
-
-    function validateContractCall(
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        bytes32 payloadHash
-    ) external override returns (bool valid) {
-        bytes32 key = _getIsContractCallApprovedKey(
-            commandId,
-            destinationSubnetId,
-            destinationContractAddress,
-            msg.sender,
-            payloadHash
-        );
-        valid = getBool(key);
-        if (valid) _setBool(key, false);
-    }
-
-    function validateContractCallAndMint(
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        bytes32 payloadHash,
-        string calldata symbol,
-        uint256 amount
-    ) external override returns (bool valid) {
-        bytes32 key = _getIsContractCallApprovedWithMintKey(
-            commandId,
-            destinationSubnetId,
-            destinationContractAddress,
-            msg.sender,
-            payloadHash,
-            symbol,
-            amount
-        );
-        valid = getBool(key);
-        if (valid) {
-            // Prevent re-entrancy
-            _setBool(key, false);
-            _mintToken(symbol, msg.sender, amount);
-        }
-    }
-
-    function isContractCallApproved(
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        address contractAddress,
-        bytes32 payloadHash
-    ) external view override returns (bool) {
-        return
-            getBool(
-                _getIsContractCallApprovedKey(
-                    commandId,
-                    destinationSubnetId,
-                    destinationContractAddress,
-                    contractAddress,
-                    payloadHash
-                )
-            );
-    }
-
-    function isContractCallAndMintApproved(
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        address contractAddress,
-        bytes32 payloadHash,
-        string calldata symbol,
-        uint256 amount
-    ) external view override returns (bool) {
-        return
-            getBool(
-                _getIsContractCallApprovedWithMintKey(
-                    commandId,
-                    destinationSubnetId,
-                    destinationContractAddress,
-                    contractAddress,
-                    payloadHash,
-                    symbol,
-                    amount
-                )
-            );
     }
 
     /***********\
@@ -464,14 +241,51 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function verifyCertificate(bytes calldata cert) public onlyAdmin {
         bytes memory certId;
-        bytes memory storedCert = validatedCerts[certId];
+        bytes memory storedCert = verifiedCerts[certId];
         require(storedCert.length != 0, "Certificate already verified");
-        require(_validateCertificate(cert), "Invalid certificate");
-        validatedCerts[certId] = cert;
+        require(_verfiyCertificate(cert), "Invalid certificate");
+        verifiedCerts[certId] = cert;
+        emit CertVerified(certId);
     }
 
-    function getValidatedCert(bytes calldata certId) public view returns (bytes memory validatedCert) {
-        validatedCert = validatedCerts[certId];
+    function verifyAssetTransferData(
+        bytes calldata certId,
+        bytes calldata crossSubnetTx,
+        bytes calldata /*crossSubnetTxProof*/
+    ) public view override returns (bool) {
+        bytes memory storedCert = getVerfiedCert(certId);
+        if (storedCert.length == 0) {
+            revert CertNotVerified();
+        }
+        (
+            bytes memory txHash,
+            address sender,
+            subnetId originSubnetId,
+            subnetId destinationSubnetId,
+            address receiver,
+            string memory symbol,
+            uint256 amount
+        ) = abi.decode(crossSubnetTx, (bytes, address, subnetId, subnetId, address, string, uint256));
+        if (!_validataDestinationId(destinationSubnetId)) revert InvalidSubnetId();
+        if (!_isSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount))
+            revert TransferAlreadyExecuted();
+        return true;
+    }
+
+    function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId)
+        public
+        view
+        override
+        returns (bool)
+    {
+        bytes memory storedCert = getVerfiedCert(certId);
+        if (storedCert.length == 0) revert CertNotVerified();
+        if (!_validataDestinationId(destinationSubnetId)) revert InvalidSubnetId();
+        return true;
+    }
+
+    function getVerfiedCert(bytes calldata certId) public view returns (bytes memory) {
+        return verifiedCerts[certId];
     }
 
     function tokenDailyMintLimit(string memory symbol) public view override returns (uint256) {
@@ -486,9 +300,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         return getAddress(_getTokenAddressKey(symbol));
     }
 
-    function isCommandExecuted(bytes32 commandId) public view override returns (bool) {
-        return getBool(_getIsCommandExecutedKey(commandId));
-    }
+    /********************\
+    |* Internal Methods *|
+    \********************/
 
     function _callERC20Token(address tokenAddress, bytes memory callData) internal returns (bool) {
         // solhint-disable-next-line avoid-low-level-calls
@@ -594,42 +408,17 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         _setAddress(_getTokenAddressKey(symbol), tokenAddress);
     }
 
-    function _setCommandExecuted(bytes32 commandId, bool executed) internal {
-        _setBool(_getIsCommandExecutedKey(commandId), executed);
-    }
-
-    function _setContractCallApproved(
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationAddress,
+    function _setSendTokenExecuted(
+        bytes memory txHash,
         address sender,
-        bytes32 payloadHash
-    ) internal {
-        _setBool(
-            _getIsContractCallApprovedKey(commandId, destinationSubnetId, destinationAddress, sender, payloadHash),
-            true
-        );
-    }
-
-    function _setContractCallApprovedWithMint(
-        bytes32 commandId,
+        subnetId originSubnetId,
         subnetId destinationSubnetId,
-        address destinationAddress,
-        address sender,
-        bytes32 payloadHash,
+        address receiver,
         string memory symbol,
         uint256 amount
     ) internal {
         _setBool(
-            _getIsContractCallApprovedWithMintKey(
-                commandId,
-                destinationSubnetId,
-                destinationAddress,
-                sender,
-                payloadHash,
-                symbol,
-                amount
-            ),
+            _getIsSendTokenExecutedKey(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount),
             true
         );
     }
@@ -638,14 +427,38 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* Internal Getters *|
     \********************/
 
-    function _validateCallData(bytes calldata certId) internal view returns (bool isOk) {
-        isOk = true;
-        bytes memory storedCert = getValidatedCert(certId);
-        if (storedCert.length == 0) isOk = false;
-    }
-
     function _getTokenType(string memory symbol) internal view returns (TokenType) {
         return TokenType(getUint(_getTokenTypeKey(symbol)));
+    }
+
+    function _validataDestinationId(subnetId destinationSubnetId) internal view returns (bool) {
+        if (subnetId.unwrap(destinationSubnetId) != subnetId.unwrap(_networkSubnetId)) {
+            return false;
+        }
+        return true;
+    }
+
+    function _isSendTokenExecuted(
+        bytes memory txHash,
+        address sender,
+        subnetId originSubnetId,
+        subnetId destinationSubnetId,
+        address receiver,
+        string memory symbol,
+        uint256 amount
+    ) internal view returns (bool) {
+        return
+            getBool(
+                _getIsSendTokenExecutedKey(
+                    txHash,
+                    sender,
+                    originSubnetId,
+                    destinationSubnetId,
+                    receiver,
+                    symbol,
+                    amount
+                )
+            );
     }
 
     /********************\
@@ -668,58 +481,30 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         return keccak256(abi.encodePacked(PREFIX_TOKEN_ADDRESS, symbol));
     }
 
-    function _getIsCommandExecutedKey(bytes32 commandId) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(PREFIX_COMMAND_EXECUTED, commandId));
-    }
-
-    /********************\
-    |* Internal Methods *|
-    \********************/
-
-    function _validateCertificate(
+    function _verfiyCertificate(
         bytes calldata /*cert*/
     ) internal pure returns (bool) {
         return true;
     }
 
-    function _getIsContractCallApprovedKey(
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
+    function _getIsSendTokenExecutedKey(
+        bytes memory txHash,
         address sender,
-        bytes32 payloadHash
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    PREFIX_CONTRACT_CALL_APPROVED,
-                    commandId,
-                    destinationSubnetId,
-                    destinationContractAddress,
-                    sender,
-                    payloadHash
-                )
-            );
-    }
-
-    function _getIsContractCallApprovedWithMintKey(
-        bytes32 commandId,
+        subnetId originSubnetId,
         subnetId destinationSubnetId,
-        address destinationContractAddress,
-        address sender,
-        bytes32 payloadHash,
+        address receiver,
         string memory symbol,
         uint256 amount
     ) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
-                    PREFIX_CONTRACT_CALL_APPROVED_WITH_MINT,
-                    commandId,
-                    destinationSubnetId,
-                    destinationContractAddress,
+                    PREFIX_SEND_TOKEN_EXECUTED,
+                    txHash,
                     sender,
-                    payloadHash,
+                    originSubnetId,
+                    destinationSubnetId,
+                    receiver,
                     symbol,
                     amount
                 )

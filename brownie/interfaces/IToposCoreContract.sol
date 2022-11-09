@@ -8,11 +8,8 @@ interface IToposCoreContract {
     |* Errors *|
     \**********/
 
-    error NotSelf();
     error InvalidTokenDeployer();
     error InvalidAmount();
-    error InvalidChainId();
-    error InvalidCommands();
     error TokenDoesNotExist(string symbol);
     error TokenAlreadyExists(string symbol);
     error TokenDeployFailed(string symbol);
@@ -21,7 +18,9 @@ interface IToposCoreContract {
     error MintFailed(string symbol);
     error InvalidSetDailyMintLimitsParams();
     error ExceedDailyMintLimit(string symbol);
-    error InvalidCallData();
+    error CertNotVerified();
+    error InvalidSubnetId();
+    error TransferAlreadyExecuted();
 
     /**********\
     |* Events *|
@@ -29,6 +28,7 @@ interface IToposCoreContract {
 
     event TokenSent(
         address indexed sender,
+        subnetId originSubnetId,
         subnetId destinationSubnetId,
         address receiver,
         string symbol,
@@ -36,7 +36,8 @@ interface IToposCoreContract {
     );
 
     event ContractCall(
-        address indexed sender,
+        subnetId originSubnetId,
+        address originAddress,
         subnetId destinationSubnetId,
         address destinationContractAddress,
         bytes32 indexed payloadHash,
@@ -44,7 +45,8 @@ interface IToposCoreContract {
     );
 
     event ContractCallWithToken(
-        address indexed sender,
+        subnetId originSubnetId,
+        address originAddress,
         subnetId destinationSubnetId,
         address destinationContractAddress,
         bytes32 indexed payloadHash,
@@ -53,31 +55,9 @@ interface IToposCoreContract {
         uint256 amount
     );
 
-    event Executed(bytes32 indexed commandId);
+    event CertVerified(bytes certId);
 
     event TokenDeployed(string symbol, address tokenAddresses);
-
-    event ContractCallApproved(
-        bytes32 indexed commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        address indexed sender,
-        bytes32 indexed payloadHash,
-        bytes32 sourceTxHash,
-        uint256 sourceEventIndex
-    );
-
-    event ContractCallApprovedWithMint(
-        bytes32 indexed commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        address indexed sender,
-        bytes32 indexed payloadHash,
-        string symbol,
-        uint256 amount,
-        bytes32 sourceTxHash,
-        uint256 sourceEventIndex
-    );
 
     event TokenDailyMintLimitUpdated(string symbol, uint256 limit);
 
@@ -87,9 +67,15 @@ interface IToposCoreContract {
 
     function sendToken(
         subnetId destinationSubnetId,
-        address destinationContractAddress,
+        address receiver,
         string calldata symbol,
         uint256 amount
+    ) external;
+
+    function executeAssetTransfer(
+        bytes calldata certId,
+        bytes calldata crossSubnetTx,
+        bytes calldata crossSubnetTxProof
     ) external;
 
     function callContract(
@@ -106,39 +92,13 @@ interface IToposCoreContract {
         uint256 amount
     ) external;
 
-    function isContractCallApproved(
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        address contractAddress,
-        bytes32 payloadHash
-    ) external view returns (bool);
-
-    function isContractCallAndMintApproved(
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        address contractAddress,
-        bytes32 payloadHash,
-        string calldata symbol,
-        uint256 amount
-    ) external view returns (bool);
-
-    function validateContractCall(
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        bytes32 payloadHash
+    function verifyAssetTransferData(
+        bytes calldata certId,
+        bytes calldata crossSubnetTx,
+        bytes calldata crossSubnetTxProof
     ) external returns (bool);
 
-    function validateContractCallAndMint(
-        bytes32 commandId,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
-        bytes32 payloadHash,
-        string calldata symbol,
-        uint256 amount
-    ) external returns (bool);
+    function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId) external returns (bool);
 
     /***********\
     |* Getters *|
@@ -150,15 +110,13 @@ interface IToposCoreContract {
 
     function tokenAddresses(string memory symbol) external view returns (address);
 
-    function isCommandExecuted(bytes32 commandId) external view returns (bool);
-
     function adminEpoch() external view returns (uint256);
 
     function adminThreshold(uint256 epoch) external view returns (uint256);
 
     function admins(uint256 epoch) external view returns (address[] memory);
 
-    function getValidatedCert(bytes calldata certId) external view returns (bytes memory);
+    function getVerfiedCert(bytes calldata certId) external view returns (bytes memory);
 
     /*******************\
     |* Admin Functions *|
@@ -168,15 +126,9 @@ interface IToposCoreContract {
 
     function verifyCertificate(bytes calldata cert) external;
 
-    function approveContractCall(bytes calldata params, bytes32 commandId) external;
-
-    function approveContractCallWithMint(bytes calldata params, bytes32 commandId) external;
-
     /**********************\
     |* External Functions *|
     \**********************/
 
     function setup(bytes calldata params) external;
-
-    function execute(bytes calldata input) external;
 }

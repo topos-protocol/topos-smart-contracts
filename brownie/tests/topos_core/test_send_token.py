@@ -165,7 +165,7 @@ def mint_token(topos_core_contract, symbol, receiver, amount):
     encoded_token_params = eth_abi.encode_abi(
         mint_token_params, mint_token_values
     )
-    topos_core_contract.mintToken(
+    topos_core_contract.executeAssetTransfer(
         dummy_data,  # certId
         dummy_data,  # xs_subnet_tx
         dummy_data,  # xs_subnet_inclusion_proof

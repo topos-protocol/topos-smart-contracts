@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import {ToposExecutable} from "./../ToposExecutable.sol";
-import {IToposCoreContract, subnetId} from "./../../../interfaces/IToposCoreContract.sol";
+import {subnetId} from "./../../../interfaces/IToposCoreContract.sol";
 import {IERC20} from "./../../../interfaces/IERC20.sol";
 
 contract CrossSubnetArbitraryCall is ToposExecutable {
@@ -27,9 +27,9 @@ contract CrossSubnetArbitraryCall is ToposExecutable {
     function _execute(
         subnetId destinationSubnetId,
         address destinationContractAddress,
-        bytes calldata payload_
+        bytes memory payload
     ) internal override {
-        (value) = abi.decode(payload_, (string));
+        (value) = abi.decode(payload, (string));
         destinationSubnetId_ = destinationSubnetId;
         destinationContractAddress_ = destinationContractAddress;
     }
