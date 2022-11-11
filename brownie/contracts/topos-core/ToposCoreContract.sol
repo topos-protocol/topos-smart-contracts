@@ -18,7 +18,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     /// @notice Mapping to store verfied certificates
     /// @dev certId => certificate
-    mapping(bytes => bytes) verifiedCerts;
+    mapping(bytes => Certificate) verifiedCerts;
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
@@ -47,22 +47,19 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         _networkSubnetId = networkSubnetId;
     }
 
-    /**********************\
-    |* External Functions *|
-    \**********************/
-
-    function setup(bytes calldata params) external override {
-        (address[] memory adminAddresses, uint256 newAdminThreshold) = abi.decode(params, (address[], uint256));
-
-        // NOTE: Admin epoch is incremented to easily invalidate current admin-related state.
-        uint256 newAdminEpoch = _adminEpoch() + uint256(1);
-        _setAdminEpoch(newAdminEpoch);
-        _setAdmins(newAdminEpoch, adminAddresses, newAdminThreshold);
-    }
-
     /*******************\
     |* Admin Functions *|
     \*******************/
+
+    function verifyCertificate(bytes memory certBytes) external onlyAdmin {
+        bytes memory certId = abi.decode(certBytes, (bytes));
+        Certificate memory storedCert = verifiedCerts[certId];
+        if (storedCert.isVerified == true) revert CertAlreadyVerified();
+        if (!_verfiyCertificate(certId)) revert InvalidCert();
+        Certificate memory newCert = Certificate({certId: certId, isVerified: true});
+        verifiedCerts[certId] = newCert;
+        emit CertVerified(certId);
+    }
 
     function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external override onlyAdmin {
         if (symbols.length != limits.length) revert InvalidSetDailyMintLimitsParams();
@@ -76,10 +73,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             _setTokenDailyMintLimit(symbol, limit);
         }
     }
-
-    /******************\
-    |* Self Functions *|
-    \******************/
 
     function deployToken(bytes calldata params) external {
         (
@@ -122,6 +115,28 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         emit TokenDeployed(symbol, tokenAddress);
     }
 
+    /// @dev Give token to an account for testing
+    function giveToken(
+        string memory symbol,
+        address account,
+        uint256 amount
+    ) external onlyAdmin {
+        _mintToken(symbol, account, amount);
+    }
+
+    /**********************\
+    |* External Functions *|
+    \**********************/
+
+    function setup(bytes calldata params) external override {
+        (address[] memory adminAddresses, uint256 newAdminThreshold) = abi.decode(params, (address[], uint256));
+
+        // NOTE: Admin epoch is incremented to easily invalidate current admin-related state.
+        uint256 newAdminEpoch = _adminEpoch() + uint256(1);
+        _setAdminEpoch(newAdminEpoch);
+        _setAdmins(newAdminEpoch, adminAddresses, newAdminThreshold);
+    }
+
     function executeAssetTransfer(
         bytes calldata certId,
         bytes calldata crossSubnetTx,
@@ -141,10 +156,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         _setSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount);
         _mintToken(symbol, receiver, amount);
     }
-
-    /******************\
-    |* Public Methods *|
-    \******************/
 
     function sendToken(
         subnetId destinationSubnetId,
@@ -191,10 +202,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         );
     }
 
-    /***********\
-    |* Getters *|
-    \***********/
-
     /// @dev Returns the current `adminEpoch`.
     function adminEpoch() external view override returns (uint256) {
         return _adminEpoch();
@@ -215,46 +222,17 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         }
     }
 
-    /********************\
-    |* Internal Methods *|
-    \********************/
-
-    function _unpackLegacyCommands(bytes memory executeData)
-        external
-        pure
-        returns (
-            uint256 chainId,
-            bytes32[] memory commandIds,
-            string[] memory commands,
-            bytes[] memory params
-        )
-    {
-        (chainId, , commandIds, commands, params) = abi.decode(
-            executeData,
-            (uint256, uint256, bytes32[], string[], bytes[])
-        );
-    }
-
-    /***********\
-    |* Getters *|
-    \***********/
-
-    function verifyCertificate(bytes calldata cert) public onlyAdmin {
-        bytes memory certId;
-        bytes memory storedCert = verifiedCerts[certId];
-        require(storedCert.length != 0, "Certificate already verified");
-        require(_verfiyCertificate(cert), "Invalid certificate");
-        verifiedCerts[certId] = cert;
-        emit CertVerified(certId);
-    }
+    /******************\
+    |* Public Methods *|
+    \******************/
 
     function verifyAssetTransferData(
         bytes calldata certId,
         bytes calldata crossSubnetTx,
         bytes calldata /*crossSubnetTxProof*/
     ) public view override returns (bool) {
-        bytes memory storedCert = getVerfiedCert(certId);
-        if (storedCert.length == 0) {
+        Certificate memory storedCert = getVerfiedCert(certId);
+        if (storedCert.isVerified == false) {
             revert CertNotVerified();
         }
         (
@@ -267,7 +245,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             uint256 amount
         ) = abi.decode(crossSubnetTx, (bytes, address, subnetId, subnetId, address, string, uint256));
         if (!_validataDestinationId(destinationSubnetId)) revert InvalidSubnetId();
-        if (!_isSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount))
+        if (_isSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount))
             revert TransferAlreadyExecuted();
         return true;
     }
@@ -278,13 +256,17 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         override
         returns (bool)
     {
-        bytes memory storedCert = getVerfiedCert(certId);
-        if (storedCert.length == 0) revert CertNotVerified();
+        Certificate memory storedCert = getVerfiedCert(certId);
+        if (storedCert.isVerified == false) revert CertNotVerified();
         if (!_validataDestinationId(destinationSubnetId)) revert InvalidSubnetId();
         return true;
     }
 
-    function getVerfiedCert(bytes calldata certId) public view returns (bytes memory) {
+    /***********\
+    |* Getters *|
+    \***********/
+
+    function getVerfiedCert(bytes calldata certId) public view returns (Certificate memory) {
         return verifiedCerts[certId];
     }
 
@@ -482,7 +464,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     }
 
     function _verfiyCertificate(
-        bytes calldata /*cert*/
+        bytes memory /*cert*/
     ) internal pure returns (bool) {
         return true;
     }

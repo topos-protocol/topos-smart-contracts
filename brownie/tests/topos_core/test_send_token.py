@@ -23,6 +23,7 @@ send_amount = 50
 dummy_data = brownie.convert.to_bytes("0x00", "bytes")
 subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
 subnet_B_id = brownie.convert.to_bytes("0x02", "bytes32")
+dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes")
 token_symbol = "TKX"
 mint_cap = 1000
 daily_mint_limit = 100
@@ -39,8 +40,9 @@ def test_send_token():
     token_sent_event = send_token()
 
     # Event logs as seen by the automation web-service
-    _ = token_sent_event["sender"]
-    _ = token_sent_event["destinationSubnetId"]
+    sender = token_sent_event["sender"]
+    originSubnetId = token_sent_event["originSubnetId"]
+    destinationSubnetId = token_sent_event["destinationSubnetId"]
     receiver = token_sent_event["receiver"]
     symbol = token_sent_event["symbol"]
     amount = token_sent_event["amount"]
@@ -49,7 +51,18 @@ def test_send_token():
     LOGGER.info("Switching to subnet network B")
     switch_network("B")
     deploy_initial_contracts(subnet_B_id)
-    mint_token(topos_core_contract_B, symbol, receiver, amount)
+    # if you don't validate a cert then the mint function would fail
+    validate_dummy_cert(topos_core_contract_B)
+    mint_token(
+        topos_core_contract_B,
+        dummy_data,  # tx_hash
+        sender,
+        originSubnetId,
+        destinationSubnetId,
+        receiver,
+        symbol,
+        amount,
+    )
     token_address = topos_core_contract_B.tokenAddresses(token_symbol)
     burnable_mint_erc20_B = BurnableMintableCappedERC20.at(token_address)
     assert burnable_mint_erc20_B.balanceOf(receiver) == send_amount
@@ -84,6 +97,16 @@ def deploy_initial_contracts(network_subnet_id):
     )
     LOGGER.info(f"ToposCoreContract address: {topos_core_contract.address}")
 
+    # set admin for ToposCoreContract
+    admin_threshold = 1
+    topos_core_contract.setup(
+        eth_abi.encode_abi(
+            ["address[]", "uint256"],
+            [[accounts[0].address], admin_threshold],
+        ),
+        {"from": accounts[0]},
+    )
+
     # deploy a token
     token_params = [
         "string",
@@ -111,22 +134,12 @@ def deploy_initial_contracts(network_subnet_id):
         + f"{deploy_token_tx.events['TokenDeployed']['tokenAddresses']}"
     )
 
-    # set admin for ToposCoreContract
-    admin_threshold = 1
-    topos_core_contract.setup(
-        eth_abi.encode_abi(
-            ["address[]", "uint256"],
-            [[accounts[0].address], admin_threshold],
-        ),
-        {"from": accounts[0]},
-    )
-
     if network_subnet_id == subnet_A_id:
         # mint some amount for the sender
         # we don't need to do this for pre-existing tokens, given that
         # the sender has some balance to transfer in his/her account
-        mint_token(
-            topos_core_contract, token_symbol, accounts[0].address, mint_amount
+        topos_core_contract.giveToken(
+            token_symbol, accounts[0], mint_amount, {"from": accounts[0]}
         )
         # get ERC20 contract at the deployed address
         burnable_mint_erc20 = BurnableMintableCappedERC20.at(
@@ -155,22 +168,50 @@ def send_token():
     return token_sent_event
 
 
-def mint_token(topos_core_contract, symbol, receiver, amount):
-    mint_token_params = ["string", "address", "uint256"]
+def validate_dummy_cert(topos_core_contract):
+    cert_params = ["bytes"]
+    cert_values = [dummy_cert_id]
+    encoded_cert_params = eth_abi.encode_abi(cert_params, cert_values)
+    topos_core_contract.verifyCertificate(
+        encoded_cert_params, {"from": accounts[0]}
+    )
+
+
+def mint_token(
+    topos_core_contract,
+    tx_hash,
+    sender,
+    origin_subnet_id,
+    destination_subnet_id,
+    receiver,
+    symbol,
+    amount,
+):
+    mint_token_params = [
+        "bytes",
+        "address",
+        "bytes32",
+        "bytes32",
+        "address",
+        "string",
+        "uint256",
+    ]
     mint_token_values = [
-        symbol,
+        tx_hash,
+        sender,
+        origin_subnet_id,
+        destination_subnet_id,
         receiver,
+        symbol,
         amount,
     ]
     encoded_token_params = eth_abi.encode_abi(
         mint_token_params, mint_token_values
     )
     topos_core_contract.executeAssetTransfer(
-        dummy_data,  # certId
-        dummy_data,  # xs_subnet_tx
-        dummy_data,  # xs_subnet_inclusion_proof
+        dummy_cert_id,  # certId
         encoded_token_params,
-        dummy_data,  # empty field
+        dummy_data,  # xs_subnet_inclusion_proof
         {"from": accounts[0]},
     )
 

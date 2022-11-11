@@ -19,8 +19,15 @@ interface IToposCoreContract {
     error InvalidSetDailyMintLimitsParams();
     error ExceedDailyMintLimit(string symbol);
     error CertNotVerified();
+    error CertAlreadyVerified();
+    error InvalidCert();
     error InvalidSubnetId();
     error TransferAlreadyExecuted();
+
+    struct Certificate {
+        bytes certId;
+        bool isVerified;
+    }
 
     /**********\
     |* Events *|
@@ -116,7 +123,7 @@ interface IToposCoreContract {
 
     function admins(uint256 epoch) external view returns (address[] memory);
 
-    function getVerfiedCert(bytes calldata certId) external view returns (bytes memory);
+    function getVerfiedCert(bytes calldata certId) external view returns (Certificate memory);
 
     /*******************\
     |* Admin Functions *|
@@ -125,6 +132,12 @@ interface IToposCoreContract {
     function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
 
     function verifyCertificate(bytes calldata cert) external;
+
+    function giveToken(
+        string memory symbol,
+        address account,
+        uint256 amount
+    ) external;
 
     /**********************\
     |* External Functions *|
