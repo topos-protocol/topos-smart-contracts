@@ -24,6 +24,7 @@ dummy_data = brownie.convert.to_bytes("0x00", "bytes")
 subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
 subnet_B_id = brownie.convert.to_bytes("0x02", "bytes32")
 dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes")
+dummy_cert_height = 12
 token_symbol = "TKX"
 mint_cap = 1000
 daily_mint_limit = 100
@@ -65,6 +66,7 @@ def test_send_token():
     )
     token_address = topos_core_contract_B.tokenAddresses(token_symbol)
     burnable_mint_erc20_B = BurnableMintableCappedERC20.at(token_address)
+    fast_forward_nonce(1)
     assert burnable_mint_erc20_B.balanceOf(receiver) == send_amount
 
 
@@ -169,8 +171,8 @@ def send_token():
 
 
 def validate_dummy_cert(topos_core_contract):
-    cert_params = ["bytes"]
-    cert_values = [dummy_cert_id]
+    cert_params = ["bytes", "uint256"]
+    cert_values = [dummy_cert_id, dummy_cert_height]
     encoded_cert_params = eth_abi.encode_abi(cert_params, cert_values)
     topos_core_contract.verifyCertificate(
         encoded_cert_params, {"from": accounts[0]}
@@ -214,6 +216,11 @@ def mint_token(
         dummy_data,  # xs_subnet_inclusion_proof
         {"from": accounts[0]},
     )
+
+
+def fast_forward_nonce(times):
+    for _ in range(times):
+        accounts[0].transfer(accounts[1], "10 ether")
 
 
 def switch_network(subnet_network):

@@ -7,9 +7,13 @@ import {subnetId} from "./../../../interfaces/IToposCoreContract.sol";
 import {IERC20} from "./../../../interfaces/IERC20.sol";
 
 contract CrossSubnetArbitraryCall is ToposExecutable {
+    error UnknownSelector();
+
     string public value;
     subnetId public destinationSubnetId_;
     address destinationContractAddress_;
+
+    bytes32 internal constant SELECTOR_CHANGE_VALUE = keccak256("changeValue");
 
     constructor(address toposCoreContract_) ToposExecutable(toposCoreContract_) {}
 
@@ -27,10 +31,19 @@ contract CrossSubnetArbitraryCall is ToposExecutable {
     function _execute(
         subnetId destinationSubnetId,
         address destinationContractAddress,
+        bytes32 selector,
         bytes memory payload
     ) internal override {
-        (value) = abi.decode(payload, (string));
-        destinationSubnetId_ = destinationSubnetId;
-        destinationContractAddress_ = destinationContractAddress;
+        if (selector == SELECTOR_CHANGE_VALUE) {
+            destinationSubnetId_ = destinationSubnetId;
+            destinationContractAddress_ = destinationContractAddress;
+            changeValue(payload);
+        } else {
+            revert UnknownSelector();
+        }
+    }
+
+    function changeValue(bytes memory payload) internal {
+        value = abi.decode(payload, (string));
     }
 }

@@ -48,13 +48,13 @@ interface IToposExecutable {
 
     function execute(
         bytes calldata certId,
-        bytes calldata crossSubnetTx,
+        ContractCallData memory contractCallData,
         bytes calldata crossSubnetTxProof
     ) external;
 
     function executeWithToken(
         bytes calldata certId,
-        bytes calldata crossSubnetTx,
+        ContractCallWithTokenData memory contractCallWithTokenData,
         bytes calldata crossSubnetTxProof
     ) external;
 }

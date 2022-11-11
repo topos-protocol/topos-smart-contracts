@@ -40,57 +40,65 @@ contract ToposExecutable is IToposExecutable {
 
     function execute(
         bytes calldata certId,
-        bytes calldata crossSubnetTx,
+        ContractCallData memory contractCallData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        ContractCallData memory contractCallData = abi.decode(crossSubnetTx, (ContractCallData));
-        if (!toposCoreContract.verifyContractCallData(certId, contractCallData.destinationSubnetId))
-            revert InvalidCallData();
-        if (!_isContractCallExecuted(contractCallData)) revert ContractCallAlreadyExecuted();
+        (bool isCertValid, uint256 certHeight) = toposCoreContract.verifyContractCallData(
+            certId,
+            contractCallData.destinationSubnetId
+        );
+        if (isCertValid == false) revert InvalidCallData();
+        if (_isContractCallExecuted(contractCallData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertHeight = _isAuthorizedOrigin(
             contractCallData.originSubnetId,
             contractCallData.originAddress,
             contractCallData.selector
         );
-        if (minimumCertHeight == 0) revert UnauthorizedOrigin();
+        if (certHeight <= minimumCertHeight) revert UnauthorizedOrigin();
 
         // prevent re-entrancy
         _setContractCallExecuted(contractCallData);
         _execute(
             contractCallData.destinationSubnetId,
             contractCallData.destinationContractAddress,
+            contractCallData.selector,
             contractCallData.payload
         );
     }
 
     function executeWithToken(
         bytes calldata certId,
-        bytes calldata crossSubnetTx,
+        ContractCallWithTokenData memory contractCallWithTokenData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        ContractCallWithTokenData memory contractCallWithTokenData = abi.decode(
-            crossSubnetTx,
-            (ContractCallWithTokenData)
+        (bool isCertValid, uint256 certHeight) = toposCoreContract.verifyContractCallData(
+            certId,
+            contractCallWithTokenData.destinationSubnetId
         );
-        if (!toposCoreContract.verifyContractCallData(certId, contractCallWithTokenData.destinationSubnetId))
-            revert InvalidCallData();
-        if (!_isContractCallAndMintExecuted(contractCallWithTokenData)) revert ContractCallAlreadyExecuted();
+        if (isCertValid == false) revert InvalidCallData();
+        if (_isContractCallAndMintExecuted(contractCallWithTokenData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertHeight = _isAuthorizedOrigin(
             contractCallWithTokenData.originSubnetId,
             contractCallWithTokenData.originAddress,
             contractCallWithTokenData.selector
         );
-        if (minimumCertHeight == 0) revert UnauthorizedOrigin();
+        if (minimumCertHeight <= certHeight) revert UnauthorizedOrigin();
 
         // prevent re-entrancy
         _setContractCallExecutedWithMint(contractCallWithTokenData);
         _executeWithToken(
             contractCallWithTokenData.destinationSubnetId,
             contractCallWithTokenData.destinationContractAddress,
+            contractCallWithTokenData.selector,
             contractCallWithTokenData.payload,
             contractCallWithTokenData.symbol,
             contractCallWithTokenData.amount
         );
+    }
+
+    /// @dev only for testing set admin manually
+    function setAdmin() external {
+        _setAdmin(msg.sender);
     }
 
     function getBool(bytes32 key) public view returns (bool) {
@@ -104,12 +112,14 @@ contract ToposExecutable is IToposExecutable {
     function _execute(
         subnetId destinationSubnetId,
         address destinationContractAddress,
+        bytes32 selector,
         bytes memory payload
     ) internal virtual {}
 
     function _executeWithToken(
         subnetId destinationSubnetId,
         address destinationContractAddress,
+        bytes32 selector,
         bytes memory payload,
         string memory tokenSymbol,
         uint256 amount

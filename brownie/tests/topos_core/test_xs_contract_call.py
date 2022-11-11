@@ -1,5 +1,6 @@
 import brownie
 import eth_abi
+import sha3
 from brownie import (
     CrossSubnetArbitraryCall,
     CrossSubnetArbitraryCallCreationCode,
@@ -23,11 +24,18 @@ bob_private = (
 )
 subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
 subnet_B_id = brownie.convert.to_bytes("0x02", "bytes32")
-command_id = brownie.convert.to_bytes("0x0001", "bytes32")
-dummy_cert_id = brownie.convert.to_bytes("0xefaa", "bytes")
+tx_hash = brownie.convert.to_bytes("0x01", "bytes")
+dummy_xs_proof = brownie.convert.to_bytes("0x0002", "bytes")
+dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes")
+dummy_cert_height = 11
+min_cert_height_admin = 10
+# get keccak256 hash of the target function
+selector_hash = sha3.keccak_256()
+selector_hash.update("changeValue".encode("utf-8"))
+selector = selector_hash.hexdigest()
 
 
-def test_cross_subnet_arbitrary_call():
+def test_cross_subnet_contract_call():
     # Network A
     LOGGER.info("Switching to subnet network A")
     switch_network("A")
@@ -37,11 +45,14 @@ def test_cross_subnet_arbitrary_call():
     # Events fetched by the automation webservice
     # get transaction data from the events
     LOGGER.info(f"set_remote_value_tx.events: {set_remote_value_tx.events}")
+    fast_forward_nonce(3)
 
     # Network B
     LOGGER.info("Switching to subnet network B")
     switch_network("B")
     deploy_initial_contracts(subnet_B_id)
+    # if you don't validate a cert then the mint function would fail
+    validate_dummy_cert(topos_core_contract_B)
     approve_and_execute_on_receiving_subnet(set_remote_value_tx)
     assert xs_arbitrary_call_B.value() == arbitrary_call_value
 
@@ -125,6 +136,15 @@ def switch_network(subnet_network):
         network.connect("substrate-subnet-network-B")
 
 
+def validate_dummy_cert(topos_core_contract):
+    cert_params = ["bytes", "uint256"]
+    cert_values = [dummy_cert_id, dummy_cert_height]
+    encoded_cert_params = eth_abi.encode_abi(cert_params, cert_values)
+    topos_core_contract.verifyCertificate(
+        encoded_cert_params, {"from": accounts[0]}
+    )
+
+
 def set_remote_value_on_sending_subnet():
     # send arbitrary command to subnetB
     return xs_arbitrary_call_A.setRemoteValue(
@@ -135,9 +155,13 @@ def set_remote_value_on_sending_subnet():
     )
 
 
-def approve_and_execute_on_receiving_subnet(set_remote_value_tx):
+def approve_and_execute_on_receiving_subnet(
+    set_remote_value_tx,
+):
+    # events as seen by the web-service
     contract_call_event = set_remote_value_tx.events["ContractCall"]
-    sender = contract_call_event["sender"]
+    origin_subnet_id = contract_call_event["originSubnetId"]
+    origin_address = contract_call_event["originAddress"]
     destination_subnet_id = contract_call_event["destinationSubnetId"]
     destination_contract_address = contract_call_event[
         "destinationContractAddress"
@@ -145,41 +169,38 @@ def approve_and_execute_on_receiving_subnet(set_remote_value_tx):
     payload_hash = contract_call_event["payloadHash"]
     payload = contract_call_event["payload"]
 
-    approve_contract_call_params = [
-        "bytes32",
-        "address",
-        "address",
-        "bytes32",
-        "bytes",
-        "uint256",
-    ]
+    # set the admin manually
+    xs_arbitrary_call_B.setAdmin({"from": accounts[0]})
 
-    approve_contract_call_values = [
-        destination_subnet_id,
-        destination_contract_address,
-        sender,
-        payload_hash,
-        brownie.convert.to_bytes(set_remote_value_tx.txid, "bytes32"),
-        0,
-    ]
-
-    encoded_call = eth_abi.encode_abi(
-        approve_contract_call_params, approve_contract_call_values
-    )
-    # approve the arbitrary contract call
-    approve_contract_call_tx = topos_core_contract_B.approveContractCall(
-        encoded_call,
-        command_id,
+    # authorize the origin
+    xs_arbitrary_call_B.authorizeOrigin(
+        origin_subnet_id,
+        origin_address,
+        selector,
+        min_cert_height_admin,
         {"from": accounts[0]},
     )
-    LOGGER.info(f"Approved Contract Call: {approve_contract_call_tx.events}")
+
+    execute_values = [
+        tx_hash,
+        origin_subnet_id,
+        origin_address,
+        destination_subnet_id,
+        destination_contract_address,
+        payload_hash,
+        payload,
+        selector,
+    ]
 
     # finally execute the arbitrary call via the ToposExecutor `execute`
     xs_arbitrary_call_B.execute(
         dummy_cert_id,
-        command_id,
-        destination_subnet_id,
-        destination_contract_address,
-        payload,
+        execute_values,
+        dummy_xs_proof,
         {"from": accounts[0]},
     )
+
+
+def fast_forward_nonce(times):
+    for _ in range(times):
+        accounts[0].transfer(accounts[1], "10 ether")

@@ -25,10 +25,11 @@
     "lint:prettier:fix": "prettier --write 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
     "lint:black:fix": "black brownie/tests",
     "coverage": "brownie test -C",
-    "install": "npm run install:flake8 && npm run install:black && npm run install:eth_abi",
+    "install": "npm run install:flake8 && npm run install:black && npm run install:eth_abi && npm run install:sha3",
     "install:flake8": "pip3 install flake8",
     "install:black": "pip3 install black",
-    "install:eth_abi": "pip3 install eth_abi"
+    "install:eth_abi": "pip3 install eth_abi",
+    "install:sha3": "pip3 install pysha3"
   },
   "devDependencies": {
     "ethlint": "^1.2.5",

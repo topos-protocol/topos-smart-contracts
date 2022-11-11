@@ -26,6 +26,7 @@ interface IToposCoreContract {
 
     struct Certificate {
         bytes certId;
+        uint256 height;
         bool isVerified;
     }
 
@@ -105,7 +106,9 @@ interface IToposCoreContract {
         bytes calldata crossSubnetTxProof
     ) external returns (bool);
 
-    function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId) external returns (bool);
+    function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId)
+        external
+        returns (bool, uint256);
 
     /***********\
     |* Getters *|
@@ -131,7 +134,7 @@ interface IToposCoreContract {
 
     function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
 
-    function verifyCertificate(bytes calldata cert) external;
+    function verifyCertificate(bytes calldata certBytes) external;
 
     function giveToken(
         string memory symbol,
