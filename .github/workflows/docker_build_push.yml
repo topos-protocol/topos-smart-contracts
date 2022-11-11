@@ -1,6 +1,8 @@
 name: Docker_build_push
 
 on:
+  push:
+    branches: [develop]
   release:
     types: [created]
 
@@ -36,6 +38,9 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=test,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
 
       - name: Push to GitHub Container Registry
         uses: docker/build-push-action@v3
@@ -45,6 +50,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
-            type=registry,ref=ghcr.io/${{ github.repository }}:build-cache-${{ env.GITHUB_REF_SLUG_URL }}-${{ github.workflow }}
-            type=registry,ref=ghcr.io/${{ github.repository }}:build-cache-main-${{ github.workflow }}
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:build-cache-${{ env.GITHUB_REF_SLUG_URL }}-${{ github.workflow }},mode=max
+            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}:build-cache-${{ env.GITHUB_REF_SLUG_URL }}-${{ github.workflow }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}:build-cache-main-${{ github.workflow }}
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}:build-cache-${{ env.GITHUB_REF_SLUG_URL }}-${{ github.workflow }},mode=max
