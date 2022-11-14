@@ -1,6 +1,6 @@
 import brownie
 import eth_abi
-import sha3
+from Crypto.Hash import keccak
 from brownie import (
     CrossSubnetArbitraryCall,
     CrossSubnetArbitraryCallCreationCode,
@@ -30,7 +30,7 @@ dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes")
 dummy_cert_height = 11
 min_cert_height_admin = 10
 # get keccak256 hash of the target function
-selector_hash = sha3.keccak_256()
+selector_hash = keccak.new(digest_bits=256)
 selector_hash.update("changeValue".encode("utf-8"))
 selector = selector_hash.hexdigest()
 
