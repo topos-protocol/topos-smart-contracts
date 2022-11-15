@@ -39,10 +39,6 @@ deploy_token_calldata = [
 # with the same addresses
 def test_constant_address_deployment():
     LOGGER.info("Switching to subnet network A")
-    LOGGER.info(f"admin account: {accounts[0]}")
-    LOGGER.info(f"admin account nonce: {accounts[0].nonce}")
-    LOGGER.info(f"bob account: {accounts[1]}")
-    LOGGER.info(f"bob account nonce: {accounts[1].nonce}")
     switch_network("A")
     _, topos_core_contract_A, _ = deploy_token_deployer(
         brownie.convert.to_bytes("0x01", "bytes32")  # subnet Id
@@ -56,10 +52,6 @@ def test_constant_address_deployment():
 
     LOGGER.info("Switching to subnet network B")
     switch_network("B")
-    LOGGER.info(f"admin account: {accounts[0]}")
-    LOGGER.info(f"admin account nonce: {accounts[0].nonce}")
-    LOGGER.info(f"bob account: {accounts[1]}")
-    LOGGER.info(f"bob account nonce: {accounts[1].nonce}")
     _, topos_core_contract_B, _ = deploy_token_deployer(
         brownie.convert.to_bytes("0x02", "bytes32")
     )
