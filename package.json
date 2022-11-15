@@ -14,7 +14,9 @@
   "main": "",
   "scripts": {
     "build": "brownie compile",
-    "test": "brownie test",
+    "pretest": "npm run add-network && npm run run-development && npm run run-development-two",
+    "test": "brownie test || true",
+    "posttest": "npm run kill-ganache && npm run clear-deployment",
     "deploy": "brownie run deploy",
     "lint": "npm run lint:sol && npm run lint:sol:ethlint && npm run lint:prettier && npm run lint:flake8",
     "lint:sol": "solhint 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
@@ -24,12 +26,19 @@
     "lint:fix": "npm run lint:prettier:fix && npm run lint:black:fix",
     "lint:prettier:fix": "prettier --write 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
     "lint:black:fix": "black brownie/tests",
-    "coverage": "brownie test -C",
+    "precoverage": "npm run add-network && npm run run-development && npm run run-development-two",
+    "coverage": "brownie test -C || true",
+    "postcoverage": "npm run kill-ganache && npm run clear-deployment",
     "install": "npm run install:flake8 && npm run install:black && npm run install:eth_abi && npm run install:Crypto",
     "install:flake8": "pip3 install flake8",
     "install:black": "pip3 install black",
     "install:eth_abi": "pip3 install eth_abi",
-    "install:Crypto": "pip3 install pycryptodome"
+    "install:Crypto": "pip3 install pycryptodome",
+    "add-network": "brownie networks import ./network-config.yaml true",
+    "clear-deployment": "rm -rf brownie/build/deployments",
+    "run-development": "(ganache --chain.chainId 1337 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 8545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)",
+    "run-development-two": "(ganache --chain.chainId 1338 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 7545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)",
+    "kill-ganache": "for pname in $(pgrep -f ganache); do kill $pname; done"
   },
   "devDependencies": {
     "ethlint": "^1.2.5",

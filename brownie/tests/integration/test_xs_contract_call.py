@@ -131,9 +131,9 @@ def deploy_initial_contracts(network_subnet_id):
 def switch_network(subnet_network):
     network.disconnect()
     if subnet_network == "A":
-        network.connect("substrate-subnet-network-A")
+        network.connect("development")
     if subnet_network == "B":
-        network.connect("substrate-subnet-network-B")
+        network.connect("development-two")
 
 
 def validate_dummy_cert(topos_core_contract):

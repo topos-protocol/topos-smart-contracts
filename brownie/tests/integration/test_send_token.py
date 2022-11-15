@@ -224,6 +224,6 @@ def fast_forward_nonce(times):
 def switch_network(subnet_network):
     network.disconnect()
     if subnet_network == "A":
-        network.connect("substrate-subnet-network-A")
+        network.connect("development")
     if subnet_network == "B":
-        network.connect("substrate-subnet-network-B")
+        network.connect("development-two")
