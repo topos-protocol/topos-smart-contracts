@@ -112,7 +112,7 @@ def deploy_initial_contracts(network_subnet_id):
     # set admin for ToposCoreContract
     admin_threshold = 1
     topos_core_contract.setup(
-        eth_abi.encode_abi(
+        eth_abi.encode(
             ["address[]", "uint256"],
             [[accounts[0].address], admin_threshold],
         ),
@@ -139,7 +139,7 @@ def switch_network(subnet_network):
 def validate_dummy_cert(topos_core_contract):
     cert_params = ["bytes", "uint256"]
     cert_values = [dummy_cert_id, dummy_cert_height]
-    encoded_cert_params = eth_abi.encode_abi(cert_params, cert_values)
+    encoded_cert_params = eth_abi.encode(cert_params, cert_values)
     topos_core_contract.verifyCertificate(
         encoded_cert_params, {"from": accounts[0]}
     )

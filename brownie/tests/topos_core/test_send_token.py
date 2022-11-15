@@ -102,7 +102,7 @@ def deploy_initial_contracts(network_subnet_id):
     # set admin for ToposCoreContract
     admin_threshold = 1
     topos_core_contract.setup(
-        eth_abi.encode_abi(
+        eth_abi.encode(
             ["address[]", "uint256"],
             [[accounts[0].address], admin_threshold],
         ),
@@ -126,7 +126,7 @@ def deploy_initial_contracts(network_subnet_id):
         brownie.ZERO_ADDRESS,
         daily_mint_limit,
     ]
-    encoded_token_params = eth_abi.encode_abi(token_params, token_values)
+    encoded_token_params = eth_abi.encode(token_params, token_values)
 
     deploy_token_tx = topos_core_contract.deployToken(
         encoded_token_params, {"from": accounts[0]}
@@ -173,7 +173,7 @@ def send_token():
 def validate_dummy_cert(topos_core_contract):
     cert_params = ["bytes", "uint256"]
     cert_values = [dummy_cert_id, dummy_cert_height]
-    encoded_cert_params = eth_abi.encode_abi(cert_params, cert_values)
+    encoded_cert_params = eth_abi.encode(cert_params, cert_values)
     topos_core_contract.verifyCertificate(
         encoded_cert_params, {"from": accounts[0]}
     )
@@ -207,9 +207,7 @@ def mint_token(
         symbol,
         amount,
     ]
-    encoded_token_params = eth_abi.encode_abi(
-        mint_token_params, mint_token_values
-    )
+    encoded_token_params = eth_abi.encode(mint_token_params, mint_token_values)
     topos_core_contract.executeAssetTransfer(
         dummy_cert_id,  # certId
         encoded_token_params,

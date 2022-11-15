@@ -43,9 +43,7 @@ def test_constant_address_deployment():
     _, topos_core_contract_A, _ = deploy_token_deployer(
         brownie.convert.to_bytes("0x01", "bytes32")  # subnet Id
     )
-    tokenAParams = eth_abi.encode_abi(
-        deploy_token_params, deploy_token_calldata
-    )
+    tokenAParams = eth_abi.encode(deploy_token_params, deploy_token_calldata)
     tokenATx = topos_core_contract_A.deployToken(
         tokenAParams, {"from": accounts[0]}
     )
@@ -57,9 +55,7 @@ def test_constant_address_deployment():
     _, topos_core_contract_B, _ = deploy_token_deployer(
         brownie.convert.to_bytes("0x02", "bytes32")
     )
-    tokenBParams = eth_abi.encode_abi(
-        deploy_token_params, deploy_token_calldata
-    )
+    tokenBParams = eth_abi.encode(deploy_token_params, deploy_token_calldata)
     tokenBTx = topos_core_contract_B.deployToken(
         tokenBParams, {"from": accounts[0]}
     )
