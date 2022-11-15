@@ -22,7 +22,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
-    subnetId immutable _networkSubnetId;
+    subnetId _networkSubnetId;
 
     /// @notice Validator role
     /// 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a
@@ -38,7 +38,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     bytes32 internal constant PREFIX_TOKEN_DAILY_MINT_AMOUNT = keccak256("token-daily-mint-amount");
 
     /// @notice Internal token deployer (ERCBurnableMintable by default)
-    address internal immutable _tokenDeployerImplementation;
+    address internal _tokenDeployerImplementation;
 
     constructor(address tokenDeployerImplementation, subnetId networkSubnetId) {
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();

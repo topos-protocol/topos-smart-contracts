@@ -6,7 +6,7 @@ import {IToposCoreContract, subnetId} from "./../../interfaces/IToposCoreContrac
 import {IToposExecutable} from "./../../interfaces/IToposExecutable.sol";
 
 contract ToposExecutable is IToposExecutable {
-    IToposCoreContract public immutable toposCoreContract;
+    IToposCoreContract public toposCoreContract;
     mapping(bytes32 => bool) private _boolStorage;
     mapping(bytes32 => uint256) private _uint256Storage;
 
