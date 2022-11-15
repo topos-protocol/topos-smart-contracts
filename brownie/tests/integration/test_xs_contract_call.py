@@ -1,40 +1,38 @@
 import brownie
-import eth_abi
 from Crypto.Hash import keccak
+import eth_abi
+import logging
+import pytest
+
 from brownie import (
+    accounts,
+    ConstAddressDeployer,
     CrossSubnetArbitraryCall,
     CrossSubnetArbitraryCallCreationCode,
+    network,
     TokenDeployer,
     ToposCoreContract,
-    ConstAddressDeployer,
-    accounts,
-    network,
 )
-import logging
 
 LOGGER = logging.getLogger(__name__)
 
 # constants
 arbitrary_call_value = "This is a test message"
-alice_private = (
-    "0x99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342"
-)
-bob_private = (
-    "0x8075991ce870b93a8870eca0c0f91913d12f47948ca0fd25b49c6fa7cdbeee8b"
-)
+dummy_cert_height = 11
+dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes")
+dummy_xs_proof = brownie.convert.to_bytes("0x0002", "bytes")
+min_cert_height_admin = 10
 subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
 subnet_B_id = brownie.convert.to_bytes("0x02", "bytes32")
-tx_hash = brownie.convert.to_bytes("0x01", "bytes")
-dummy_xs_proof = brownie.convert.to_bytes("0x0002", "bytes")
-dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes")
-dummy_cert_height = 11
-min_cert_height_admin = 10
-# get keccak256 hash of the target function
-selector_hash = keccak.new(digest_bits=256)
+selector_hash = keccak.new(
+    digest_bits=256
+)  # get keccak256 hash of the target function
 selector_hash.update("changeValue".encode("utf-8"))
 selector = selector_hash.hexdigest()
+tx_hash = brownie.convert.to_bytes("0x01", "bytes")
 
 
+@pytest.mark.skip_coverage
 def test_cross_subnet_contract_call():
     # Network A
     LOGGER.info("Switching to subnet network A")
@@ -58,8 +56,6 @@ def test_cross_subnet_contract_call():
 
 
 def deploy_initial_contracts(network_subnet_id):
-    accounts.add(alice_private)
-    accounts.add(bob_private)
     # deploy constant address deployer
     const_address_deployer = ConstAddressDeployer.deploy({"from": accounts[0]})
     LOGGER.info(

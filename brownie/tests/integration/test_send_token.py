@@ -1,38 +1,34 @@
 import brownie
 import eth_abi
+import logging
+import pytest
+
 from brownie import (
+    accounts,
     BurnableMintableCappedERC20,
+    ConstAddressDeployer,
+    network,
     TokenDeployer,
     ToposCoreContract,
-    ConstAddressDeployer,
-    accounts,
-    network,
 )
-import logging
 
 LOGGER = logging.getLogger(__name__)
 
 # Constants
-alice_private = (
-    "0x99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342"
-)
-bob_private = (
-    "0x8075991ce870b93a8870eca0c0f91913d12f47948ca0fd25b49c6fa7cdbeee8b"
-)
-send_amount = 50
+approve_amount = 50
+daily_mint_limit = 100
+dummy_cert_height = 12
+dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes")
 dummy_data = brownie.convert.to_bytes("0x00", "bytes")
+mint_amount = 100
+mint_cap = 1000
+send_amount = 50
 subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
 subnet_B_id = brownie.convert.to_bytes("0x02", "bytes32")
-dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes")
-dummy_cert_height = 12
 token_symbol = "TKX"
-mint_cap = 1000
-daily_mint_limit = 100
-mint_amount = 100
-approve_amount = 50
-send_amount = 50
 
 
+@pytest.mark.skip_coverage
 def test_send_token():
     # Network A
     LOGGER.info("Switching to subnet network A")
@@ -71,8 +67,6 @@ def test_send_token():
 
 
 def deploy_initial_contracts(network_subnet_id):
-    accounts.add(alice_private)
-    accounts.add(bob_private)
     # deploy constant address deployer
     const_address_deployer = ConstAddressDeployer.deploy({"from": accounts[0]})
     LOGGER.info(

@@ -1,22 +1,18 @@
 import brownie
 import eth_abi
+import logging
+import pytest
+
 from brownie import (
+    accounts,
+    ConstAddressDeployer,
+    network,
     TokenDeployer,
     ToposCoreContract,
-    ConstAddressDeployer,
-    accounts,
-    network,
 )
-import logging
 
 LOGGER = logging.getLogger(__name__)
 
-alice_private = (
-    "0x99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342"
-)
-bob_private = (
-    "0x8075991ce870b93a8870eca0c0f91913d12f47948ca0fd25b49c6fa7cdbeee8b"
-)
 deploy_token_params = [
     "string",
     "string",
@@ -37,6 +33,7 @@ deploy_token_calldata = [
 
 # Test to verify that contracts are deployed on multiple networks
 # with the same addresses
+@pytest.mark.skip_coverage
 def test_constant_address_deployment():
     LOGGER.info("Switching to subnet network A")
     switch_network("A")
@@ -65,8 +62,6 @@ def test_constant_address_deployment():
 
 
 def deploy_token_deployer(networkSubnetId):
-    # accounts.add(alice_private)
-    # accounts.add(bob_private)
     const_address_deployer = ConstAddressDeployer.deploy({"from": accounts[0]})
     LOGGER.info(
         f"ConstantAddressDeployer address: {const_address_deployer.address}"
