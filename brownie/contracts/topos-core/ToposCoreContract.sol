@@ -134,9 +134,10 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     function executeAssetTransfer(
         bytes calldata certId,
         bytes calldata crossSubnetTx,
-        bytes calldata crossSubnetTxProof
+        bytes calldata /*crossSubnetTxProof*/
     ) external {
-        if (verifyAssetTransferData(certId, crossSubnetTx, crossSubnetTxProof) == false) revert();
+        Certificate memory storedCert = getVerfiedCert(certId);
+        if (storedCert.isVerified == false) revert CertNotVerified();
         (
             bytes memory txHash,
             address sender,
@@ -146,6 +147,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             string memory symbol,
             uint256 amount
         ) = abi.decode(crossSubnetTx, (bytes, address, subnetId, subnetId, address, string, uint256));
+        if (!_validataDestinationId(destinationSubnetId)) revert InvalidSubnetId();
+        if (_isSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount))
+            revert TransferAlreadyExecuted();
         // prevent re-entrancy
         _setSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount);
         _mintToken(symbol, receiver, amount);
@@ -219,30 +223,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     /******************\
     |* Public Methods *|
     \******************/
-
-    function verifyAssetTransferData(
-        bytes calldata certId,
-        bytes calldata crossSubnetTx,
-        bytes calldata /*crossSubnetTxProof*/
-    ) public view override returns (bool) {
-        Certificate memory storedCert = getVerfiedCert(certId);
-        if (storedCert.isVerified == false) {
-            revert CertNotVerified();
-        }
-        (
-            bytes memory txHash,
-            address sender,
-            subnetId originSubnetId,
-            subnetId destinationSubnetId,
-            address receiver,
-            string memory symbol,
-            uint256 amount
-        ) = abi.decode(crossSubnetTx, (bytes, address, subnetId, subnetId, address, string, uint256));
-        if (!_validataDestinationId(destinationSubnetId)) revert InvalidSubnetId();
-        if (_isSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount))
-            revert TransferAlreadyExecuted();
-        return true;
-    }
 
     function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId)
         public

@@ -100,12 +100,6 @@ interface IToposCoreContract {
         uint256 amount
     ) external;
 
-    function verifyAssetTransferData(
-        bytes calldata certId,
-        bytes calldata crossSubnetTx,
-        bytes calldata crossSubnetTxProof
-    ) external returns (bool);
-
     function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId)
         external
         returns (bool, uint256);
