@@ -100,9 +100,7 @@ interface IToposCoreContract {
         uint256 amount
     ) external;
 
-    function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId)
-        external
-        returns (bool, uint256);
+    function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId) external returns (uint256);
 
     /***********\
     |* Getters *|

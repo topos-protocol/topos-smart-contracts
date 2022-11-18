@@ -904,7 +904,7 @@ def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
         )
 
 
-def test_verify_contract_call_returns_true(admin, topos_core_contract):
+def test_verify_contract_call_returns_cert_height(admin, topos_core_contract):
     fixture_subnet_id = origin_subnet_id
     cert_params = ["bytes", "uint256"]
     cert_values = [cert_id, cert_height]
@@ -913,7 +913,7 @@ def test_verify_contract_call_returns_true(admin, topos_core_contract):
     tx = topos_core_contract.verifyContractCallData(
         cert_id, fixture_subnet_id, {"from": admin}
     )
-    assert tx == [True, cert_height]
+    assert tx == cert_height
 
 
 # internal functions #

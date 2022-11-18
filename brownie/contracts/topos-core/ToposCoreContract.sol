@@ -228,12 +228,12 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         public
         view
         override
-        returns (bool, uint256)
+        returns (uint256)
     {
         Certificate memory storedCert = getVerfiedCert(certId);
         if (storedCert.isVerified == false) revert CertNotVerified();
         if (!_validataDestinationId(destinationSubnetId)) revert InvalidSubnetId();
-        return (true, storedCert.height);
+        return storedCert.height;
     }
 
     /***********\
