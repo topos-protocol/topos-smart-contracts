@@ -327,36 +327,26 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
                 tokenAddress,
                 abi.encodeWithSelector(IERC20.transferFrom.selector, sender, address(this), amount)
             );
-
             if (!burnSuccess) revert BurnFailed(symbol);
-
-            return;
-        }
-
-        if (tokenType == TokenType.InternalBurnableFrom) {
+        } else if (tokenType == TokenType.InternalBurnableFrom) {
             burnSuccess = _callERC20Token(
                 tokenAddress,
                 abi.encodeWithSelector(IBurnableMintableCappedERC20.burnFrom.selector, sender, amount)
             );
-
             if (!burnSuccess) revert BurnFailed(symbol);
-
-            return;
+        } else {
+            burnSuccess = _callERC20Token(
+                tokenAddress,
+                abi.encodeWithSelector(
+                    IERC20.transferFrom.selector,
+                    sender,
+                    IBurnableMintableCappedERC20(tokenAddress).depositAddress(bytes32(0)),
+                    amount
+                )
+            );
+            if (!burnSuccess) revert BurnFailed(symbol);
+            IBurnableMintableCappedERC20(tokenAddress).burn(bytes32(0));
         }
-
-        burnSuccess = _callERC20Token(
-            tokenAddress,
-            abi.encodeWithSelector(
-                IERC20.transferFrom.selector,
-                sender,
-                IBurnableMintableCappedERC20(tokenAddress).depositAddress(bytes32(0)),
-                amount
-            )
-        );
-
-        if (!burnSuccess) revert BurnFailed(symbol);
-
-        IBurnableMintableCappedERC20(tokenAddress).burn(bytes32(0));
     }
 
     /********************\
