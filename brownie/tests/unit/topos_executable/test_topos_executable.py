@@ -7,7 +7,6 @@ cert_bytes = "0xdeaf"
 cert_height = 10
 cert_id = brownie.convert.to_bytes(cert_bytes, "bytes")
 daily_mint_limit = 100
-decimals = 18
 destination_subnet_id = brownie.convert.to_bytes("0x02", "bytes32")
 dummy_data = brownie.convert.to_bytes("0x00", "bytes")
 minimum_cert_height = 5
