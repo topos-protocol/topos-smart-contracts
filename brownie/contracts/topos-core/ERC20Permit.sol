@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.9;
 
-import {IERC20} from "./../../interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "./../../interfaces/IERC20Permit.sol";
 
-import {ERC20} from "./ERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 abstract contract ERC20Permit is IERC20, IERC20Permit, ERC20 {
     error PermitExpired();

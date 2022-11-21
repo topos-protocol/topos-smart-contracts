@@ -16,7 +16,6 @@ LOGGER = logging.getLogger(__name__)
 deploy_token_params = [
     "string",
     "string",
-    "uint8",
     "uint256",
     "address",
     "uint256",
@@ -24,7 +23,6 @@ deploy_token_params = [
 deploy_token_calldata = [
     "Token",
     "Token",
-    18,
     2**50,
     brownie.ZERO_ADDRESS,
     2**10,

@@ -11,17 +11,16 @@ contract BurnableMintableCappedERC20 is IBurnableMintableCappedERC20, MintableCa
     constructor(
         string memory name,
         string memory symbol,
-        uint8 decimals,
         uint256 capacity
-    ) MintableCappedERC20(name, symbol, decimals, capacity) {}
+    ) MintableCappedERC20(name, symbol, capacity) {}
 
     function burn(bytes32 salt) external onlyOwner {
         address account = depositAddress(salt);
-        _burn(account, balanceOf[account]);
+        _burn(account, balanceOf(account));
     }
 
     function burnFrom(address account, uint256 amount) external onlyOwner {
-        uint256 _allowance = allowance[account][msg.sender];
+        uint256 _allowance = allowance(account, msg.sender);
         if (_allowance != type(uint256).max) {
             _approve(account, msg.sender, _allowance - amount);
         }

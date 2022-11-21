@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import {IERC20} from "./IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "./IERC20Permit.sol";
 import {IOwnable} from "./IOwnable.sol";
 

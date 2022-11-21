@@ -1,10 +1,8 @@
 node_modules
 contracts/Migrations.sol
 brownie/contracts/topos-core/ToposCoreContract.sol
-brownie/contracts/topos-core/ECDSA.sol
 brownie/contracts/topos-core/DepositHandler.sol
 brownie/contracts/topos-core/AdminMultisigBase.sol
-brownie/contracts/topos-core/ERC20.sol
 brownie/contracts/topos-core/ERC20Permit.sol
 brownie/contracts/topos-core/MintableCappedERC20.sol
 brownie/contracts/topos-core/Ownable.sol

@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 import {IMintableCappedERC20} from "./../../interfaces/IMintableCappedERC20.sol";
 
-import {ERC20} from "./ERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Permit} from "./ERC20Permit.sol";
 import {Ownable} from "./Ownable.sol";
 
@@ -14,9 +14,8 @@ contract MintableCappedERC20 is IMintableCappedERC20, ERC20, ERC20Permit, Ownabl
     constructor(
         string memory name,
         string memory symbol,
-        uint8 decimals,
         uint256 capacity
-    ) ERC20(name, symbol, decimals) ERC20Permit(name) Ownable() {
+    ) ERC20(name, symbol) ERC20Permit(name) Ownable() {
         cap = capacity;
     }
 
@@ -27,6 +26,6 @@ contract MintableCappedERC20 is IMintableCappedERC20, ERC20, ERC20Permit, Ownabl
 
         if (capacity == 0) return;
 
-        if (totalSupply > capacity) revert CapExceeded();
+        if (totalSupply() > capacity) revert CapExceeded();
     }
 }

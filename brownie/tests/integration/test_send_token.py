@@ -107,7 +107,6 @@ def deploy_initial_contracts(network_subnet_id):
     token_params = [
         "string",
         "string",
-        "uint8",
         "uint256",
         "address",
         "uint256",
@@ -115,7 +114,6 @@ def deploy_initial_contracts(network_subnet_id):
     token_values = [
         "TokenX",
         token_symbol,
-        18,
         mint_cap,
         brownie.ZERO_ADDRESS,
         daily_mint_limit,

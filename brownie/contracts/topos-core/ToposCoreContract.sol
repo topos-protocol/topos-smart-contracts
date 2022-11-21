@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 import {IToposCoreContract, subnetId} from "./../../interfaces/IToposCoreContract.sol";
-import {IERC20} from "./../../interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IBurnableMintableCappedERC20} from "./../../interfaces/IBurnableMintableCappedERC20.sol";
 import {ITokenDeployer} from "./../../interfaces/ITokenDeployer.sol";
 
@@ -75,14 +75,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     }
 
     function deployToken(bytes calldata params) external {
-        (
-            string memory name,
-            string memory symbol,
-            uint8 decimals,
-            uint256 cap,
-            address tokenAddress,
-            uint256 dailyMintLimit
-        ) = abi.decode(params, (string, string, uint8, uint256, address, uint256));
+        (string memory name, string memory symbol, uint256 cap, address tokenAddress, uint256 dailyMintLimit) = abi
+            .decode(params, (string, string, uint256, address, uint256));
 
         // Ensure that this symbol has not been taken.
         if (tokenAddresses(symbol) != address(0)) revert TokenAlreadyExists(symbol);
@@ -93,7 +87,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
             // solhint-disable-next-line avoid-low-level-calls
             (bool success, bytes memory data) = _tokenDeployerImplementation.delegatecall(
-                abi.encodeWithSelector(ITokenDeployer.deployToken.selector, name, symbol, decimals, cap, salt)
+                abi.encodeWithSelector(ITokenDeployer.deployToken.selector, name, symbol, cap, salt)
             );
 
             if (!success) revert TokenDeployFailed(symbol);
