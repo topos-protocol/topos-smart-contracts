@@ -9,7 +9,6 @@ cert_bytes = "0xdeaf"
 cert_height = 5
 cert_id = brownie.convert.to_bytes(cert_bytes, "bytes")
 daily_mint_limit = 100
-decimals = 18
 destination_subnet_id = brownie.convert.to_bytes("0x02", "bytes32")
 dummy_data = brownie.convert.to_bytes("0x00", "bytes")
 mint_amount = 10
@@ -24,7 +23,6 @@ token_symbol_second = "TKY"
 token_params = [
     "string",
     "string",
-    "uint8",
     "uint256",
     "address",
     "uint256",
@@ -32,7 +30,6 @@ token_params = [
 token_values = [
     token_name,
     token_symbol,
-    decimals,
     mint_cap,
     brownie.ZERO_ADDRESS,
     daily_mint_limit,
@@ -109,7 +106,6 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
     token_params = [
         "string",
         "string",
-        "uint8",
         "uint256",
         "address",
         "uint256",
@@ -117,7 +113,6 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
     token_values = [
         token_name,
         token_symbol,
-        decimals,
         mint_cap,
         brownie.ZERO_ADDRESS,
         0,  # 0 daily mint limit = unlimited mint limit
@@ -172,13 +167,12 @@ def test_deploy_token_external_token_emits_events(
 ):
     # deploy an external erc20 token
     burn_mint_erc20 = BurnableMintableCappedERC20.deploy(
-        token_name, token_symbol, decimals, mint_cap, {"from": admin}
+        token_name, token_symbol, mint_cap, {"from": admin}
     )
     # token to be deployed args
     token_params = [
         "string",
         "string",
-        "uint8",
         "uint256",
         "address",
         "uint256",
@@ -186,7 +180,6 @@ def test_deploy_token_external_token_emits_events(
     token_values = [
         token_name,
         token_symbol,
-        decimals,
         mint_cap,
         burn_mint_erc20.address,
         daily_mint_limit,
@@ -450,14 +443,13 @@ def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
 ):
     # deploy an external erc20 token
     burn_mint_erc20 = BurnableMintableCappedERC20.deploy(
-        token_name, token_symbol, decimals, mint_cap, {"from": admin}
+        token_name, token_symbol, mint_cap, {"from": admin}
     )
 
     # token to be deployed args
     token_params = [
         "string",
         "string",
-        "uint8",
         "uint256",
         "address",
         "uint256",
@@ -465,7 +457,6 @@ def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
     token_values = [
         token_name,
         token_symbol,
-        decimals,
         mint_cap,
         burn_mint_erc20.address,
         daily_mint_limit,
@@ -520,14 +511,13 @@ def test_execute_transfer_external_token_transfer_emits_events(
 ):
     # deploy an external erc20 token
     burn_mint_erc20 = BurnableMintableCappedERC20.deploy(
-        token_name, token_symbol, decimals, mint_cap, {"from": admin}
+        token_name, token_symbol, mint_cap, {"from": admin}
     )
 
     # token to be deployed args
     token_params = [
         "string",
         "string",
-        "uint8",
         "uint256",
         "address",
         "uint256",
@@ -535,7 +525,6 @@ def test_execute_transfer_external_token_transfer_emits_events(
     token_values = [
         token_name,
         token_symbol,
-        decimals,
         mint_cap,
         burn_mint_erc20.address,
         daily_mint_limit,
@@ -674,14 +663,13 @@ def test_send_token_reverts_on_external_token_burn_fail(
 ):
     # deploy an external erc20 token
     burn_mint_erc20 = BurnableMintableCappedERC20.deploy(
-        token_name, token_symbol, decimals, mint_cap, {"from": admin}
+        token_name, token_symbol, mint_cap, {"from": admin}
     )
 
     # register the token onto ToposCoreContract
     token_params = [
         "string",
         "string",
-        "uint8",
         "uint256",
         "address",
         "uint256",
@@ -689,7 +677,6 @@ def test_send_token_reverts_on_external_token_burn_fail(
     token_values = [
         token_name,
         token_symbol,
-        decimals,
         mint_cap,
         burn_mint_erc20.address,
         daily_mint_limit,
@@ -714,7 +701,7 @@ def test_send_token_external_token_emits_events(
 ):
     # deploy an external erc20 token
     burn_mint_erc20 = BurnableMintableCappedERC20.deploy(
-        token_name, token_symbol, decimals, mint_cap, {"from": admin}
+        token_name, token_symbol, mint_cap, {"from": admin}
     )
     burn_mint_erc20.mint(alice, mint_amount, {"from": admin})
     approve_tx = burn_mint_erc20.approve(
@@ -730,7 +717,6 @@ def test_send_token_external_token_emits_events(
     token_params = [
         "string",
         "string",
-        "uint8",
         "uint256",
         "address",
         "uint256",
@@ -738,7 +724,6 @@ def test_send_token_external_token_emits_events(
     token_values = [
         token_name,
         token_symbol,
-        decimals,
         mint_cap,
         burn_mint_erc20.address,
         daily_mint_limit,
