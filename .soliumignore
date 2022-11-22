@@ -11,3 +11,4 @@ brownie/contracts/topos-core/ConstAddressDeployer.sol
 brownie/contracts/executables/ToposExecutable.sol
 brownie/contracts/executables/examples/CrossSubnetArbitraryCall.sol
 brownie/contracts/topos-core/TCENodeRegistrator.sol
+brownie/contracts/topos-core/SubnetRegistrator.sol
