@@ -3,7 +3,6 @@ from Crypto.Hash import keccak
 import eth_abi
 
 # const
-admin_threshold = 2
 approve_amount = 10
 cert_bytes = "0xdeaf"
 cert_height = 5
@@ -18,46 +17,42 @@ send_amount = 10
 token_name = "TokenX"
 token_symbol = "TKX"
 token_symbol_second = "TKY"
-
-# token to be deployed args
+# admin params
+new_admin_params = [
+    "address[]",  # admin addresses
+    "uint256",  # admin threshold
+]
+# token to be deployed params
 token_params = [
-    "string",
-    "string",
-    "uint256",
-    "address",
-    "uint256",
+    "string",  # name
+    "string",  # symbol
+    "uint256",  # cap
+    "address",  # token address
+    "uint256",  # daily mint limit
 ]
-token_values = [
-    token_name,
-    token_symbol,
-    mint_cap,
-    brownie.ZERO_ADDRESS,
-    daily_mint_limit,
+# token to mint params
+mint_token_params = [
+    "bytes",  # tx hash
+    "address",  # sender
+    "bytes32",  # origin subnet id
+    "bytes32",  # destination subnet id
+    "address",  # receiver
+    "string",  # symbol
+    "uint256",  # amount
 ]
-encoded_token_params = eth_abi.encode(token_params, token_values)
 
 
 def test_verify_certificate_reverts_on_already_verified_certificate(
     admin, topos_core_contract
 ):
-    encoded_cert_params = eth_abi.encode_abi(
-        ["bytes", "uint256"], [cert_id, cert_height]
-    )
-    topos_core_contract.verifyCertificate(encoded_cert_params, {"from": admin})
+    verify_cert(admin, topos_core_contract)
     with brownie.reverts():
         # retry verifying the same cert
-        topos_core_contract.verifyCertificate(
-            encoded_cert_params, {"from": admin}
-        )
+        verify_cert(admin, topos_core_contract)
 
 
 def test_verify_certificate_emits_event(admin, topos_core_contract):
-    encoded_cert_params = eth_abi.encode_abi(
-        ["bytes", "uint256"], [cert_id, cert_height]
-    )
-    tx = topos_core_contract.verifyCertificate(
-        encoded_cert_params, {"from": admin}
-    )
+    tx = verify_cert(admin, topos_core_contract)
     assert tx.events["CertVerified"].values() == [cert_bytes]
 
 
@@ -88,8 +83,9 @@ def test_set_token_daily_mint_limits_reverts_on_token_does_not_exist(
 def test_set_token_daily_mint_limits_emits_event(admin, topos_core_contract):
     symbols = [token_symbol]
     mint_limits = [mint_amount]
-
-    topos_core_contract.deployToken(encoded_token_params, {"from": admin})
+    topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
     tx = topos_core_contract.setTokenDailyMintLimits(
         symbols, mint_limits, {"from": admin}
     )
@@ -103,13 +99,6 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
     admin, alice, bob, topos_core_contract
 ):
     # token to be deployed args
-    token_params = [
-        "string",
-        "string",
-        "uint256",
-        "address",
-        "uint256",
-    ]
     token_values = [
         token_name,
         token_symbol,
@@ -119,31 +108,12 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
     ]
     encoded_token_params = eth_abi.encode(token_params, token_values)
     topos_core_contract.deployToken(encoded_token_params, {"from": admin})
-    verify_dummy_cert(admin, topos_core_contract)
-    # execute asset transfer args
-    mint_token_params = [
-        "bytes",
-        "address",
-        "bytes32",
-        "bytes32",
-        "address",
-        "string",
-        "uint256",
-    ]
-    mint_token_values = [
-        dummy_data,
-        alice.address,
-        origin_subnet_id,
-        origin_subnet_id,
-        bob.address,
-        token_symbol,
-        send_amount,
-    ]
-    encoded_mint_token_params = eth_abi.encode(
-        mint_token_params, mint_token_values
-    )
+    verify_cert(admin, topos_core_contract)
     tx = topos_core_contract.executeAssetTransfer(
-        cert_id, encoded_mint_token_params, dummy_data, {"from": admin}
+        cert_id,
+        get_default_mint_val(alice, bob),
+        dummy_data,
+        {"from": admin},
     )
     # the transaction should go through even without a daily mint limit set
     assert tx.events["Transfer"].values() == [
@@ -156,10 +126,14 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
 def test_deploy_token_reverts_on_token_already_deployed(
     admin, topos_core_contract
 ):
-    topos_core_contract.deployToken(encoded_token_params, {"from": admin})
+    topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
     # retry deploying the same token
     with brownie.reverts():
-        topos_core_contract.deployToken(encoded_token_params, {"from": admin})
+        topos_core_contract.deployToken(
+            get_default_internal_token_val(), {"from": admin}
+        )
 
 
 def test_deploy_token_external_token_emits_events(
@@ -169,23 +143,10 @@ def test_deploy_token_external_token_emits_events(
     burn_mint_erc20 = BurnableMintableCappedERC20.deploy(
         token_name, token_symbol, mint_cap, {"from": admin}
     )
-    # token to be deployed args
-    token_params = [
-        "string",
-        "string",
-        "uint256",
-        "address",
-        "uint256",
-    ]
-    token_values = [
-        token_name,
-        token_symbol,
-        mint_cap,
-        burn_mint_erc20.address,
-        daily_mint_limit,
-    ]
-    encoded_token_params = eth_abi.encode(token_params, token_values)
-    tx = topos_core_contract.deployToken(encoded_token_params, {"from": admin})
+    tx = topos_core_contract.deployToken(
+        get_default_external_token_val(burn_mint_erc20.address),
+        {"from": admin},
+    )
     assert tx.events["TokenDeployed"].values() == [
         token_symbol,
         burn_mint_erc20.address,
@@ -193,7 +154,9 @@ def test_deploy_token_external_token_emits_events(
 
 
 def test_deploy_token_emits_events(admin, topos_core_contract):
-    tx = topos_core_contract.deployToken(encoded_token_params, {"from": admin})
+    tx = topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
     token_address = tx.events["TokenDeployed"]["tokenAddresses"]
     assert tx.events["TokenDailyMintLimitUpdated"].values() == [
         token_symbol,
@@ -203,15 +166,9 @@ def test_deploy_token_emits_events(admin, topos_core_contract):
 
 
 def test_setup_reverts_on_mismatch_admin_threshold(admin, topos_core_contract):
-    # admin args
-    new_admin_params = [
-        "address[]",
-        "uint256",
-    ]
     new_admin_values = [[admin.address], 2]
     encoded_admin_params = eth_abi.encode(new_admin_params, new_admin_values)
-    # should revert since one admin address was provided but
-    # the threshold was set to 2
+    # should revert no. of admin address does not match the threshold
     with brownie.reverts():
         topos_core_contract.setup(encoded_admin_params, {"from": admin})
 
@@ -219,11 +176,6 @@ def test_setup_reverts_on_mismatch_admin_threshold(admin, topos_core_contract):
 def test_setup_reverts_on_admin_threshold_cannot_be_zero(
     admin, topos_core_contract
 ):
-    # admin args
-    new_admin_params = [
-        "address[]",
-        "uint256",
-    ]
     new_admin_values = [[admin.address], 0]
     encoded_admin_params = eth_abi.encode(new_admin_params, new_admin_values)
     # should revert since the threshold can't be zero
@@ -232,25 +184,14 @@ def test_setup_reverts_on_admin_threshold_cannot_be_zero(
 
 
 def test_setup_reverts_on_duplicate_admin(admin, topos_core_contract):
-    # admin args
-    new_admin_params = [
-        "address[]",
-        "uint256",
-    ]
     new_admin_values = [[admin.address, admin.address], 2]
     encoded_admin_params = eth_abi.encode(new_admin_params, new_admin_values)
-    # should revert since you can't have two admins with the same
-    # address
+    # should revert since you can't have two admins with the same address
     with brownie.reverts():
         topos_core_contract.setup(encoded_admin_params, {"from": admin})
 
 
 def test_setup_reverts_on_zero_address_admin(admin, topos_core_contract):
-    # admin args
-    new_admin_params = [
-        "address[]",
-        "uint256",
-    ]
     new_admin_values = [[brownie.ZERO_ADDRESS], 1]
     encoded_admin_params = eth_abi.encode(new_admin_params, new_admin_values)
     # should revert since the admin address can't be zero address
@@ -261,32 +202,13 @@ def test_setup_reverts_on_zero_address_admin(admin, topos_core_contract):
 def test_execute_transfer_reverts_on_unverified_cert(
     admin, alice, bob, topos_core_contract
 ):
-    # execute asset transfer args
-    mint_token_params = [
-        "bytes",
-        "address",
-        "bytes32",
-        "bytes32",
-        "address",
-        "string",
-        "uint256",
-    ]
-    mint_token_values = [
-        dummy_data,
-        alice.address,
-        origin_subnet_id,
-        destination_subnet_id,
-        bob.address,
-        token_symbol,
-        send_amount,
-    ]
-    encoded_mint_token_params = eth_abi.encode(
-        mint_token_params, mint_token_values
-    )
     # should revert since the certificate wasn't verified
     with brownie.reverts():
         topos_core_contract.executeAssetTransfer(
-            cert_id, encoded_mint_token_params, dummy_data, {"from": admin}
+            cert_id,
+            get_default_mint_val(alice, bob),
+            dummy_data,
+            {"from": admin},
         )
 
 
@@ -295,18 +217,8 @@ def test_execute_transfer_reverts_on_invalid_subnet_id(
 ):
     # default destination cert id is set to "0x01"
     dummy_destination_subnet_id = brownie.convert.to_bytes("0x02", "bytes32")
-    verify_dummy_cert(admin, topos_core_contract)
-
+    verify_cert(admin, topos_core_contract)
     # execute asset transfer args
-    mint_token_params = [
-        "bytes",
-        "address",
-        "bytes32",
-        "bytes32",
-        "address",
-        "string",
-        "uint256",
-    ]
     mint_token_values = [
         dummy_data,
         alice.address,
@@ -329,38 +241,23 @@ def test_execute_transfer_reverts_on_invalid_subnet_id(
 def test_execute_transfer_reverts_on_call_already_executed(
     admin, alice, bob, topos_core_contract
 ):
-    topos_core_contract.deployToken(encoded_token_params, {"from": admin})
-    verify_dummy_cert(admin, topos_core_contract)
-
-    # execute asset transfer args
-    mint_token_params = [
-        "bytes",
-        "address",
-        "bytes32",
-        "bytes32",
-        "address",
-        "string",
-        "uint256",
-    ]
-    mint_token_values = [
-        dummy_data,
-        alice.address,
-        origin_subnet_id,
-        origin_subnet_id,
-        bob.address,
-        token_symbol,
-        send_amount,
-    ]
-    encoded_mint_token_params = eth_abi.encode(
-        mint_token_params, mint_token_values
+    topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
     )
+    verify_cert(admin, topos_core_contract)
     topos_core_contract.executeAssetTransfer(
-        cert_id, encoded_mint_token_params, dummy_data, {"from": admin}
+        cert_id,
+        get_default_mint_val(alice, bob),
+        dummy_data,
+        {"from": admin},
     )
     # resending the same call should fail
     with brownie.reverts():
         topos_core_contract.executeAssetTransfer(
-            cert_id, encoded_mint_token_params, dummy_data, {"from": admin}
+            cert_id,
+            get_default_mint_val(alice, bob),
+            dummy_data,
+            {"from": admin},
         )
 
 
@@ -368,18 +265,11 @@ def test_execute_transfer_reverts_on_token_does_not_exist(
     admin, alice, bob, topos_core_contract
 ):
     dummy_token_symbol = "DUMMY"
-    topos_core_contract.deployToken(encoded_token_params, {"from": admin})
-    verify_dummy_cert(admin, topos_core_contract)
+    topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
+    verify_cert(admin, topos_core_contract)
     # execute asset transfer args
-    mint_token_params = [
-        "bytes",
-        "address",
-        "bytes32",
-        "bytes32",
-        "address",
-        "string",
-        "uint256",
-    ]
     mint_token_values = [
         dummy_data,
         alice.address,
@@ -403,19 +293,11 @@ def test_execute_transfer_reverts_on_exceeding_daily_mint_limit(
     admin, alice, bob, topos_core_contract
 ):
     send_amount = 110
-    topos_core_contract.deployToken(encoded_token_params, {"from": admin})
-    verify_dummy_cert(admin, topos_core_contract)
-
+    topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
+    verify_cert(admin, topos_core_contract)
     # execute asset transfer args
-    mint_token_params = [
-        "bytes",
-        "address",
-        "bytes32",
-        "bytes32",
-        "address",
-        "string",
-        "uint256",
-    ]
     mint_token_values = [
         dummy_data,
         alice.address,
@@ -445,50 +327,24 @@ def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
     burn_mint_erc20 = BurnableMintableCappedERC20.deploy(
         token_name, token_symbol, mint_cap, {"from": admin}
     )
-
-    # token to be deployed args
-    token_params = [
-        "string",
-        "string",
-        "uint256",
-        "address",
-        "uint256",
-    ]
-    token_values = [
-        token_name,
-        token_symbol,
-        mint_cap,
-        burn_mint_erc20.address,
-        daily_mint_limit,
-    ]
-    encoded_token_params = eth_abi.encode(token_params, token_values)
     # register the external token on ToposCoreContract
-    topos_core_contract.deployToken(encoded_token_params, {"from": admin})
+    topos_core_contract.deployToken(
+        get_default_external_token_val(burn_mint_erc20.address),
+        {"from": admin},
+    )
 
-    # allocate some amount to the ToposCoreContract so it can mint/transfer
-    # to the recipient
+    # mint amount for ToposCoreContract
     burn_mint_erc20.mint(
         topos_core_contract.address, mint_amount, {"from": admin}
     )
-
-    verify_dummy_cert(admin, topos_core_contract)
-
+    verify_cert(admin, topos_core_contract)
     # execute asset transfer args
-    mint_token_params = [
-        "bytes",
-        "address",
-        "bytes32",
-        "bytes32",
-        "address",
-        "string",
-        "uint256",
-    ]
     mint_token_values = [
         dummy_data,
         alice.address,
         origin_subnet_id,
         origin_subnet_id,
-        brownie.ZERO_ADDRESS,  # receiver
+        brownie.ZERO_ADDRESS,  # receiver is zero address
         token_symbol,
         send_amount,
     ]
@@ -513,58 +369,21 @@ def test_execute_transfer_external_token_transfer_emits_events(
     burn_mint_erc20 = BurnableMintableCappedERC20.deploy(
         token_name, token_symbol, mint_cap, {"from": admin}
     )
-
-    # token to be deployed args
-    token_params = [
-        "string",
-        "string",
-        "uint256",
-        "address",
-        "uint256",
-    ]
-    token_values = [
-        token_name,
-        token_symbol,
-        mint_cap,
-        burn_mint_erc20.address,
-        daily_mint_limit,
-    ]
-    encoded_token_params = eth_abi.encode(token_params, token_values)
     # register the external token on ToposCoreContract
-    topos_core_contract.deployToken(encoded_token_params, {"from": admin})
-
-    # allocate some amount to the ToposCoreContract so it can mint/transfer
-    # to the recipient
+    topos_core_contract.deployToken(
+        get_default_external_token_val(burn_mint_erc20.address),
+        {"from": admin},
+    )
+    # mint amount for ToposCoreContract
     burn_mint_erc20.mint(
         topos_core_contract.address, mint_amount, {"from": admin}
     )
-
-    verify_dummy_cert(admin, topos_core_contract)
-
-    # execute asset transfer args
-    mint_token_params = [
-        "bytes",
-        "address",
-        "bytes32",
-        "bytes32",
-        "address",
-        "string",
-        "uint256",
-    ]
-    mint_token_values = [
-        dummy_data,
-        alice.address,
-        origin_subnet_id,
-        origin_subnet_id,
-        bob.address,
-        token_symbol,
-        send_amount,
-    ]
-    encoded_mint_token_params = eth_abi.encode(
-        mint_token_params, mint_token_values
-    )
+    verify_cert(admin, topos_core_contract)
     tx = topos_core_contract.executeAssetTransfer(
-        cert_id, encoded_mint_token_params, dummy_data, {"from": admin}
+        cert_id,
+        get_default_mint_val(alice, bob),
+        dummy_data,
+        {"from": admin},
     )
     assert tx.events["Transfer"].values() == [
         topos_core_contract.address,
@@ -574,32 +393,15 @@ def test_execute_transfer_external_token_transfer_emits_events(
 
 
 def test_execute_transfer_emits_event(admin, alice, bob, topos_core_contract):
-    topos_core_contract.deployToken(encoded_token_params, {"from": admin})
-    verify_dummy_cert(admin, topos_core_contract)
-    # execute asset transfer args
-    mint_token_params = [
-        "bytes",
-        "address",
-        "bytes32",
-        "bytes32",
-        "address",
-        "string",
-        "uint256",
-    ]
-    mint_token_values = [
-        dummy_data,
-        alice.address,
-        origin_subnet_id,
-        origin_subnet_id,
-        bob.address,
-        token_symbol,
-        send_amount,
-    ]
-    encoded_mint_token_params = eth_abi.encode(
-        mint_token_params, mint_token_values
+    topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
     )
+    verify_cert(admin, topos_core_contract)
     tx = topos_core_contract.executeAssetTransfer(
-        cert_id, encoded_mint_token_params, dummy_data, {"from": admin}
+        cert_id,
+        get_default_mint_val(alice, bob),
+        dummy_data,
+        {"from": admin},
     )
     assert tx.events["Transfer"].values() == [
         brownie.ZERO_ADDRESS,
@@ -612,7 +414,9 @@ def test_send_token_reverts_on_token_does_not_exist(
     admin, alice, bob, topos_core_contract, BurnableMintableCappedERC20
 ):
     dummy_token_symbol = "DUMMY"
-    tx = topos_core_contract.deployToken(encoded_token_params, {"from": admin})
+    tx = topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
     topos_core_contract.giveToken(
         token_symbol, alice, mint_amount, {"from": admin}
     )
@@ -637,7 +441,9 @@ def test_send_token_reverts_on_zero_amount(
     admin, alice, bob, topos_core_contract, BurnableMintableCappedERC20
 ):
     send_amount = 0
-    tx = topos_core_contract.deployToken(encoded_token_params, {"from": admin})
+    tx = topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
     topos_core_contract.giveToken(
         token_symbol, alice, mint_amount, {"from": admin}
     )
@@ -665,27 +471,12 @@ def test_send_token_reverts_on_external_token_burn_fail(
     burn_mint_erc20 = BurnableMintableCappedERC20.deploy(
         token_name, token_symbol, mint_cap, {"from": admin}
     )
-
     # register the token onto ToposCoreContract
-    token_params = [
-        "string",
-        "string",
-        "uint256",
-        "address",
-        "uint256",
-    ]
-    token_values = [
-        token_name,
-        token_symbol,
-        mint_cap,
-        burn_mint_erc20.address,
-        daily_mint_limit,
-    ]
-    encoded_token_params = eth_abi.encode(token_params, token_values)
-    topos_core_contract.deployToken(encoded_token_params, {"from": admin})
-
-    # transaction should fail because alice does not have enough
-    # balance to burn
+    topos_core_contract.deployToken(
+        get_default_external_token_val(burn_mint_erc20.address),
+        {"from": admin},
+    )
+    # should fail because alice does not have enough balance to burn
     with brownie.reverts():
         topos_core_contract.sendToken(
             destination_subnet_id,
@@ -712,25 +503,11 @@ def test_send_token_external_token_emits_events(
         topos_core_contract.address,
         send_amount,
     ]
-
     # register the token onto ToposCoreContract
-    token_params = [
-        "string",
-        "string",
-        "uint256",
-        "address",
-        "uint256",
-    ]
-    token_values = [
-        token_name,
-        token_symbol,
-        mint_cap,
-        burn_mint_erc20.address,
-        daily_mint_limit,
-    ]
-    encoded_token_params = eth_abi.encode(token_params, token_values)
-    topos_core_contract.deployToken(encoded_token_params, {"from": admin})
-
+    topos_core_contract.deployToken(
+        get_default_external_token_val(burn_mint_erc20.address),
+        {"from": admin},
+    )
     send_token_tx = topos_core_contract.sendToken(
         destination_subnet_id, bob, token_symbol, send_amount, {"from": alice}
     )
@@ -752,9 +529,10 @@ def test_send_token_external_token_emits_events(
 def test_send_token_reverts_on_burn_fail(
     admin, alice, bob, topos_core_contract
 ):
-    topos_core_contract.deployToken(encoded_token_params, {"from": admin})
-    # transaction should fail because alice does not have enough
-    # balance to burn
+    topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
+    # should fail because alice does not have enough balance to burn
     with brownie.reverts():
         topos_core_contract.sendToken(
             destination_subnet_id,
@@ -768,7 +546,9 @@ def test_send_token_reverts_on_burn_fail(
 def test_send_token_emits_events(
     admin, alice, bob, topos_core_contract, BurnableMintableCappedERC20
 ):
-    tx = topos_core_contract.deployToken(encoded_token_params, {"from": admin})
+    tx = topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
     topos_core_contract.giveToken(
         token_symbol, alice, mint_amount, {"from": admin}
     )
@@ -783,7 +563,6 @@ def test_send_token_emits_events(
         topos_core_contract.address,
         send_amount,
     ]
-
     send_token_tx = topos_core_contract.sendToken(
         destination_subnet_id,
         bob,
@@ -821,7 +600,7 @@ def test_call_contract_emits_event(accounts, alice, topos_core_contract):
         alice.address,
         brownie.convert.datatypes.HexString(destination_subnet_id, "bytes32"),
         destination_contract_addr.address,
-        "0x" + k.hexdigest(),
+        "0x" + k.hexdigest(),  # payload hash
         brownie.convert.datatypes.HexString(dummy_data, "bytes"),
     ]
 
@@ -829,7 +608,9 @@ def test_call_contract_emits_event(accounts, alice, topos_core_contract):
 def test_call_contract_with_token_emits_event(
     accounts, admin, alice, topos_core_contract, BurnableMintableCappedERC20
 ):
-    tx = topos_core_contract.deployToken(encoded_token_params, {"from": admin})
+    tx = topos_core_contract.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
     topos_core_contract.giveToken(
         token_symbol, alice, mint_amount, {"from": admin}
     )
@@ -855,7 +636,7 @@ def test_call_contract_with_token_emits_event(
         alice.address,
         brownie.convert.datatypes.HexString(destination_subnet_id, "bytes32"),
         destination_contract_addr.address,
-        "0x" + k.hexdigest(),
+        "0x" + k.hexdigest(),  # payload hash
         brownie.convert.datatypes.HexString(dummy_data, "bytes"),
         token_symbol,
         send_amount,
@@ -877,12 +658,8 @@ def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
     admin, topos_core_contract
 ):
     fixture_subnet_id = destination_subnet_id
-    cert_params = ["bytes", "uint256"]
-    cert_values = [cert_id, cert_height]
-    encoded_cert_params = eth_abi.encode(cert_params, cert_values)
-    topos_core_contract.verifyCertificate(encoded_cert_params, {"from": admin})
-    # should fail since the subnet ID entered in the constructor
-    # is equal to source_subnet_id
+    verify_cert(admin, topos_core_contract)
+    # should revert since fixture is set to source_subnet_id
     with brownie.reverts():
         topos_core_contract.verifyContractCallData(
             cert_id, fixture_subnet_id, {"from": admin}
@@ -891,10 +668,7 @@ def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
 
 def test_verify_contract_call_returns_cert_height(admin, topos_core_contract):
     fixture_subnet_id = origin_subnet_id
-    cert_params = ["bytes", "uint256"]
-    cert_values = [cert_id, cert_height]
-    encoded_cert_params = eth_abi.encode(cert_params, cert_values)
-    topos_core_contract.verifyCertificate(encoded_cert_params, {"from": admin})
+    verify_cert(admin, topos_core_contract)
     tx = topos_core_contract.verifyContractCallData(
         cert_id, fixture_subnet_id, {"from": admin}
     )
@@ -902,8 +676,43 @@ def test_verify_contract_call_returns_cert_height(admin, topos_core_contract):
 
 
 # internal functions #
-def verify_dummy_cert(admin, topos_core_contract):
-    cert_params = ["bytes", "uint256"]
-    cert_values = [cert_id, cert_height]
-    encoded_cert_params = eth_abi.encode(cert_params, cert_values)
-    topos_core_contract.verifyCertificate(encoded_cert_params, {"from": admin})
+def verify_cert(admin, topos_core_contract):
+    return topos_core_contract.verifyCertificate(
+        eth_abi.encode_abi(["bytes", "uint256"], [cert_id, cert_height]),
+        {"from": admin},
+    )
+
+
+def get_default_internal_token_val():
+    token_values = [
+        token_name,
+        token_symbol,
+        mint_cap,
+        brownie.ZERO_ADDRESS,  # address zero since not yet deployed
+        daily_mint_limit,
+    ]
+    return eth_abi.encode(token_params, token_values)
+
+
+def get_default_external_token_val(address):
+    token_values = [
+        token_name,
+        token_symbol,
+        mint_cap,
+        address,  # specify deployed token address
+        daily_mint_limit,
+    ]
+    return eth_abi.encode(token_params, token_values)
+
+
+def get_default_mint_val(alice, bob):
+    mint_token_args = [
+        dummy_data,
+        alice.address,
+        origin_subnet_id,
+        origin_subnet_id,
+        bob.address,
+        token_symbol,
+        send_amount,
+    ]
+    return eth_abi.encode(mint_token_params, mint_token_args)
