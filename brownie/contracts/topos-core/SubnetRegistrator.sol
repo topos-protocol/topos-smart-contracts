@@ -5,6 +5,7 @@ type SubnetPublicKey is bytes32; // type of subnet public keys
 
 contract SubnetRegistrator {
     error SubnetAlreadyRegistered(SubnetPublicKey publicKey);
+    error SubnetNotRegistered(SubnetPublicKey publicKey);
 
     struct Subnet {
         bytes endpoint;
@@ -15,10 +16,13 @@ contract SubnetRegistrator {
 
     /// @notice Mapping to store the registered subnets
     /// @dev SubnetPublicKey => Subnet
-    mapping(SubnetPublicKey => Subnet) subnets;
+    mapping(SubnetPublicKey => Subnet) public subnets;
 
     /// @notice New subnet registration event
     event NewSubnetRegistered(SubnetPublicKey publicKey);
+
+    /// @notice Subnet removal event
+    event SubnetRemoved(SubnetPublicKey publicKey);
 
     /// @notice Register a new subnet
     /// @param endpoint JSON RPC endpoint of a subnet
@@ -35,5 +39,13 @@ contract SubnetRegistrator {
         Subnet memory subnet = Subnet(endpoint, logoURL, name, true);
         subnets[publicKey] = subnet;
         emit NewSubnetRegistered(publicKey);
+    }
+
+    /// @notice Remove an already registered subnet
+    /// @param publicKey FROST public key of a subnet
+    function removeSubnet(SubnetPublicKey publicKey) public {
+        if (!subnets[publicKey].isPresent) revert SubnetNotRegistered(publicKey);
+        delete subnets[publicKey];
+        emit SubnetRemoved(publicKey);
     }
 }

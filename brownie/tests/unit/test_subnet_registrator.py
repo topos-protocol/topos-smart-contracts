@@ -26,3 +26,22 @@ def test_register_subnet_emits_event(alice, subnet_registrator):
     assert tx.events["NewSubnetRegistered"].values() == [
         brownie.convert.datatypes.HexString(public_key, "bytes")
     ]
+
+
+def test_remove_subnet_reverts_on_not_registered(alice, subnet_registrator):
+    # should revert since subnet is not registered
+    with brownie.reverts():
+        subnet_registrator.removeSubnet(public_key, {"from": alice})
+
+
+def test_remove_subnet_emits_event(alice, subnet_registrator):
+    subnet_registrator.registerSubnet(
+        endpoint, logo_url, name, public_key, {"from": alice}
+    )
+    tx = subnet_registrator.removeSubnet(public_key, {"from": alice})
+    expected = False
+    subnet = subnet_registrator.subnets(public_key)
+    assert subnet["isPresent"] == expected
+    assert tx.events["SubnetRemoved"].values() == [
+        brownie.convert.datatypes.HexString(public_key, "bytes")
+    ]
