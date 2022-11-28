@@ -65,3 +65,9 @@ def topos_executable(accounts, ToposExecutable, topos_core_contract_B):
     return ToposExecutable.deploy(
         topos_core_contract_B.address, {"from": accounts[0]}
     )
+
+
+@pytest.fixture(scope="module")
+def tce_node_registrator(accounts, TCENodeRegistrator):
+    tce_node_registrator = TCENodeRegistrator.deploy({"from": accounts[0]})
+    return tce_node_registrator
