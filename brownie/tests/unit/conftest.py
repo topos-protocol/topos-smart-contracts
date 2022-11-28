@@ -45,6 +45,12 @@ def bob(accounts):
 
 
 @pytest.fixture(scope="module")
+def subnet_registrator(accounts, SubnetRegistrator):
+    subnet_registrator = SubnetRegistrator.deploy({"from": accounts[0]})
+    return subnet_registrator
+
+
+@pytest.fixture(scope="module")
 def topos_core_contract_A(accounts, TokenDeployer, ToposCoreContract):
     subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
     return deploy_topos_core_contract(
