@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+type SubnetPublicKey is bytes32; // type of subnet public keys
+
 contract SubnetRegistrator {
-    error SubnetAlreadyRegistered(bytes publicKey);
+    error SubnetAlreadyRegistered(SubnetPublicKey publicKey);
 
     struct Subnet {
         bytes endpoint;
@@ -12,11 +14,11 @@ contract SubnetRegistrator {
     }
 
     /// @notice Mapping to store the registered subnets
-    /// @dev publicKey => Subnet
-    mapping(bytes => Subnet) subnets;
+    /// @dev SubnetPublicKey => Subnet
+    mapping(SubnetPublicKey => Subnet) subnets;
 
     /// @notice New subnet registration event
-    event NewSubnetRegistered(bytes publicKey);
+    event NewSubnetRegistered(SubnetPublicKey publicKey);
 
     /// @notice Register a new subnet
     /// @param endpoint JSON RPC endpoint of a subnet
@@ -27,7 +29,7 @@ contract SubnetRegistrator {
         bytes calldata endpoint,
         bytes calldata logoURL,
         string calldata name,
-        bytes calldata publicKey
+        SubnetPublicKey publicKey
     ) public {
         if (subnets[publicKey].isPresent) revert SubnetAlreadyRegistered(publicKey);
         Subnet memory subnet = Subnet(endpoint, logoURL, name, true);
