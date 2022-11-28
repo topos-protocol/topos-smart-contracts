@@ -5,6 +5,7 @@ type PeerId is bytes32; // type of peer IDs
 
 contract TCENodeRegistrator {
     error TCENodeAlreadyRegistered(PeerId peerId);
+    error TCENodeNotRegistered(PeerId peerId);
 
     struct TCENode {
         PeerId peerId;
@@ -13,10 +14,13 @@ contract TCENodeRegistrator {
 
     /// @notice Mapping to store the registered TCE nodes
     /// @dev PeerId => TCENode
-    mapping(PeerId => TCENode) tceNodes;
+    mapping(PeerId => TCENode) public tceNodes;
 
     /// @notice New TCE node registration event
     event NewTCENodeRegistered(PeerId peerId);
+
+    /// @notice TCE node removal event
+    event TCENodeRemoved(PeerId peerId);
 
     /// @notice Register a new TCE node
     /// @param peerId peer ID of the TCE node
@@ -25,5 +29,13 @@ contract TCENodeRegistrator {
         TCENode memory tceNode = TCENode(peerId, true);
         tceNodes[peerId] = tceNode;
         emit NewTCENodeRegistered(peerId);
+    }
+
+    /// @notice Remove an already registered TCE node
+    /// @param peerId peer ID of the TCE node
+    function removeTCENode(PeerId peerId) public {
+        if (!tceNodes[peerId].isPresent) revert TCENodeNotRegistered(peerId);
+        delete tceNodes[peerId];
+        emit TCENodeRemoved(peerId);
     }
 }
