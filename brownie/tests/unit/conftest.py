@@ -12,7 +12,7 @@ def isolate(fn_isolation):
 
 
 @pytest.fixture(scope="module")
-def topos_core_contract(ToposCoreContract, TokenDeployer, accounts):
+def topos_core_contract_A(ToposCoreContract, TokenDeployer, accounts):
     subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
     admin_threshold = 1
 
