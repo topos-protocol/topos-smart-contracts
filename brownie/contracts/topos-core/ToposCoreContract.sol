@@ -147,7 +147,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             string memory symbol,
             uint256 amount
         ) = abi.decode(crossSubnetTx, (bytes, address, subnetId, subnetId, address, string, uint256));
-        if (!_validataDestinationId(destinationSubnetId)) revert InvalidSubnetId();
+        if (!_validateDestinationSubnetId(destinationSubnetId)) revert InvalidSubnetId();
         if (_isSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount))
             revert TransferAlreadyExecuted();
         // prevent re-entrancy
@@ -232,7 +232,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     {
         Certificate memory storedCert = getVerfiedCert(certId);
         if (storedCert.isVerified == false) revert CertNotVerified();
-        if (!_validataDestinationId(destinationSubnetId)) revert InvalidSubnetId();
+        if (!_validateDestinationSubnetId(destinationSubnetId)) revert InvalidSubnetId();
         return storedCert.height;
     }
 
@@ -377,7 +377,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         return TokenType(getUint(_getTokenTypeKey(symbol)));
     }
 
-    function _validataDestinationId(subnetId destinationSubnetId) internal view returns (bool) {
+    function _validateDestinationSubnetId(subnetId destinationSubnetId) internal view returns (bool) {
         if (subnetId.unwrap(destinationSubnetId) != subnetId.unwrap(_networkSubnetId)) {
             return false;
         }
