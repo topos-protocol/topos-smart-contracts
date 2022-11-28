@@ -10,19 +10,3 @@ development:
   host: http://127.0.0.1
   id: development-two
   name: Ganache-CLI
-
-######## Substrate networks ########
-# live:
-# - name: substrate-subnet-network-A
-#   networks:
-#   - chainid: 43
-#     host: http://127.0.0.1:9933/
-#     id: Substrate-Subnet
-#     name: 'substrate_subnet_network_A'
-
-# - name: substrate-subnet-network-B
-#   networks:
-#   - chainid: 44
-#     host: http://127.0.0.1:9944/
-#     id: Substrate-Subnet
-#     name: 'substrate_subnet_network_B'
