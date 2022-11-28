@@ -11,14 +11,13 @@ def isolate(fn_isolation):
     pass
 
 
-@pytest.fixture(scope="module")
-def topos_core_contract_A(ToposCoreContract, TokenDeployer, accounts):
-    subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
+def deploy_topos_core_contract(
+    accounts, subnet_id, TokenDeployer, ToposCoreContract
+):
     admin_threshold = 1
-
     token_deployer = TokenDeployer.deploy({"from": accounts[0]})
     topos_core_contract = ToposCoreContract.deploy(
-        token_deployer.address, subnet_A_id, {"from": accounts[0]}
+        token_deployer.address, subnet_id, {"from": accounts[0]}
     )
     topos_core_contract.setup(
         eth_abi.encode(
@@ -43,3 +42,26 @@ def alice(accounts):
 @pytest.fixture(scope="session")
 def bob(accounts):
     yield accounts[2]
+
+
+@pytest.fixture(scope="module")
+def topos_core_contract_A(accounts, TokenDeployer, ToposCoreContract):
+    subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
+    return deploy_topos_core_contract(
+        accounts, subnet_A_id, TokenDeployer, ToposCoreContract
+    )
+
+
+@pytest.fixture(scope="module")
+def topos_core_contract_B(ToposCoreContract, TokenDeployer, accounts):
+    subnet_B_id = brownie.convert.to_bytes("0x02", "bytes32")
+    return deploy_topos_core_contract(
+        accounts, subnet_B_id, TokenDeployer, ToposCoreContract
+    )
+
+
+@pytest.fixture(scope="module")
+def topos_executable(accounts, ToposExecutable, topos_core_contract_B):
+    return ToposExecutable.deploy(
+        topos_core_contract_B.address, {"from": accounts[0]}
+    )
