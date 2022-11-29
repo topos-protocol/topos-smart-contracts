@@ -21,7 +21,7 @@ def topos_core_contract_A(ToposCoreContract, TokenDeployer, accounts):
         token_deployer.address, subnet_A_id, {"from": accounts[0]}
     )
     topos_core_contract.setup(
-        eth_abi.encode_abi(
+        eth_abi.encode(
             ["address[]", "uint256"],
             [[accounts[0].address], admin_threshold],
         ),
