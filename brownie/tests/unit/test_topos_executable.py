@@ -2,29 +2,7 @@ import brownie
 from Crypto.Hash import keccak
 import eth_abi
 
-# const
-cert_bytes = "0xdeaf"
-cert_height = 10
-cert_id = brownie.convert.to_bytes(cert_bytes, "bytes")
-destination_subnet_id = brownie.convert.to_bytes("0x02", "bytes32")
-dummy_data = brownie.convert.to_bytes("0x00", "bytes")
-encoded_cert_params = eth_abi.encode_abi(
-    ["bytes", "uint256"], [cert_id, cert_height]
-)
-minimum_cert_height = 5
-origin_subnet_id = brownie.convert.to_bytes("0x01", "bytes32")
-send_amount = 10
-token_symbol = "TKX"
-# payload
-payload = brownie.convert.to_bytes("0xdead", "bytes")
-k = keccak.new(digest_bits=256)
-k.update(payload)
-payload_hash = "0x" + k.hexdigest()
-# function selector
-selector = "changeValue"
-k = keccak.new(digest_bits=256)
-k.update(dummy_data)
-selector_hash = "0x" + k.hexdigest()
+import const as c
 
 
 def test_authorize_origin_reverts_on_unknown_admin(
@@ -40,10 +18,10 @@ def test_authorize_origin_emits_event(accounts, admin, topos_executable):
     dummy_address = accounts.add()
     tx = authorize_origin(dummy_address, admin, topos_executable)
     assert tx.events["OriginAuthorized"].values() == [
-        brownie.convert.datatypes.HexString(origin_subnet_id, "bytes32"),
+        brownie.convert.datatypes.HexString(c.ORIGIN_SUBNET_ID, "bytes32"),
         dummy_address,
-        brownie.convert.datatypes.HexString(selector_hash, "bytes32"),
-        minimum_cert_height,
+        brownie.convert.datatypes.HexString(get_selector_hash(), "bytes32"),
+        c.MINIMUM_CERT_HEIGHT,
     ]
 
 
@@ -53,13 +31,13 @@ def test_execute_reverts_on_unverified_cert_id(
     invalid_cert_id = brownie.convert.to_bytes("0xdead", "bytes")
     dummy_address = accounts.add()
     topos_core_contract_B.verifyCertificate(
-        encoded_cert_params, {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
     )
-    data = get_call_contract_data(dummy_address, destination_subnet_id)
+    data = get_call_contract_data(dummy_address, c.DESTINATION_SUBNET_ID)
     # should revert since the cert is unverified
     with brownie.reverts():
         topos_executable.execute(
-            invalid_cert_id, data, dummy_data, {"from": admin}
+            invalid_cert_id, data, c.DUMMY_DATA, {"from": admin}
         )
 
 
@@ -69,12 +47,14 @@ def test_execute_reverts_on_false_destination_id(
     invalid_destination_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
     dummy_address = accounts.add()
     topos_core_contract_B.verifyCertificate(
-        encoded_cert_params, {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
     )
     data = get_call_contract_data(dummy_address, invalid_destination_subnet_id)
     # should revert since destination subnet id is incorrect
     with brownie.reverts():
-        topos_executable.execute(cert_id, data, dummy_data, {"from": admin})
+        topos_executable.execute(
+            c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
+        )
 
 
 def test_execute_reverts_on_contract_call_already_executed(
@@ -83,31 +63,32 @@ def test_execute_reverts_on_contract_call_already_executed(
     dummy_address = accounts.add()
     authorize_origin(dummy_address, admin, topos_executable)
     topos_core_contract_B.verifyCertificate(
-        encoded_cert_params, {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
     )
-    data = get_call_contract_data(dummy_address, destination_subnet_id)
-    topos_executable.execute(cert_id, data, dummy_data, {"from": admin})
+    data = get_call_contract_data(dummy_address, c.DESTINATION_SUBNET_ID)
+    topos_executable.execute(c.CERT_ID, data, c.DUMMY_DATA, {"from": admin})
     # should revert when executing the same call
     with brownie.reverts():
-        topos_executable.execute(cert_id, data, dummy_data, {"from": admin})
+        topos_executable.execute(
+            c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
+        )
 
 
 def test_execute_reverts_on_cert_height_lower_than_min_height(
     accounts, admin, topos_core_contract_B, topos_executable
 ):
     dummy_address = accounts.add()
-    cert_height = 4
+    cert_height = 3
     authorize_origin(dummy_address, admin, topos_executable)
-    encoded_cert_params = eth_abi.encode_abi(
-        ["bytes", "uint256"], [cert_id, cert_height]
-    )
     topos_core_contract_B.verifyCertificate(
-        encoded_cert_params, {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, cert_height), {"from": admin}
     )
-    data = get_call_contract_data(dummy_address, destination_subnet_id)
+    data = get_call_contract_data(dummy_address, c.DESTINATION_SUBNET_ID)
     # should revert since the cert height < min cert height
     with brownie.reverts():
-        topos_executable.execute(cert_id, data, dummy_data, {"from": admin})
+        topos_executable.execute(
+            c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
+        )
 
 
 def test_execute_with_token_reverts_on_unverified_cert_id(
@@ -116,15 +97,15 @@ def test_execute_with_token_reverts_on_unverified_cert_id(
     invalid_cert_id = brownie.convert.to_bytes("0xdead", "bytes")
     dummy_address = accounts.add()
     topos_core_contract_B.verifyCertificate(
-        encoded_cert_params, {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
     )
     data = get_call_contract_with_token_data(
-        dummy_address, destination_subnet_id
+        dummy_address, c.DESTINATION_SUBNET_ID
     )
     # should revert since the cert is unverified
     with brownie.reverts():
         topos_executable.executeWithToken(
-            invalid_cert_id, data, dummy_data, {"from": admin}
+            invalid_cert_id, data, c.DUMMY_DATA, {"from": admin}
         )
 
 
@@ -134,7 +115,7 @@ def test_execute_with_token_reverts_on_false_destination_id(
     invalid_destination_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
     dummy_address = accounts.add()
     topos_core_contract_B.verifyCertificate(
-        encoded_cert_params, {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
     )
     data = get_call_contract_with_token_data(
         dummy_address, invalid_destination_subnet_id
@@ -142,7 +123,7 @@ def test_execute_with_token_reverts_on_false_destination_id(
     # should revert since destination subnet id is incorrect
     with brownie.reverts():
         topos_executable.executeWithToken(
-            cert_id, data, dummy_data, {"from": admin}
+            c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
         )
 
 
@@ -152,18 +133,18 @@ def test_execute_with_token_reverts_on_contract_call_already_executed(
     dummy_address = accounts.add()
     authorize_origin(dummy_address, admin, topos_executable)
     topos_core_contract_B.verifyCertificate(
-        encoded_cert_params, {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
     )
     data = get_call_contract_with_token_data(
-        dummy_address, destination_subnet_id
+        dummy_address, c.DESTINATION_SUBNET_ID
     )
     topos_executable.executeWithToken(
-        cert_id, data, dummy_data, {"from": admin}
+        c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
     )
     # should revert when executing the same call
     with brownie.reverts():
         topos_executable.executeWithToken(
-            cert_id, data, dummy_data, {"from": admin}
+            c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
         )
 
 
@@ -171,58 +152,71 @@ def test_execute_with_token_reverts_on_cert_height_lower_than_min_height(
     accounts, admin, topos_core_contract_B, topos_executable
 ):
     dummy_address = accounts.add()
-    cert_height = 4
+    cert_height = 3
     authorize_origin(dummy_address, admin, topos_executable)
-    encoded_cert_params = eth_abi.encode_abi(
-        ["bytes", "uint256"], [cert_id, cert_height]
-    )
     topos_core_contract_B.verifyCertificate(
-        encoded_cert_params, {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, cert_height), {"from": admin}
     )
     data = get_call_contract_with_token_data(
-        dummy_address, destination_subnet_id
+        dummy_address, c.DESTINATION_SUBNET_ID
     )
     # should revert since the cert height < min cert height
     with brownie.reverts():
         topos_executable.executeWithToken(
-            cert_id, data, dummy_data, {"from": admin}
+            c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
         )
 
 
 # internal functions #
 def authorize_origin(sender, spender, topos_executable):
     return topos_executable.authorizeOrigin(
-        origin_subnet_id,
+        c.ORIGIN_SUBNET_ID,
         sender,
-        selector_hash,
-        minimum_cert_height,
+        get_selector_hash(),
+        c.MINIMUM_CERT_HEIGHT,
         {"from": spender},
     )
 
 
 def get_call_contract_data(addr, subnet_id):
     return [
-        dummy_data,  # tx_hash
-        origin_subnet_id,
+        c.DUMMY_DATA,  # tx_hash
+        c.ORIGIN_SUBNET_ID,
         addr,  # origin_address
         subnet_id,
         addr,  # destination_contract_address
-        payload_hash,
-        payload,
-        selector_hash,
+        get_payload_hash(),
+        c.PAYLOAD,
+        get_selector_hash(),
     ]
 
 
 def get_call_contract_with_token_data(addr, subnet_id):
     return [
-        dummy_data,  # tx_hash
-        origin_subnet_id,
+        c.DUMMY_DATA,  # tx_hash
+        c.ORIGIN_SUBNET_ID,
         addr,  # origin_address
         subnet_id,
         addr,  # destination_contract_address
-        payload_hash,
-        payload,
-        token_symbol,
-        send_amount,
-        selector_hash,
+        get_payload_hash(),
+        c.PAYLOAD,
+        c.TOKEN_SYMBOL_X,
+        c.SEND_AMOUNT,
+        get_selector_hash(),
     ]
+
+
+def get_encoded_cert_params(cert_id, cert_height):
+    return eth_abi.encode(["bytes", "uint256"], [cert_id, cert_height])
+
+
+def get_payload_hash():
+    k = keccak.new(digest_bits=256)
+    k.update(c.PAYLOAD)
+    return "0x" + k.hexdigest()
+
+
+def get_selector_hash():
+    k = keccak.new(digest_bits=256)
+    k.update(c.DUMMY_DATA)
+    return "0x" + k.hexdigest()
