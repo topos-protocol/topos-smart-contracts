@@ -1,21 +1,21 @@
 import brownie
 
-peer_id = brownie.convert.to_bytes("0xdeaf", "bytes")
+import const as c
 
 
 def test_register_tce_node_reverts_on_already_registered(
     alice, tce_node_registrator
 ):
-    tce_node_registrator.registerTCENode(peer_id, {"from": alice})
+    tce_node_registrator.registerTCENode(c.PEER_ID, {"from": alice})
     # should revert since tce node is already registered
     with brownie.reverts():
-        tce_node_registrator.registerTCENode(peer_id, {"from": alice})
+        tce_node_registrator.registerTCENode(c.PEER_ID, {"from": alice})
 
 
 def test_register_tce_node_emits_event(alice, tce_node_registrator):
-    tx = tce_node_registrator.registerTCENode(peer_id, {"from": alice})
+    tx = tce_node_registrator.registerTCENode(c.PEER_ID, {"from": alice})
     assert tx.events["NewTCENodeRegistered"].values() == [
-        brownie.convert.datatypes.HexString(peer_id, "bytes")
+        brownie.convert.datatypes.HexString(c.PEER_ID, "bytes")
     ]
 
 
@@ -24,15 +24,15 @@ def test_remove_tce_node_reverts_on_not_registered(
 ):
     # should revert since tce node is not registered yet
     with brownie.reverts():
-        tce_node_registrator.removeTCENode(peer_id, {"from": alice})
+        tce_node_registrator.removeTCENode(c.PEER_ID, {"from": alice})
 
 
 def test_remove_tce_node_emits_event(alice, tce_node_registrator):
-    tce_node_registrator.registerTCENode(peer_id, {"from": alice})
-    tx = tce_node_registrator.removeTCENode(peer_id, {"from": alice})
+    tce_node_registrator.registerTCENode(c.PEER_ID, {"from": alice})
+    tx = tce_node_registrator.removeTCENode(c.PEER_ID, {"from": alice})
     expected = False
-    tce_node = tce_node_registrator.tceNodes(peer_id)
+    tce_node = tce_node_registrator.tceNodes(c.PEER_ID)
     assert tce_node["isPresent"] == expected
     assert tx.events["TCENodeRemoved"].values() == [
-        brownie.convert.datatypes.HexString(peer_id, "bytes")
+        brownie.convert.datatypes.HexString(c.PEER_ID, "bytes")
     ]
