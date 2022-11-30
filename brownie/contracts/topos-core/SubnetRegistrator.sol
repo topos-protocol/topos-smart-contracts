@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-type SubnetPublicKey is bytes32; // type of subnet public keys
+type SubnetPublicKey is bytes32;
 
 contract SubnetRegistrator {
     error SubnetAlreadyRegistered(SubnetPublicKey publicKey);
