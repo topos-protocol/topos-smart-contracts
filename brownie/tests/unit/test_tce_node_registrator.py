@@ -30,9 +30,8 @@ def test_remove_tce_node_reverts_on_not_registered(
 def test_remove_tce_node_emits_event(alice, tce_node_registrator):
     tce_node_registrator.registerTCENode(c.PEER_ID, {"from": alice})
     tx = tce_node_registrator.removeTCENode(c.PEER_ID, {"from": alice})
-    expected = False
     tce_node = tce_node_registrator.tceNodes(c.PEER_ID)
-    assert tce_node["isPresent"] == expected
+    assert tce_node["isPresent"] is False
     assert tx.events["TCENodeRemoved"].values() == [
         brownie.convert.datatypes.HexString(c.PEER_ID, "bytes")
     ]
