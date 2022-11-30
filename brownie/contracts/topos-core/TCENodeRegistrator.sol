@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-type PeerId is bytes32; // type of peer IDs
+type PeerId is bytes32;
 
 contract TCENodeRegistrator {
     error TCENodeAlreadyRegistered(PeerId peerId);
