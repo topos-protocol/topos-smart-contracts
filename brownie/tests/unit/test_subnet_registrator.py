@@ -28,9 +28,8 @@ def test_remove_subnet_reverts_on_not_registered(alice, subnet_registrator):
 def test_remove_subnet_emits_event(alice, subnet_registrator):
     register_subnet(alice, subnet_registrator)
     tx = subnet_registrator.removeSubnet(c.SUBNET_PUBLIC_KEY, {"from": alice})
-    expected = False
     subnet = subnet_registrator.subnets(c.SUBNET_PUBLIC_KEY)
-    assert subnet["isPresent"] == expected
+    assert subnet["isPresent"] is False
     assert tx.events["SubnetRemoved"].values() == [
         brownie.convert.datatypes.HexString(c.SUBNET_PUBLIC_KEY, "bytes")
     ]
