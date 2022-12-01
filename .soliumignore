@@ -1,2 +1,12 @@
 node_modules
 contracts/Migrations.sol
+brownie/contracts/topos-core/ToposCoreContract.sol
+brownie/contracts/topos-core/DepositHandler.sol
+brownie/contracts/topos-core/AdminMultisigBase.sol
+brownie/contracts/topos-core/ERC20Permit.sol
+brownie/contracts/topos-core/MintableCappedERC20.sol
+brownie/contracts/topos-core/Ownable.sol
+brownie/contracts/topos-core/TokenDeployer.sol
+brownie/contracts/topos-core/ConstAddressDeployer.sol
+brownie/contracts/executables/ToposExecutable.sol
+brownie/contracts/executables/examples/CrossSubnetArbitraryCall.sol

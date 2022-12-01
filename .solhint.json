@@ -10,7 +10,7 @@
       "modifier-name-mixedcase": "error",
       "no-unused-vars": "error",
       "ordering": "error",
-      "private-vars-leading-underscore": "error",
+      "private-vars-leading-underscore": "off",
       "reentrancy": "error",
       "var-name-mixedcase": "error"
     }
