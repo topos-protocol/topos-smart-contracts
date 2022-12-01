@@ -2,7 +2,7 @@ name: Docker_build_push
 
 on:
   push:
-    branches: [develop]
+    branches: main
   release:
     types: [created]
 
