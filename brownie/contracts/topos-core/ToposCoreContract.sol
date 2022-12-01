@@ -22,7 +22,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
-    subnetId immutable _networkSubnetId;
+    subnetId _networkSubnetId;
 
     /// @notice Validator role
     /// 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a
@@ -38,7 +38,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     bytes32 internal constant PREFIX_TOKEN_DAILY_MINT_AMOUNT = keccak256("token-daily-mint-amount");
 
     /// @notice Internal token deployer (ERCBurnableMintable by default)
-    address internal immutable _tokenDeployerImplementation;
+    address internal _tokenDeployerImplementation;
 
     constructor(address tokenDeployerImplementation, subnetId networkSubnetId) {
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
@@ -134,9 +134,10 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     function executeAssetTransfer(
         bytes calldata certId,
         bytes calldata crossSubnetTx,
-        bytes calldata crossSubnetTxProof
+        bytes calldata /*crossSubnetTxProof*/
     ) external {
-        if (verifyAssetTransferData(certId, crossSubnetTx, crossSubnetTxProof) == false) revert();
+        Certificate memory storedCert = getVerfiedCert(certId);
+        if (storedCert.isVerified == false) revert CertNotVerified();
         (
             bytes memory txHash,
             address sender,
@@ -146,6 +147,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             string memory symbol,
             uint256 amount
         ) = abi.decode(crossSubnetTx, (bytes, address, subnetId, subnetId, address, string, uint256));
+        if (!_validateDestinationSubnetId(destinationSubnetId)) revert InvalidSubnetId();
+        if (_isSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount))
+            revert TransferAlreadyExecuted();
         // prevent re-entrancy
         _setSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount);
         _mintToken(symbol, receiver, amount);
@@ -220,40 +224,16 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* Public Methods *|
     \******************/
 
-    function verifyAssetTransferData(
-        bytes calldata certId,
-        bytes calldata crossSubnetTx,
-        bytes calldata /*crossSubnetTxProof*/
-    ) public view override returns (bool) {
-        Certificate memory storedCert = getVerfiedCert(certId);
-        if (storedCert.isVerified == false) {
-            revert CertNotVerified();
-        }
-        (
-            bytes memory txHash,
-            address sender,
-            subnetId originSubnetId,
-            subnetId destinationSubnetId,
-            address receiver,
-            string memory symbol,
-            uint256 amount
-        ) = abi.decode(crossSubnetTx, (bytes, address, subnetId, subnetId, address, string, uint256));
-        if (!_validataDestinationId(destinationSubnetId)) revert InvalidSubnetId();
-        if (_isSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount))
-            revert TransferAlreadyExecuted();
-        return true;
-    }
-
     function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId)
         public
         view
         override
-        returns (bool, uint256)
+        returns (uint256)
     {
         Certificate memory storedCert = getVerfiedCert(certId);
         if (storedCert.isVerified == false) revert CertNotVerified();
-        if (!_validataDestinationId(destinationSubnetId)) revert InvalidSubnetId();
-        return (true, storedCert.height);
+        if (!_validateDestinationSubnetId(destinationSubnetId)) revert InvalidSubnetId();
+        return storedCert.height;
     }
 
     /***********\
@@ -397,7 +377,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         return TokenType(getUint(_getTokenTypeKey(symbol)));
     }
 
-    function _validataDestinationId(subnetId destinationSubnetId) internal view returns (bool) {
+    function _validateDestinationSubnetId(subnetId destinationSubnetId) internal view returns (bool) {
         if (subnetId.unwrap(destinationSubnetId) != subnetId.unwrap(_networkSubnetId)) {
             return false;
         }

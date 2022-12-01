@@ -6,7 +6,7 @@ import {IToposCoreContract, subnetId} from "./../../interfaces/IToposCoreContrac
 import {IToposExecutable} from "./../../interfaces/IToposExecutable.sol";
 
 contract ToposExecutable is IToposExecutable {
-    IToposCoreContract public immutable toposCoreContract;
+    IToposCoreContract public toposCoreContract;
     mapping(bytes32 => bool) private _boolStorage;
     mapping(bytes32 => uint256) private _uint256Storage;
 
@@ -43,11 +43,7 @@ contract ToposExecutable is IToposExecutable {
         ContractCallData memory contractCallData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        (bool isCertValid, uint256 certHeight) = toposCoreContract.verifyContractCallData(
-            certId,
-            contractCallData.destinationSubnetId
-        );
-        if (isCertValid == false) revert InvalidCallData();
+        uint256 certHeight = toposCoreContract.verifyContractCallData(certId, contractCallData.destinationSubnetId);
         if (_isContractCallExecuted(contractCallData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertHeight = _isAuthorizedOrigin(
             contractCallData.originSubnetId,
@@ -71,18 +67,17 @@ contract ToposExecutable is IToposExecutable {
         ContractCallWithTokenData memory contractCallWithTokenData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        (bool isCertValid, uint256 certHeight) = toposCoreContract.verifyContractCallData(
+        uint256 certHeight = toposCoreContract.verifyContractCallData(
             certId,
             contractCallWithTokenData.destinationSubnetId
         );
-        if (isCertValid == false) revert InvalidCallData();
         if (_isContractCallAndMintExecuted(contractCallWithTokenData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertHeight = _isAuthorizedOrigin(
             contractCallWithTokenData.originSubnetId,
             contractCallWithTokenData.originAddress,
             contractCallWithTokenData.selector
         );
-        if (minimumCertHeight <= certHeight) revert UnauthorizedOrigin();
+        if (certHeight <= minimumCertHeight) revert UnauthorizedOrigin();
 
         // prevent re-entrancy
         _setContractCallExecutedWithMint(contractCallWithTokenData);
