@@ -13,6 +13,7 @@ MINT_AMOUNT = 10
 MINT_CAP = 1000
 ORIGIN_SUBNET_ID = brownie.convert.to_bytes("0x01", "bytes32")
 PAYLOAD = brownie.convert.to_bytes("0xdead", "bytes")
+PEER_ID = brownie.convert.to_bytes("0xdeaf", "bytes")
 SEND_AMOUNT = 10
 TOKEN_NAME = "TokenX"
 TOKEN_SYMBOL_X = "TKX"
