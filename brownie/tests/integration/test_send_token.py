@@ -17,7 +17,7 @@ LOGGER = logging.getLogger(__name__)
 # Constants
 approve_amount = 50
 daily_mint_limit = 100
-dummy_cert_height = 12
+dummy_cert_position = 12
 dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes")
 dummy_data = brownie.convert.to_bytes("0x00", "bytes")
 mint_amount = 100
@@ -164,7 +164,7 @@ def send_token():
 
 def validate_dummy_cert(topos_core_contract):
     cert_params = ["bytes", "uint256"]
-    cert_values = [dummy_cert_id, dummy_cert_height]
+    cert_values = [dummy_cert_id, dummy_cert_position]
     encoded_cert_params = eth_abi.encode(cert_params, cert_values)
     topos_core_contract.verifyCertificate(
         encoded_cert_params, {"from": accounts[0]}

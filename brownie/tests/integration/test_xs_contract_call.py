@@ -18,10 +18,10 @@ LOGGER = logging.getLogger(__name__)
 
 # constants
 arbitrary_call_value = "This is a test message"
-dummy_cert_height = 11
+dummy_cert_position = 11
 dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes")
 dummy_xs_proof = brownie.convert.to_bytes("0x0002", "bytes")
-min_cert_height_admin = 10
+min_cert_position_admin = 10
 subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
 subnet_B_id = brownie.convert.to_bytes("0x02", "bytes32")
 selector_hash = keccak.new(
@@ -134,7 +134,7 @@ def switch_network(subnet_network):
 
 def validate_dummy_cert(topos_core_contract):
     cert_params = ["bytes", "uint256"]
-    cert_values = [dummy_cert_id, dummy_cert_height]
+    cert_values = [dummy_cert_id, dummy_cert_position]
     encoded_cert_params = eth_abi.encode(cert_params, cert_values)
     topos_core_contract.verifyCertificate(
         encoded_cert_params, {"from": accounts[0]}
@@ -173,7 +173,7 @@ def approve_and_execute_on_receiving_subnet(
         origin_subnet_id,
         origin_address,
         selector,
-        min_cert_height_admin,
+        min_cert_position_admin,
         {"from": accounts[0]},
     )
 
