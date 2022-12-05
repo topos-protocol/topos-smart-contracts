@@ -11,13 +11,18 @@ interface IToposExecutable {
     error ContractCallAlreadyExecuted();
     error UnauthorizedOrigin();
 
-    event OriginAuthorized(subnetId sourceSubnetId, address originAddress, bytes32 selector, uint256 minimumCertPosition);
+    event OriginAuthorized(
+        subnetId sourceSubnetId,
+        address originAddress,
+        bytes32 selector,
+        uint256 minimumCertPosition
+    );
 
     struct ContractCallData {
         bytes txHash;
         subnetId sourceSubnetId;
         address originAddress;
-        subnetId destinationSubnetId;
+        subnetId targetSubnetId;
         address destinationContractAddress;
         bytes32 payloadHash;
         bytes payload;
@@ -28,7 +33,7 @@ interface IToposExecutable {
         bytes txHash;
         subnetId sourceSubnetId;
         address originAddress;
-        subnetId destinationSubnetId;
+        subnetId targetSubnetId;
         address destinationContractAddress;
         bytes32 payloadHash;
         bytes payload;

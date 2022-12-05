@@ -33,7 +33,7 @@ def test_execute_reverts_on_unverified_cert_id(
     topos_core_contract_B.verifyCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
-    data = get_call_contract_data(dummy_address, c.DESTINATION_SUBNET_ID)
+    data = get_call_contract_data(dummy_address, c.TARGET_SUBNET_ID)
     # should revert since the cert is unverified
     with brownie.reverts():
         topos_executable.execute(
@@ -41,16 +41,16 @@ def test_execute_reverts_on_unverified_cert_id(
         )
 
 
-def test_execute_reverts_on_false_destination_id(
+def test_execute_reverts_on_false_target_subnet_id(
     accounts, admin, topos_core_contract_B, topos_executable
 ):
-    invalid_destination_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
+    invalid_target_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
     dummy_address = accounts.add()
     topos_core_contract_B.verifyCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
-    data = get_call_contract_data(dummy_address, invalid_destination_subnet_id)
-    # should revert since destination subnet id is incorrect
+    data = get_call_contract_data(dummy_address, invalid_target_subnet_id)
+    # should revert since target subnet id is incorrect
     with brownie.reverts():
         topos_executable.execute(
             c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
@@ -65,7 +65,7 @@ def test_execute_reverts_on_contract_call_already_executed(
     topos_core_contract_B.verifyCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
-    data = get_call_contract_data(dummy_address, c.DESTINATION_SUBNET_ID)
+    data = get_call_contract_data(dummy_address, c.TARGET_SUBNET_ID)
     topos_executable.execute(c.CERT_ID, data, c.DUMMY_DATA, {"from": admin})
     # should revert when executing the same call
     with brownie.reverts():
@@ -83,7 +83,7 @@ def test_execute_reverts_on_cert_position_lower_than_min_position(
     topos_core_contract_B.verifyCertificate(
         get_encoded_cert_params(c.CERT_ID, cert_position), {"from": admin}
     )
-    data = get_call_contract_data(dummy_address, c.DESTINATION_SUBNET_ID)
+    data = get_call_contract_data(dummy_address, c.TARGET_SUBNET_ID)
     # should revert since the cert position < min cert position
     with brownie.reverts():
         topos_executable.execute(
@@ -99,9 +99,7 @@ def test_execute_with_token_reverts_on_unverified_cert_id(
     topos_core_contract_B.verifyCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
-    data = get_call_contract_with_token_data(
-        dummy_address, c.DESTINATION_SUBNET_ID
-    )
+    data = get_call_contract_with_token_data(dummy_address, c.TARGET_SUBNET_ID)
     # should revert since the cert is unverified
     with brownie.reverts():
         topos_executable.executeWithToken(
@@ -109,18 +107,18 @@ def test_execute_with_token_reverts_on_unverified_cert_id(
         )
 
 
-def test_execute_with_token_reverts_on_false_destination_id(
+def test_execute_with_token_reverts_on_false_target_subnet_id(
     accounts, admin, topos_core_contract_B, topos_executable
 ):
-    invalid_destination_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
+    invalid_target_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
     dummy_address = accounts.add()
     topos_core_contract_B.verifyCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_with_token_data(
-        dummy_address, invalid_destination_subnet_id
+        dummy_address, invalid_target_subnet_id
     )
-    # should revert since destination subnet id is incorrect
+    # should revert since target subnet id is incorrect
     with brownie.reverts():
         topos_executable.executeWithToken(
             c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
@@ -135,9 +133,7 @@ def test_execute_with_token_reverts_on_contract_call_already_executed(
     topos_core_contract_B.verifyCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
-    data = get_call_contract_with_token_data(
-        dummy_address, c.DESTINATION_SUBNET_ID
-    )
+    data = get_call_contract_with_token_data(dummy_address, c.TARGET_SUBNET_ID)
     topos_executable.executeWithToken(
         c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
     )
@@ -157,9 +153,7 @@ def test_execute_with_token_reverts_on_cert_position_lower_than_min_position(
     topos_core_contract_B.verifyCertificate(
         get_encoded_cert_params(c.CERT_ID, cert_position), {"from": admin}
     )
-    data = get_call_contract_with_token_data(
-        dummy_address, c.DESTINATION_SUBNET_ID
-    )
+    data = get_call_contract_with_token_data(dummy_address, c.TARGET_SUBNET_ID)
     # should revert since the cert position < min cert position
     with brownie.reverts():
         topos_executable.executeWithToken(

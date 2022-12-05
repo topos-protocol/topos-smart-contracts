@@ -43,7 +43,7 @@ contract ToposExecutable is IToposExecutable {
         ContractCallData memory contractCallData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        uint256 certPosition = toposCoreContract.verifyContractCallData(certId, contractCallData.destinationSubnetId);
+        uint256 certPosition = toposCoreContract.verifyContractCallData(certId, contractCallData.targetSubnetId);
         if (_isContractCallExecuted(contractCallData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertPosition = _isAuthorizedOrigin(
             contractCallData.sourceSubnetId,
@@ -55,7 +55,7 @@ contract ToposExecutable is IToposExecutable {
         // prevent re-entrancy
         _setContractCallExecuted(contractCallData);
         _execute(
-            contractCallData.destinationSubnetId,
+            contractCallData.targetSubnetId,
             contractCallData.destinationContractAddress,
             contractCallData.selector,
             contractCallData.payload
@@ -69,7 +69,7 @@ contract ToposExecutable is IToposExecutable {
     ) external override {
         uint256 certPosition = toposCoreContract.verifyContractCallData(
             certId,
-            contractCallWithTokenData.destinationSubnetId
+            contractCallWithTokenData.targetSubnetId
         );
         if (_isContractCallAndMintExecuted(contractCallWithTokenData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertPosition = _isAuthorizedOrigin(
@@ -82,7 +82,7 @@ contract ToposExecutable is IToposExecutable {
         // prevent re-entrancy
         _setContractCallExecutedWithMint(contractCallWithTokenData);
         _executeWithToken(
-            contractCallWithTokenData.destinationSubnetId,
+            contractCallWithTokenData.targetSubnetId,
             contractCallWithTokenData.destinationContractAddress,
             contractCallWithTokenData.selector,
             contractCallWithTokenData.payload,
@@ -105,14 +105,14 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _execute(
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address destinationContractAddress,
         bytes32 selector,
         bytes memory payload
     ) internal virtual {}
 
     function _executeWithToken(
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address destinationContractAddress,
         bytes32 selector,
         bytes memory payload,
@@ -186,7 +186,7 @@ contract ToposExecutable is IToposExecutable {
                     contractCallData.txHash,
                     contractCallData.sourceSubnetId,
                     contractCallData.originAddress,
-                    contractCallData.destinationSubnetId,
+                    contractCallData.targetSubnetId,
                     contractCallData.destinationContractAddress,
                     contractCallData.payloadHash,
                     contractCallData.payload,
@@ -207,7 +207,7 @@ contract ToposExecutable is IToposExecutable {
                     contractCallWithTokenData.txHash,
                     contractCallWithTokenData.sourceSubnetId,
                     contractCallWithTokenData.originAddress,
-                    contractCallWithTokenData.destinationSubnetId,
+                    contractCallWithTokenData.targetSubnetId,
                     contractCallWithTokenData.destinationContractAddress,
                     contractCallWithTokenData.payloadHash,
                     contractCallWithTokenData.payload,

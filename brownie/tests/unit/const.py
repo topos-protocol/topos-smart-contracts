@@ -6,7 +6,7 @@ CERT_BYTES = "0xdeaf"
 CERT_POSITION = 5
 CERT_ID = brownie.convert.to_bytes(CERT_BYTES, "bytes")
 DAILY_MINT_LIMIT = 100
-DESTINATION_SUBNET_ID = brownie.convert.to_bytes("0x02", "bytes32")
+TARGET_SUBNET_ID = brownie.convert.to_bytes("0x02", "bytes32")
 DUMMY_DATA = brownie.convert.to_bytes("0x00", "bytes")
 ENDPOINT = brownie.convert.to_bytes("0xdead", "bytes")
 LOGO_URL = brownie.convert.to_bytes("0xdeed", "bytes")
@@ -40,7 +40,7 @@ MINT_TOKEN_PARAMS = [
     "bytes",  # tx hash
     "address",  # sender
     "bytes32",  # source subnet id
-    "bytes32",  # destination subnet id
+    "bytes32",  # target subnet id
     "address",  # receiver
     "string",  # symbol
     "uint256",  # amount

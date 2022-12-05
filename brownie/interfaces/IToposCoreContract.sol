@@ -37,7 +37,7 @@ interface IToposCoreContract {
     event TokenSent(
         address indexed sender,
         subnetId sourceSubnetId,
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address receiver,
         string symbol,
         uint256 amount
@@ -46,7 +46,7 @@ interface IToposCoreContract {
     event ContractCall(
         subnetId sourceSubnetId,
         address originAddress,
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address destinationContractAddress,
         bytes32 indexed payloadHash,
         bytes payload
@@ -55,7 +55,7 @@ interface IToposCoreContract {
     event ContractCallWithToken(
         subnetId sourceSubnetId,
         address originAddress,
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address destinationContractAddress,
         bytes32 indexed payloadHash,
         bytes payload,
@@ -74,7 +74,7 @@ interface IToposCoreContract {
     \********************/
 
     function sendToken(
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address receiver,
         string calldata symbol,
         uint256 amount
@@ -87,20 +87,20 @@ interface IToposCoreContract {
     ) external;
 
     function callContract(
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address destinationContractAddress,
         bytes calldata payload
     ) external;
 
     function callContractWithToken(
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address destinationContractAddress,
         bytes calldata payload,
         string calldata symbol,
         uint256 amount
     ) external;
 
-    function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId) external returns (uint256);
+    function verifyContractCallData(bytes calldata certId, subnetId targetSubnetId) external returns (uint256);
 
     /***********\
     |* Getters *|

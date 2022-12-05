@@ -39,7 +39,7 @@ def test_send_token():
     # Event logs as seen by the automation web-service
     sender = token_sent_event["sender"]
     sourceSubnetId = token_sent_event["sourceSubnetId"]
-    destinationSubnetId = token_sent_event["destinationSubnetId"]
+    targetSubnetId = token_sent_event["targetSubnetId"]
     receiver = token_sent_event["receiver"]
     symbol = token_sent_event["symbol"]
     amount = token_sent_event["amount"]
@@ -55,7 +55,7 @@ def test_send_token():
         dummy_data,  # tx_hash
         sender,
         sourceSubnetId,
-        destinationSubnetId,
+        targetSubnetId,
         receiver,
         symbol,
         amount,
@@ -176,7 +176,7 @@ def mint_token(
     tx_hash,
     sender,
     source_subnet_id,
-    destination_subnet_id,
+    target_subnet_id,
     receiver,
     symbol,
     amount,
@@ -194,7 +194,7 @@ def mint_token(
         tx_hash,
         sender,
         source_subnet_id,
-        destination_subnet_id,
+        target_subnet_id,
         receiver,
         symbol,
         amount,

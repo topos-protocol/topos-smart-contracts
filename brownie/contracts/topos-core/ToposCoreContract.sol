@@ -142,38 +142,38 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             bytes memory txHash,
             address sender,
             subnetId sourceSubnetId,
-            subnetId destinationSubnetId,
+            subnetId targetSubnetId,
             address receiver,
             string memory symbol,
             uint256 amount
         ) = abi.decode(crossSubnetTx, (bytes, address, subnetId, subnetId, address, string, uint256));
-        if (!_validateDestinationSubnetId(destinationSubnetId)) revert InvalidSubnetId();
-        if (_isSendTokenExecuted(txHash, sender, sourceSubnetId, destinationSubnetId, receiver, symbol, amount))
+        if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
+        if (_isSendTokenExecuted(txHash, sender, sourceSubnetId, targetSubnetId, receiver, symbol, amount))
             revert TransferAlreadyExecuted();
         // prevent re-entrancy
-        _setSendTokenExecuted(txHash, sender, sourceSubnetId, destinationSubnetId, receiver, symbol, amount);
+        _setSendTokenExecuted(txHash, sender, sourceSubnetId, targetSubnetId, receiver, symbol, amount);
         _mintToken(symbol, receiver, amount);
     }
 
     function sendToken(
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address receiver,
         string calldata symbol,
         uint256 amount
     ) external {
         _burnTokenFrom(msg.sender, symbol, amount);
-        emit TokenSent(msg.sender, _networkSubnetId, destinationSubnetId, receiver, symbol, amount);
+        emit TokenSent(msg.sender, _networkSubnetId, targetSubnetId, receiver, symbol, amount);
     }
 
     function callContract(
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address destinationContractAddress,
         bytes calldata payload
     ) external {
         emit ContractCall(
             _networkSubnetId,
             msg.sender,
-            destinationSubnetId,
+            targetSubnetId,
             destinationContractAddress,
             keccak256(payload),
             payload
@@ -181,7 +181,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     }
 
     function callContractWithToken(
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address destinationContractAddress,
         bytes calldata payload,
         string calldata symbol,
@@ -191,7 +191,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         emit ContractCallWithToken(
             _networkSubnetId,
             msg.sender,
-            destinationSubnetId,
+            targetSubnetId,
             destinationContractAddress,
             keccak256(payload),
             payload,
@@ -224,7 +224,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* Public Methods *|
     \******************/
 
-    function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId)
+    function verifyContractCallData(bytes calldata certId, subnetId targetSubnetId)
         public
         view
         override
@@ -232,7 +232,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     {
         Certificate memory storedCert = getVerfiedCert(certId);
         if (storedCert.isVerified == false) revert CertNotVerified();
-        if (!_validateDestinationSubnetId(destinationSubnetId)) revert InvalidSubnetId();
+        if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
         return storedCert.position;
     }
 
@@ -358,13 +358,13 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         bytes memory txHash,
         address sender,
         subnetId sourceSubnetId,
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address receiver,
         string memory symbol,
         uint256 amount
     ) internal {
         _setBool(
-            _getIsSendTokenExecutedKey(txHash, sender, sourceSubnetId, destinationSubnetId, receiver, symbol, amount),
+            _getIsSendTokenExecutedKey(txHash, sender, sourceSubnetId, targetSubnetId, receiver, symbol, amount),
             true
         );
     }
@@ -377,8 +377,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         return TokenType(getUint(_getTokenTypeKey(symbol)));
     }
 
-    function _validateDestinationSubnetId(subnetId destinationSubnetId) internal view returns (bool) {
-        if (subnetId.unwrap(destinationSubnetId) != subnetId.unwrap(_networkSubnetId)) {
+    function _validateTargetSubnetId(subnetId targetSubnetId) internal view returns (bool) {
+        if (subnetId.unwrap(targetSubnetId) != subnetId.unwrap(_networkSubnetId)) {
             return false;
         }
         return true;
@@ -388,22 +388,14 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         bytes memory txHash,
         address sender,
         subnetId sourceSubnetId,
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address receiver,
         string memory symbol,
         uint256 amount
     ) internal view returns (bool) {
         return
             getBool(
-                _getIsSendTokenExecutedKey(
-                    txHash,
-                    sender,
-                    sourceSubnetId,
-                    destinationSubnetId,
-                    receiver,
-                    symbol,
-                    amount
-                )
+                _getIsSendTokenExecutedKey(txHash, sender, sourceSubnetId, targetSubnetId, receiver, symbol, amount)
             );
     }
 
@@ -437,7 +429,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         bytes memory txHash,
         address sender,
         subnetId sourceSubnetId,
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address receiver,
         string memory symbol,
         uint256 amount
@@ -449,7 +441,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
                     txHash,
                     sender,
                     sourceSubnetId,
-                    destinationSubnetId,
+                    targetSubnetId,
                     receiver,
                     symbol,
                     amount

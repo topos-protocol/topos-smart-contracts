@@ -158,7 +158,7 @@ def approve_and_execute_on_receiving_subnet(
     contract_call_event = set_remote_value_tx.events["ContractCall"]
     source_subnet_id = contract_call_event["sourceSubnetId"]
     origin_address = contract_call_event["originAddress"]
-    destination_subnet_id = contract_call_event["destinationSubnetId"]
+    target_subnet_id = contract_call_event["targetSubnetId"]
     destination_contract_address = contract_call_event[
         "destinationContractAddress"
     ]
@@ -181,7 +181,7 @@ def approve_and_execute_on_receiving_subnet(
         tx_hash,
         source_subnet_id,
         origin_address,
-        destination_subnet_id,
+        target_subnet_id,
         destination_contract_address,
         payload_hash,
         payload,
