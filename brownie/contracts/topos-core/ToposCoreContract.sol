@@ -141,17 +141,17 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         (
             bytes memory txHash,
             address sender,
-            subnetId originSubnetId,
+            subnetId sourceSubnetId,
             subnetId destinationSubnetId,
             address receiver,
             string memory symbol,
             uint256 amount
         ) = abi.decode(crossSubnetTx, (bytes, address, subnetId, subnetId, address, string, uint256));
         if (!_validateDestinationSubnetId(destinationSubnetId)) revert InvalidSubnetId();
-        if (_isSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount))
+        if (_isSendTokenExecuted(txHash, sender, sourceSubnetId, destinationSubnetId, receiver, symbol, amount))
             revert TransferAlreadyExecuted();
         // prevent re-entrancy
-        _setSendTokenExecuted(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount);
+        _setSendTokenExecuted(txHash, sender, sourceSubnetId, destinationSubnetId, receiver, symbol, amount);
         _mintToken(symbol, receiver, amount);
     }
 
@@ -357,14 +357,14 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     function _setSendTokenExecuted(
         bytes memory txHash,
         address sender,
-        subnetId originSubnetId,
+        subnetId sourceSubnetId,
         subnetId destinationSubnetId,
         address receiver,
         string memory symbol,
         uint256 amount
     ) internal {
         _setBool(
-            _getIsSendTokenExecutedKey(txHash, sender, originSubnetId, destinationSubnetId, receiver, symbol, amount),
+            _getIsSendTokenExecutedKey(txHash, sender, sourceSubnetId, destinationSubnetId, receiver, symbol, amount),
             true
         );
     }
@@ -387,7 +387,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     function _isSendTokenExecuted(
         bytes memory txHash,
         address sender,
-        subnetId originSubnetId,
+        subnetId sourceSubnetId,
         subnetId destinationSubnetId,
         address receiver,
         string memory symbol,
@@ -398,7 +398,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
                 _getIsSendTokenExecutedKey(
                     txHash,
                     sender,
-                    originSubnetId,
+                    sourceSubnetId,
                     destinationSubnetId,
                     receiver,
                     symbol,
@@ -436,7 +436,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     function _getIsSendTokenExecutedKey(
         bytes memory txHash,
         address sender,
-        subnetId originSubnetId,
+        subnetId sourceSubnetId,
         subnetId destinationSubnetId,
         address receiver,
         string memory symbol,
@@ -448,7 +448,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
                     PREFIX_SEND_TOKEN_EXECUTED,
                     txHash,
                     sender,
-                    originSubnetId,
+                    sourceSubnetId,
                     destinationSubnetId,
                     receiver,
                     symbol,

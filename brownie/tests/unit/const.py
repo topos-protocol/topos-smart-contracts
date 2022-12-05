@@ -13,7 +13,7 @@ LOGO_URL = brownie.convert.to_bytes("0xdeed", "bytes")
 MINIMUM_CERT_POSITION = 4
 MINT_AMOUNT = 10
 MINT_CAP = 1000
-ORIGIN_SUBNET_ID = brownie.convert.to_bytes("0x01", "bytes32")
+SOURCE_SUBNET_ID = brownie.convert.to_bytes("0x01", "bytes32")
 PAYLOAD = brownie.convert.to_bytes("0xdead", "bytes")
 PEER_ID = brownie.convert.to_bytes("0xdeaf", "bytes")
 SEND_AMOUNT = 10
@@ -39,7 +39,7 @@ TOKEN_PARAMS = [
 MINT_TOKEN_PARAMS = [
     "bytes",  # tx hash
     "address",  # sender
-    "bytes32",  # origin subnet id
+    "bytes32",  # source subnet id
     "bytes32",  # destination subnet id
     "address",  # receiver
     "string",  # symbol

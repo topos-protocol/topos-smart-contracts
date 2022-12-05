@@ -190,7 +190,7 @@ def test_execute_transfer_reverts_on_invalid_subnet_id(
     mint_token_values = [
         c.DUMMY_DATA,
         alice.address,
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         dummy_destination_subnet_id,
         bob.address,
         c.TOKEN_SYMBOL_X,
@@ -241,8 +241,8 @@ def test_execute_transfer_reverts_on_token_does_not_exist(
     mint_token_values = [
         c.DUMMY_DATA,
         alice.address,
-        c.ORIGIN_SUBNET_ID,
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         bob.address,
         dummy_token_symbol,
         c.SEND_AMOUNT,
@@ -269,8 +269,8 @@ def test_execute_transfer_reverts_on_exceeding_daily_mint_limit(
     mint_token_values = [
         c.DUMMY_DATA,
         alice.address,
-        c.ORIGIN_SUBNET_ID,
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         bob.address,
         c.TOKEN_SYMBOL_X,
         send_amount,
@@ -312,8 +312,8 @@ def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
     mint_token_values = [
         c.DUMMY_DATA,
         alice.address,
-        c.ORIGIN_SUBNET_ID,
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         brownie.ZERO_ADDRESS,  # receiver is zero address
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,
@@ -512,7 +512,7 @@ def test_send_token_external_token_emits_events(
     ]
     assert send_token_tx.events["TokenSent"].values() == [
         alice.address,
-        brownie.convert.datatypes.HexString(c.ORIGIN_SUBNET_ID, "bytes32"),
+        brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         brownie.convert.datatypes.HexString(
             c.DESTINATION_SUBNET_ID, "bytes32"
         ),
@@ -577,7 +577,7 @@ def test_send_token_emits_events(
     ]
     assert send_token_tx.events["TokenSent"].values() == [
         alice.address,
-        brownie.convert.datatypes.HexString(c.ORIGIN_SUBNET_ID, "bytes32"),
+        brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         brownie.convert.datatypes.HexString(
             c.DESTINATION_SUBNET_ID, "bytes32"
         ),
@@ -598,7 +598,7 @@ def test_call_contract_emits_event(accounts, alice, topos_core_contract_A):
     k = keccak.new(digest_bits=256)
     k.update(c.DUMMY_DATA)
     assert tx.events["ContractCall"].values() == [
-        brownie.convert.datatypes.HexString(c.ORIGIN_SUBNET_ID, "bytes32"),
+        brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         alice.address,
         brownie.convert.datatypes.HexString(
             c.DESTINATION_SUBNET_ID, "bytes32"
@@ -640,7 +640,7 @@ def test_call_contract_with_token_emits_event(
     k = keccak.new(digest_bits=256)
     k.update(c.DUMMY_DATA)
     assert tx.events["ContractCallWithToken"].values() == [
-        brownie.convert.datatypes.HexString(c.ORIGIN_SUBNET_ID, "bytes32"),
+        brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         alice.address,
         brownie.convert.datatypes.HexString(
             c.DESTINATION_SUBNET_ID, "bytes32"
@@ -656,7 +656,7 @@ def test_call_contract_with_token_emits_event(
 def test_verify_contract_call_data_reverts_on_cert_not_verified(
     admin, topos_core_contract_A
 ):
-    fixture_subnet_id = c.ORIGIN_SUBNET_ID
+    fixture_subnet_id = c.SOURCE_SUBNET_ID
     # should fail since the certificate is nor verified yet
     with brownie.reverts():
         topos_core_contract_A.verifyContractCallData(
@@ -679,7 +679,7 @@ def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
 def test_verify_contract_call_returns_cert_position(
     admin, topos_core_contract_A
 ):
-    fixture_subnet_id = c.ORIGIN_SUBNET_ID
+    fixture_subnet_id = c.SOURCE_SUBNET_ID
     verify_cert(admin, topos_core_contract_A)
     tx = topos_core_contract_A.verifyContractCallData(
         c.CERT_ID, fixture_subnet_id, {"from": admin}
@@ -721,8 +721,8 @@ def get_default_mint_val(alice, bob):
     mint_token_args = [
         c.DUMMY_DATA,
         alice.address,
-        c.ORIGIN_SUBNET_ID,
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         bob.address,
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,

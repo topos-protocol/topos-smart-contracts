@@ -11,16 +11,11 @@ interface IToposExecutable {
     error ContractCallAlreadyExecuted();
     error UnauthorizedOrigin();
 
-    event OriginAuthorized(
-        subnetId originSubnetId,
-        address originAddress,
-        bytes32 selector,
-        uint256 minimumCertPosition
-    );
+    event OriginAuthorized(subnetId sourceSubnetId, address originAddress, bytes32 selector, uint256 minimumCertPosition);
 
     struct ContractCallData {
         bytes txHash;
-        subnetId originSubnetId;
+        subnetId sourceSubnetId;
         address originAddress;
         subnetId destinationSubnetId;
         address destinationContractAddress;
@@ -31,7 +26,7 @@ interface IToposExecutable {
 
     struct ContractCallWithTokenData {
         bytes txHash;
-        subnetId originSubnetId;
+        subnetId sourceSubnetId;
         address originAddress;
         subnetId destinationSubnetId;
         address destinationContractAddress;
@@ -45,7 +40,7 @@ interface IToposExecutable {
     function toposCoreContract() external view returns (IToposCoreContract);
 
     function authorizeOrigin(
-        subnetId originSubnetId,
+        subnetId sourceSubnetId,
         address originAddress,
         bytes32 selector,
         uint256 minimumCertPosition

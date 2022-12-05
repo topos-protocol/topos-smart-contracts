@@ -36,7 +36,7 @@ interface IToposCoreContract {
 
     event TokenSent(
         address indexed sender,
-        subnetId originSubnetId,
+        subnetId sourceSubnetId,
         subnetId destinationSubnetId,
         address receiver,
         string symbol,
@@ -44,7 +44,7 @@ interface IToposCoreContract {
     );
 
     event ContractCall(
-        subnetId originSubnetId,
+        subnetId sourceSubnetId,
         address originAddress,
         subnetId destinationSubnetId,
         address destinationContractAddress,
@@ -53,7 +53,7 @@ interface IToposCoreContract {
     );
 
     event ContractCallWithToken(
-        subnetId originSubnetId,
+        subnetId sourceSubnetId,
         address originAddress,
         subnetId destinationSubnetId,
         address destinationContractAddress,

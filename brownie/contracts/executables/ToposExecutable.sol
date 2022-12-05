@@ -29,13 +29,13 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function authorizeOrigin(
-        subnetId originSubnetId,
+        subnetId sourceSubnetId,
         address originAddress,
         bytes32 selector,
         uint256 minimumCertPosition
     ) external onlyAdmin {
-        _setAuthorizedOrigin(originSubnetId, originAddress, selector, minimumCertPosition);
-        emit OriginAuthorized(originSubnetId, originAddress, selector, minimumCertPosition);
+        _setAuthorizedOrigin(sourceSubnetId, originAddress, selector, minimumCertPosition);
+        emit OriginAuthorized(sourceSubnetId, originAddress, selector, minimumCertPosition);
     }
 
     function execute(
@@ -46,7 +46,7 @@ contract ToposExecutable is IToposExecutable {
         uint256 certPosition = toposCoreContract.verifyContractCallData(certId, contractCallData.destinationSubnetId);
         if (_isContractCallExecuted(contractCallData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertPosition = _isAuthorizedOrigin(
-            contractCallData.originSubnetId,
+            contractCallData.sourceSubnetId,
             contractCallData.originAddress,
             contractCallData.selector
         );
@@ -73,7 +73,7 @@ contract ToposExecutable is IToposExecutable {
         );
         if (_isContractCallAndMintExecuted(contractCallWithTokenData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertPosition = _isAuthorizedOrigin(
-            contractCallWithTokenData.originSubnetId,
+            contractCallWithTokenData.sourceSubnetId,
             contractCallWithTokenData.originAddress,
             contractCallWithTokenData.selector
         );
@@ -141,12 +141,12 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _setAuthorizedOrigin(
-        subnetId originSubnetId,
+        subnetId sourceSubnetId,
         address originAddress,
         bytes32 selector,
         uint256 minimumCertPosition
     ) internal {
-        _setUint256(_getAuthorizedOriginsKey(originSubnetId, originAddress, selector), minimumCertPosition);
+        _setUint256(_getAuthorizedOriginsKey(sourceSubnetId, originAddress, selector), minimumCertPosition);
     }
 
     function _isAdmin(address account) internal view returns (bool) {
@@ -166,11 +166,11 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _isAuthorizedOrigin(
-        subnetId originSubnetId,
+        subnetId sourceSubnetId,
         address originAddress,
         bytes32 selector
     ) internal view returns (uint256) {
-        return getUint256(_getAuthorizedOriginsKey(originSubnetId, originAddress, selector));
+        return getUint256(_getAuthorizedOriginsKey(sourceSubnetId, originAddress, selector));
     }
 
     function char(bytes1 b) internal pure returns (bytes1 c) {
@@ -184,7 +184,7 @@ contract ToposExecutable is IToposExecutable {
                 abi.encode(
                     PREFIX_CONTRACT_CALL_EXECUTED,
                     contractCallData.txHash,
-                    contractCallData.originSubnetId,
+                    contractCallData.sourceSubnetId,
                     contractCallData.originAddress,
                     contractCallData.destinationSubnetId,
                     contractCallData.destinationContractAddress,
@@ -205,7 +205,7 @@ contract ToposExecutable is IToposExecutable {
                 abi.encode(
                     PREFIX_CONTRACT_CALL_EXECUTED_WITH_MINT,
                     contractCallWithTokenData.txHash,
-                    contractCallWithTokenData.originSubnetId,
+                    contractCallWithTokenData.sourceSubnetId,
                     contractCallWithTokenData.originAddress,
                     contractCallWithTokenData.destinationSubnetId,
                     contractCallWithTokenData.destinationContractAddress,
@@ -223,10 +223,10 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _getAuthorizedOriginsKey(
-        subnetId originSubnetId,
+        subnetId sourceSubnetId,
         address originAddress,
         bytes32 selector
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encode(PREFIX_AUTHORIZED_ORIGINS, originSubnetId, originAddress, selector));
+        return keccak256(abi.encode(PREFIX_AUTHORIZED_ORIGINS, sourceSubnetId, originAddress, selector));
     }
 }

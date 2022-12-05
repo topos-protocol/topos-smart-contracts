@@ -18,7 +18,7 @@ def test_authorize_origin_emits_event(accounts, admin, topos_executable):
     dummy_address = accounts.add()
     tx = authorize_origin(dummy_address, admin, topos_executable)
     assert tx.events["OriginAuthorized"].values() == [
-        brownie.convert.datatypes.HexString(c.ORIGIN_SUBNET_ID, "bytes32"),
+        brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         dummy_address,
         brownie.convert.datatypes.HexString(get_selector_hash(), "bytes32"),
         c.MINIMUM_CERT_POSITION,
@@ -170,7 +170,7 @@ def test_execute_with_token_reverts_on_cert_position_lower_than_min_position(
 # internal functions #
 def authorize_origin(sender, spender, topos_executable):
     return topos_executable.authorizeOrigin(
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         sender,
         get_selector_hash(),
         c.MINIMUM_CERT_POSITION,
@@ -181,7 +181,7 @@ def authorize_origin(sender, spender, topos_executable):
 def get_call_contract_data(addr, subnet_id):
     return [
         c.DUMMY_DATA,  # tx_hash
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         addr,  # origin_address
         subnet_id,
         addr,  # destination_contract_address
@@ -194,7 +194,7 @@ def get_call_contract_data(addr, subnet_id):
 def get_call_contract_with_token_data(addr, subnet_id):
     return [
         c.DUMMY_DATA,  # tx_hash
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         addr,  # origin_address
         subnet_id,
         addr,  # destination_contract_address
