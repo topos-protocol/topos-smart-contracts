@@ -47,7 +47,7 @@ interface IToposCoreContract {
         subnetId sourceSubnetId,
         address sourceContractAddr,
         subnetId targetSubnetId,
-        address destinationContractAddress,
+        address targetContractAddr,
         bytes32 indexed payloadHash,
         bytes payload
     );
@@ -56,7 +56,7 @@ interface IToposCoreContract {
         subnetId sourceSubnetId,
         address sourceContractAddr,
         subnetId targetSubnetId,
-        address destinationContractAddress,
+        address targetContractAddr,
         bytes32 indexed payloadHash,
         bytes payload,
         string symbol,
@@ -88,13 +88,13 @@ interface IToposCoreContract {
 
     function callContract(
         subnetId targetSubnetId,
-        address destinationContractAddress,
+        address targetContractAddr,
         bytes calldata payload
     ) external;
 
     function callContractWithToken(
         subnetId targetSubnetId,
-        address destinationContractAddress,
+        address targetContractAddr,
         bytes calldata payload,
         string calldata symbol,
         uint256 amount

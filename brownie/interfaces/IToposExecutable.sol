@@ -23,7 +23,7 @@ interface IToposExecutable {
         subnetId sourceSubnetId;
         address sourceContractAddr;
         subnetId targetSubnetId;
-        address destinationContractAddress;
+        address targetContractAddr;
         bytes32 payloadHash;
         bytes payload;
         bytes32 selector; // keccak256 hash of a function name eg. keccak256("executeContractCall")
@@ -34,7 +34,7 @@ interface IToposExecutable {
         subnetId sourceSubnetId;
         address sourceContractAddr;
         subnetId targetSubnetId;
-        address destinationContractAddress;
+        address targetContractAddr;
         bytes32 payloadHash;
         bytes payload;
         string symbol;

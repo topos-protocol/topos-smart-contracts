@@ -56,7 +56,7 @@ contract ToposExecutable is IToposExecutable {
         _setContractCallExecuted(contractCallData);
         _execute(
             contractCallData.targetSubnetId,
-            contractCallData.destinationContractAddress,
+            contractCallData.targetContractAddr,
             contractCallData.selector,
             contractCallData.payload
         );
@@ -83,7 +83,7 @@ contract ToposExecutable is IToposExecutable {
         _setContractCallExecutedWithMint(contractCallWithTokenData);
         _executeWithToken(
             contractCallWithTokenData.targetSubnetId,
-            contractCallWithTokenData.destinationContractAddress,
+            contractCallWithTokenData.targetContractAddr,
             contractCallWithTokenData.selector,
             contractCallWithTokenData.payload,
             contractCallWithTokenData.symbol,
@@ -106,14 +106,14 @@ contract ToposExecutable is IToposExecutable {
 
     function _execute(
         subnetId targetSubnetId,
-        address destinationContractAddress,
+        address targetContractAddr,
         bytes32 selector,
         bytes memory payload
     ) internal virtual {}
 
     function _executeWithToken(
         subnetId targetSubnetId,
-        address destinationContractAddress,
+        address targetContractAddr,
         bytes32 selector,
         bytes memory payload,
         string memory tokenSymbol,
@@ -187,7 +187,7 @@ contract ToposExecutable is IToposExecutable {
                     contractCallData.sourceSubnetId,
                     contractCallData.sourceContractAddr,
                     contractCallData.targetSubnetId,
-                    contractCallData.destinationContractAddress,
+                    contractCallData.targetContractAddr,
                     contractCallData.payloadHash,
                     contractCallData.payload,
                     contractCallData.selector
@@ -208,7 +208,7 @@ contract ToposExecutable is IToposExecutable {
                     contractCallWithTokenData.sourceSubnetId,
                     contractCallWithTokenData.sourceContractAddr,
                     contractCallWithTokenData.targetSubnetId,
-                    contractCallWithTokenData.destinationContractAddress,
+                    contractCallWithTokenData.targetContractAddr,
                     contractCallWithTokenData.payloadHash,
                     contractCallWithTokenData.payload,
                     contractCallWithTokenData.symbol,

@@ -178,7 +178,7 @@ def get_call_contract_data(addr, subnet_id):
         c.SOURCE_SUBNET_ID,
         addr,  # source_contract_addr
         subnet_id,
-        addr,  # destination_contract_address
+        addr,  # target_contract_addr
         get_payload_hash(),
         c.PAYLOAD,
         get_selector_hash(),
@@ -191,7 +191,7 @@ def get_call_contract_with_token_data(addr, subnet_id):
         c.SOURCE_SUBNET_ID,
         addr,  # source_contract_addr
         subnet_id,
-        addr,  # destination_contract_address
+        addr,  # target_contract_addr
         get_payload_hash(),
         c.PAYLOAD,
         c.TOKEN_SYMBOL_X,

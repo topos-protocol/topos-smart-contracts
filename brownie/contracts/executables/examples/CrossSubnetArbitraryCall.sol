@@ -11,7 +11,7 @@ contract CrossSubnetArbitraryCall is ToposExecutable {
 
     string public value;
     subnetId public targetSubnetId_;
-    address destinationContractAddress_;
+    address targetContractAddr_;
 
     bytes32 internal constant SELECTOR_CHANGE_VALUE = keccak256("changeValue");
 
@@ -20,23 +20,23 @@ contract CrossSubnetArbitraryCall is ToposExecutable {
     // Call this function to update the value of this contract along with all its siblings'.
     function setRemoteValue(
         subnetId targetSubnetId,
-        address destinationContractAddress,
+        address targetContractAddr,
         string calldata value_
     ) external payable {
         bytes memory payload = abi.encode(value_);
-        toposCoreContract.callContract(targetSubnetId, destinationContractAddress, payload);
+        toposCoreContract.callContract(targetSubnetId, targetContractAddr, payload);
     }
 
     // Handles calls created by setAndSend. Updates this contract's value
     function _execute(
         subnetId targetSubnetId,
-        address destinationContractAddress,
+        address targetContractAddr,
         bytes32 selector,
         bytes memory payload
     ) internal override {
         if (selector == SELECTOR_CHANGE_VALUE) {
             targetSubnetId_ = targetSubnetId;
-            destinationContractAddress_ = destinationContractAddress;
+            targetContractAddr_ = targetContractAddr;
             changeValue(payload);
         } else {
             revert UnknownSelector();

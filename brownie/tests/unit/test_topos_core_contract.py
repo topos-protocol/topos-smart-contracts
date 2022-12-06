@@ -183,7 +183,7 @@ def test_execute_transfer_reverts_on_unverified_cert(
 def test_execute_transfer_reverts_on_invalid_subnet_id(
     admin, alice, bob, topos_core_contract_A
 ):
-    # default destination cert id is set to "0x01"
+    # default target subnet id is set to "0x01"
     dummy_target_subnet_id = brownie.convert.to_bytes("0x02", "bytes32")
     verify_cert(admin, topos_core_contract_A)
     # execute asset transfer args
@@ -584,10 +584,10 @@ def test_send_token_emits_events(
 
 
 def test_call_contract_emits_event(accounts, alice, topos_core_contract_A):
-    destination_contract_addr = accounts.add()
+    target_contract_addr = accounts.add()
     tx = topos_core_contract_A.callContract(
         c.TARGET_SUBNET_ID,
-        destination_contract_addr,
+        target_contract_addr,
         c.DUMMY_DATA,
         {"from": alice},
     )
@@ -597,7 +597,7 @@ def test_call_contract_emits_event(accounts, alice, topos_core_contract_A):
         brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         alice.address,
         brownie.convert.datatypes.HexString(c.TARGET_SUBNET_ID, "bytes32"),
-        destination_contract_addr.address,
+        target_contract_addr.address,
         "0x" + k.hexdigest(),  # payload hash
         brownie.convert.datatypes.HexString(c.DUMMY_DATA, "bytes"),
     ]
@@ -622,10 +622,10 @@ def test_call_contract_with_token_emits_event(
     burnable_mint_erc20.approve(
         topos_core_contract_A, c.APPROVE_AMOUNT, {"from": alice}
     )
-    destination_contract_addr = accounts.add()
+    target_contract_addr = accounts.add()
     tx = topos_core_contract_A.callContractWithToken(
         c.TARGET_SUBNET_ID,
-        destination_contract_addr,
+        target_contract_addr,
         c.DUMMY_DATA,
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,
@@ -637,7 +637,7 @@ def test_call_contract_with_token_emits_event(
         brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         alice.address,
         brownie.convert.datatypes.HexString(c.TARGET_SUBNET_ID, "bytes32"),
-        destination_contract_addr.address,
+        target_contract_addr.address,
         "0x" + k.hexdigest(),  # payload hash
         brownie.convert.datatypes.HexString(c.DUMMY_DATA, "bytes"),
         c.TOKEN_SYMBOL_X,

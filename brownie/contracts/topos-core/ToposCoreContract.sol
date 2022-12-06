@@ -167,14 +167,14 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function callContract(
         subnetId targetSubnetId,
-        address destinationContractAddress,
+        address targetContractAddr,
         bytes calldata payload
     ) external {
         emit ContractCall(
             _networkSubnetId,
             msg.sender,
             targetSubnetId,
-            destinationContractAddress,
+            targetContractAddr,
             keccak256(payload),
             payload
         );
@@ -182,7 +182,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function callContractWithToken(
         subnetId targetSubnetId,
-        address destinationContractAddress,
+        address targetContractAddr,
         bytes calldata payload,
         string calldata symbol,
         uint256 amount
@@ -192,7 +192,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             _networkSubnetId,
             msg.sender,
             targetSubnetId,
-            destinationContractAddress,
+            targetContractAddr,
             keccak256(payload),
             payload,
             symbol,
