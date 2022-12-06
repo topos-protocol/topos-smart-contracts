@@ -176,7 +176,7 @@ def get_call_contract_data(addr, subnet_id):
     return [
         c.DUMMY_DATA,  # tx_hash
         c.SOURCE_SUBNET_ID,
-        addr,  # origin_address
+        addr,  # source_contract_addr
         subnet_id,
         addr,  # destination_contract_address
         get_payload_hash(),
@@ -189,7 +189,7 @@ def get_call_contract_with_token_data(addr, subnet_id):
     return [
         c.DUMMY_DATA,  # tx_hash
         c.SOURCE_SUBNET_ID,
-        addr,  # origin_address
+        addr,  # source_contract_addr
         subnet_id,
         addr,  # destination_contract_address
         get_payload_hash(),

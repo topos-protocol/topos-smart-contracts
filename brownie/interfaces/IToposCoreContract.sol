@@ -45,7 +45,7 @@ interface IToposCoreContract {
 
     event ContractCall(
         subnetId sourceSubnetId,
-        address originAddress,
+        address sourceContractAddr,
         subnetId targetSubnetId,
         address destinationContractAddress,
         bytes32 indexed payloadHash,
@@ -54,7 +54,7 @@ interface IToposCoreContract {
 
     event ContractCallWithToken(
         subnetId sourceSubnetId,
-        address originAddress,
+        address sourceContractAddr,
         subnetId targetSubnetId,
         address destinationContractAddress,
         bytes32 indexed payloadHash,

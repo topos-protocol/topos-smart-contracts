@@ -157,7 +157,7 @@ def approve_and_execute_on_receiving_subnet(
     # events as seen by the web-service
     contract_call_event = set_remote_value_tx.events["ContractCall"]
     source_subnet_id = contract_call_event["sourceSubnetId"]
-    origin_address = contract_call_event["originAddress"]
+    source_contract_addr = contract_call_event["sourceContractAddr"]
     target_subnet_id = contract_call_event["targetSubnetId"]
     destination_contract_address = contract_call_event[
         "destinationContractAddress"
@@ -171,7 +171,7 @@ def approve_and_execute_on_receiving_subnet(
     # authorize the origin
     xs_arbitrary_call_B.authorizeOrigin(
         source_subnet_id,
-        origin_address,
+        source_contract_addr,
         selector,
         min_cert_position_admin,
         {"from": accounts[0]},
@@ -180,7 +180,7 @@ def approve_and_execute_on_receiving_subnet(
     execute_values = [
         tx_hash,
         source_subnet_id,
-        origin_address,
+        source_contract_addr,
         target_subnet_id,
         destination_contract_address,
         payload_hash,

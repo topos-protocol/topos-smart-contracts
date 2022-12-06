@@ -13,7 +13,7 @@ interface IToposExecutable {
 
     event OriginAuthorized(
         subnetId sourceSubnetId,
-        address originAddress,
+        address sourceContractAddr,
         bytes32 selector,
         uint256 minimumCertPosition
     );
@@ -21,7 +21,7 @@ interface IToposExecutable {
     struct ContractCallData {
         bytes txHash;
         subnetId sourceSubnetId;
-        address originAddress;
+        address sourceContractAddr;
         subnetId targetSubnetId;
         address destinationContractAddress;
         bytes32 payloadHash;
@@ -32,7 +32,7 @@ interface IToposExecutable {
     struct ContractCallWithTokenData {
         bytes txHash;
         subnetId sourceSubnetId;
-        address originAddress;
+        address sourceContractAddr;
         subnetId targetSubnetId;
         address destinationContractAddress;
         bytes32 payloadHash;
@@ -46,7 +46,7 @@ interface IToposExecutable {
 
     function authorizeOrigin(
         subnetId sourceSubnetId,
-        address originAddress,
+        address sourceContractAddr,
         bytes32 selector,
         uint256 minimumCertPosition
     ) external;
