@@ -36,27 +36,27 @@ interface IToposCoreContract {
 
     event TokenSent(
         address indexed sender,
-        subnetId originSubnetId,
-        subnetId destinationSubnetId,
+        subnetId sourceSubnetId,
+        subnetId targetSubnetId,
         address receiver,
         string symbol,
         uint256 amount
     );
 
     event ContractCall(
-        subnetId originSubnetId,
-        address originAddress,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
+        subnetId sourceSubnetId,
+        address sourceContractAddr,
+        subnetId targetSubnetId,
+        address targetContractAddr,
         bytes32 indexed payloadHash,
         bytes payload
     );
 
     event ContractCallWithToken(
-        subnetId originSubnetId,
-        address originAddress,
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
+        subnetId sourceSubnetId,
+        address sourceContractAddr,
+        subnetId targetSubnetId,
+        address targetContractAddr,
         bytes32 indexed payloadHash,
         bytes payload,
         string symbol,
@@ -74,7 +74,7 @@ interface IToposCoreContract {
     \********************/
 
     function sendToken(
-        subnetId destinationSubnetId,
+        subnetId targetSubnetId,
         address receiver,
         string calldata symbol,
         uint256 amount
@@ -87,20 +87,20 @@ interface IToposCoreContract {
     ) external;
 
     function callContract(
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
+        subnetId targetSubnetId,
+        address targetContractAddr,
         bytes calldata payload
     ) external;
 
     function callContractWithToken(
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
+        subnetId targetSubnetId,
+        address targetContractAddr,
         bytes calldata payload,
         string calldata symbol,
         uint256 amount
     ) external;
 
-    function verifyContractCallData(bytes calldata certId, subnetId destinationSubnetId) external returns (uint256);
+    function verifyContractCallData(bytes calldata certId, subnetId targetSubnetId) external returns (uint256);
 
     /***********\
     |* Getters *|

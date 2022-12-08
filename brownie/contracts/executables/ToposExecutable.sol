@@ -29,13 +29,13 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function authorizeOrigin(
-        subnetId originSubnetId,
-        address originAddress,
+        subnetId sourceSubnetId,
+        address sourceContractAddr,
         bytes32 selector,
         uint256 minimumCertPosition
     ) external onlyAdmin {
-        _setAuthorizedOrigin(originSubnetId, originAddress, selector, minimumCertPosition);
-        emit OriginAuthorized(originSubnetId, originAddress, selector, minimumCertPosition);
+        _setAuthorizedOrigin(sourceSubnetId, sourceContractAddr, selector, minimumCertPosition);
+        emit OriginAuthorized(sourceSubnetId, sourceContractAddr, selector, minimumCertPosition);
     }
 
     function execute(
@@ -43,11 +43,11 @@ contract ToposExecutable is IToposExecutable {
         ContractCallData memory contractCallData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        uint256 certPosition = toposCoreContract.verifyContractCallData(certId, contractCallData.destinationSubnetId);
+        uint256 certPosition = toposCoreContract.verifyContractCallData(certId, contractCallData.targetSubnetId);
         if (_isContractCallExecuted(contractCallData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertPosition = _isAuthorizedOrigin(
-            contractCallData.originSubnetId,
-            contractCallData.originAddress,
+            contractCallData.sourceSubnetId,
+            contractCallData.sourceContractAddr,
             contractCallData.selector
         );
         if (certPosition <= minimumCertPosition) revert UnauthorizedOrigin();
@@ -55,8 +55,8 @@ contract ToposExecutable is IToposExecutable {
         // prevent re-entrancy
         _setContractCallExecuted(contractCallData);
         _execute(
-            contractCallData.destinationSubnetId,
-            contractCallData.destinationContractAddress,
+            contractCallData.targetSubnetId,
+            contractCallData.targetContractAddr,
             contractCallData.selector,
             contractCallData.payload
         );
@@ -69,12 +69,12 @@ contract ToposExecutable is IToposExecutable {
     ) external override {
         uint256 certPosition = toposCoreContract.verifyContractCallData(
             certId,
-            contractCallWithTokenData.destinationSubnetId
+            contractCallWithTokenData.targetSubnetId
         );
         if (_isContractCallAndMintExecuted(contractCallWithTokenData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertPosition = _isAuthorizedOrigin(
-            contractCallWithTokenData.originSubnetId,
-            contractCallWithTokenData.originAddress,
+            contractCallWithTokenData.sourceSubnetId,
+            contractCallWithTokenData.sourceContractAddr,
             contractCallWithTokenData.selector
         );
         if (certPosition <= minimumCertPosition) revert UnauthorizedOrigin();
@@ -82,8 +82,8 @@ contract ToposExecutable is IToposExecutable {
         // prevent re-entrancy
         _setContractCallExecutedWithMint(contractCallWithTokenData);
         _executeWithToken(
-            contractCallWithTokenData.destinationSubnetId,
-            contractCallWithTokenData.destinationContractAddress,
+            contractCallWithTokenData.targetSubnetId,
+            contractCallWithTokenData.targetContractAddr,
             contractCallWithTokenData.selector,
             contractCallWithTokenData.payload,
             contractCallWithTokenData.symbol,
@@ -105,15 +105,15 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _execute(
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
+        subnetId targetSubnetId,
+        address targetContractAddr,
         bytes32 selector,
         bytes memory payload
     ) internal virtual {}
 
     function _executeWithToken(
-        subnetId destinationSubnetId,
-        address destinationContractAddress,
+        subnetId targetSubnetId,
+        address targetContractAddr,
         bytes32 selector,
         bytes memory payload,
         string memory tokenSymbol,
@@ -141,12 +141,12 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _setAuthorizedOrigin(
-        subnetId originSubnetId,
-        address originAddress,
+        subnetId sourceSubnetId,
+        address sourceContractAddr,
         bytes32 selector,
         uint256 minimumCertPosition
     ) internal {
-        _setUint256(_getAuthorizedOriginsKey(originSubnetId, originAddress, selector), minimumCertPosition);
+        _setUint256(_getAuthorizedOriginsKey(sourceSubnetId, sourceContractAddr, selector), minimumCertPosition);
     }
 
     function _isAdmin(address account) internal view returns (bool) {
@@ -166,11 +166,11 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _isAuthorizedOrigin(
-        subnetId originSubnetId,
-        address originAddress,
+        subnetId sourceSubnetId,
+        address sourceContractAddr,
         bytes32 selector
     ) internal view returns (uint256) {
-        return getUint256(_getAuthorizedOriginsKey(originSubnetId, originAddress, selector));
+        return getUint256(_getAuthorizedOriginsKey(sourceSubnetId, sourceContractAddr, selector));
     }
 
     function char(bytes1 b) internal pure returns (bytes1 c) {
@@ -184,10 +184,10 @@ contract ToposExecutable is IToposExecutable {
                 abi.encode(
                     PREFIX_CONTRACT_CALL_EXECUTED,
                     contractCallData.txHash,
-                    contractCallData.originSubnetId,
-                    contractCallData.originAddress,
-                    contractCallData.destinationSubnetId,
-                    contractCallData.destinationContractAddress,
+                    contractCallData.sourceSubnetId,
+                    contractCallData.sourceContractAddr,
+                    contractCallData.targetSubnetId,
+                    contractCallData.targetContractAddr,
                     contractCallData.payloadHash,
                     contractCallData.payload,
                     contractCallData.selector
@@ -205,10 +205,10 @@ contract ToposExecutable is IToposExecutable {
                 abi.encode(
                     PREFIX_CONTRACT_CALL_EXECUTED_WITH_MINT,
                     contractCallWithTokenData.txHash,
-                    contractCallWithTokenData.originSubnetId,
-                    contractCallWithTokenData.originAddress,
-                    contractCallWithTokenData.destinationSubnetId,
-                    contractCallWithTokenData.destinationContractAddress,
+                    contractCallWithTokenData.sourceSubnetId,
+                    contractCallWithTokenData.sourceContractAddr,
+                    contractCallWithTokenData.targetSubnetId,
+                    contractCallWithTokenData.targetContractAddr,
                     contractCallWithTokenData.payloadHash,
                     contractCallWithTokenData.payload,
                     contractCallWithTokenData.symbol,
@@ -223,10 +223,10 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _getAuthorizedOriginsKey(
-        subnetId originSubnetId,
-        address originAddress,
+        subnetId sourceSubnetId,
+        address sourceContractAddr,
         bytes32 selector
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encode(PREFIX_AUTHORIZED_ORIGINS, originSubnetId, originAddress, selector));
+        return keccak256(abi.encode(PREFIX_AUTHORIZED_ORIGINS, sourceSubnetId, sourceContractAddr, selector));
     }
 }
