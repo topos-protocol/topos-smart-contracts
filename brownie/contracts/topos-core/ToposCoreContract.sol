@@ -52,11 +52,11 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     \*******************/
 
     function verifyCertificate(bytes memory certBytes) external onlyAdmin {
-        (bytes memory certId, uint256 certHeight) = abi.decode(certBytes, (bytes, uint256));
+        (bytes memory certId, uint256 certPosition) = abi.decode(certBytes, (bytes, uint256));
         Certificate memory storedCert = verifiedCerts[certId];
         if (storedCert.isVerified == true) revert CertAlreadyVerified();
         if (!_verfiyCertificate(certId)) revert InvalidCert();
-        Certificate memory newCert = Certificate({certId: certId, height: certHeight, isVerified: true});
+        Certificate memory newCert = Certificate({certId: certId, position: certPosition, isVerified: true});
         verifiedCerts[certId] = newCert;
         emit CertVerified(certId);
     }
@@ -233,7 +233,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         Certificate memory storedCert = getVerfiedCert(certId);
         if (storedCert.isVerified == false) revert CertNotVerified();
         if (!_validateDestinationSubnetId(destinationSubnetId)) revert InvalidSubnetId();
-        return storedCert.height;
+        return storedCert.position;
     }
 
     /***********\

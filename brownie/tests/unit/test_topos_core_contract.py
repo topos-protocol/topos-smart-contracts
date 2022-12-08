@@ -676,7 +676,7 @@ def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
         )
 
 
-def test_verify_contract_call_returns_cert_height(
+def test_verify_contract_call_returns_cert_position(
     admin, topos_core_contract_A
 ):
     fixture_subnet_id = c.ORIGIN_SUBNET_ID
@@ -684,13 +684,13 @@ def test_verify_contract_call_returns_cert_height(
     tx = topos_core_contract_A.verifyContractCallData(
         c.CERT_ID, fixture_subnet_id, {"from": admin}
     )
-    assert tx == c.CERT_HEIGHT
+    assert tx == c.CERT_POSITION
 
 
 # internal functions #
 def verify_cert(admin, topos_core_contract_A):
     return topos_core_contract_A.verifyCertificate(
-        eth_abi.encode(["bytes", "uint256"], [c.CERT_ID, c.CERT_HEIGHT]),
+        eth_abi.encode(["bytes", "uint256"], [c.CERT_ID, c.CERT_POSITION]),
         {"from": admin},
     )
 

@@ -32,10 +32,10 @@ contract ToposExecutable is IToposExecutable {
         subnetId originSubnetId,
         address originAddress,
         bytes32 selector,
-        uint256 minimumCertHeight
+        uint256 minimumCertPosition
     ) external onlyAdmin {
-        _setAuthorizedOrigin(originSubnetId, originAddress, selector, minimumCertHeight);
-        emit OriginAuthorized(originSubnetId, originAddress, selector, minimumCertHeight);
+        _setAuthorizedOrigin(originSubnetId, originAddress, selector, minimumCertPosition);
+        emit OriginAuthorized(originSubnetId, originAddress, selector, minimumCertPosition);
     }
 
     function execute(
@@ -43,14 +43,14 @@ contract ToposExecutable is IToposExecutable {
         ContractCallData memory contractCallData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        uint256 certHeight = toposCoreContract.verifyContractCallData(certId, contractCallData.destinationSubnetId);
+        uint256 certPosition = toposCoreContract.verifyContractCallData(certId, contractCallData.destinationSubnetId);
         if (_isContractCallExecuted(contractCallData) == true) revert ContractCallAlreadyExecuted();
-        uint256 minimumCertHeight = _isAuthorizedOrigin(
+        uint256 minimumCertPosition = _isAuthorizedOrigin(
             contractCallData.originSubnetId,
             contractCallData.originAddress,
             contractCallData.selector
         );
-        if (certHeight <= minimumCertHeight) revert UnauthorizedOrigin();
+        if (certPosition <= minimumCertPosition) revert UnauthorizedOrigin();
 
         // prevent re-entrancy
         _setContractCallExecuted(contractCallData);
@@ -67,17 +67,17 @@ contract ToposExecutable is IToposExecutable {
         ContractCallWithTokenData memory contractCallWithTokenData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        uint256 certHeight = toposCoreContract.verifyContractCallData(
+        uint256 certPosition = toposCoreContract.verifyContractCallData(
             certId,
             contractCallWithTokenData.destinationSubnetId
         );
         if (_isContractCallAndMintExecuted(contractCallWithTokenData) == true) revert ContractCallAlreadyExecuted();
-        uint256 minimumCertHeight = _isAuthorizedOrigin(
+        uint256 minimumCertPosition = _isAuthorizedOrigin(
             contractCallWithTokenData.originSubnetId,
             contractCallWithTokenData.originAddress,
             contractCallWithTokenData.selector
         );
-        if (certHeight <= minimumCertHeight) revert UnauthorizedOrigin();
+        if (certPosition <= minimumCertPosition) revert UnauthorizedOrigin();
 
         // prevent re-entrancy
         _setContractCallExecutedWithMint(contractCallWithTokenData);
@@ -144,9 +144,9 @@ contract ToposExecutable is IToposExecutable {
         subnetId originSubnetId,
         address originAddress,
         bytes32 selector,
-        uint256 minimumCertHeight
+        uint256 minimumCertPosition
     ) internal {
-        _setUint256(_getAuthorizedOriginsKey(originSubnetId, originAddress, selector), minimumCertHeight);
+        _setUint256(_getAuthorizedOriginsKey(originSubnetId, originAddress, selector), minimumCertPosition);
     }
 
     function _isAdmin(address account) internal view returns (bool) {
