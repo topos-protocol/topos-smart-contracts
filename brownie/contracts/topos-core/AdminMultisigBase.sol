@@ -4,7 +4,6 @@ pragma solidity ^0.8.9;
 
 import {EternalStorage} from "./EternalStorage.sol";
 
-/* solium-disable */
 contract AdminMultisigBase is EternalStorage {
     error NotAdmin();
     error AlreadyVoted();

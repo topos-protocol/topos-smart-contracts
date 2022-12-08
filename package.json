@@ -24,14 +24,13 @@
     "install:eth_abi": "pip3 install eth_abi",
     "install:flake8": "pip3 install flake8",
     "kill-ganache": "for pname in $(pgrep -f ganache); do kill $pname; done",
-    "lint": "npm run lint:sol && npm run lint:sol:ethlint && npm run lint:prettier && npm run lint:flake8",
+    "lint": "npm run lint:sol && npm run lint:prettier && npm run lint:flake8",
     "lint:black:fix": "black brownie/tests",
     "lint:fix": "npm run lint:prettier:fix && npm run lint:black:fix",
     "lint:flake8": "flake8 'brownie/tests'",
     "lint:prettier": "prettier -c 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
     "lint:prettier:fix": "prettier --write 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
     "lint:sol": "solhint 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
-    "lint:sol:ethlint": "solium -d brownie/contracts/",
     "precoverage": "npm run add-network && npm run run-development && npm run run-development-two",
     "postcoverage": "npm run kill-ganache && npm run clear-deployment",
     "pretest": "npm run add-network && npm run run-development && npm run run-development-two",
@@ -41,7 +40,6 @@
     "test": "brownie test"
   },
   "devDependencies": {
-    "ethlint": "^1.2.5",
     "ganache": "^7.4.1",
     "prettier": "^2.7.1",
     "prettier-plugin-solidity": "^1.0.0-beta.24",
