@@ -21,7 +21,7 @@ def test_authorize_origin_emits_event(accounts, admin, topos_executable):
         brownie.convert.datatypes.HexString(c.ORIGIN_SUBNET_ID, "bytes32"),
         dummy_address,
         brownie.convert.datatypes.HexString(get_selector_hash(), "bytes32"),
-        c.MINIMUM_CERT_HEIGHT,
+        c.MINIMUM_CERT_POSITION,
     ]
 
 
@@ -31,7 +31,7 @@ def test_execute_reverts_on_unverified_cert_id(
     invalid_cert_id = brownie.convert.to_bytes("0xdead", "bytes")
     dummy_address = accounts.add()
     topos_core_contract_B.verifyCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_data(dummy_address, c.DESTINATION_SUBNET_ID)
     # should revert since the cert is unverified
@@ -47,7 +47,7 @@ def test_execute_reverts_on_false_destination_id(
     invalid_destination_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
     dummy_address = accounts.add()
     topos_core_contract_B.verifyCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_data(dummy_address, invalid_destination_subnet_id)
     # should revert since destination subnet id is incorrect
@@ -63,7 +63,7 @@ def test_execute_reverts_on_contract_call_already_executed(
     dummy_address = accounts.add()
     authorize_origin(dummy_address, admin, topos_executable)
     topos_core_contract_B.verifyCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_data(dummy_address, c.DESTINATION_SUBNET_ID)
     topos_executable.execute(c.CERT_ID, data, c.DUMMY_DATA, {"from": admin})
@@ -74,17 +74,17 @@ def test_execute_reverts_on_contract_call_already_executed(
         )
 
 
-def test_execute_reverts_on_cert_height_lower_than_min_height(
+def test_execute_reverts_on_cert_position_lower_than_min_position(
     accounts, admin, topos_core_contract_B, topos_executable
 ):
     dummy_address = accounts.add()
-    cert_height = 3
+    cert_position = 3
     authorize_origin(dummy_address, admin, topos_executable)
     topos_core_contract_B.verifyCertificate(
-        get_encoded_cert_params(c.CERT_ID, cert_height), {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, cert_position), {"from": admin}
     )
     data = get_call_contract_data(dummy_address, c.DESTINATION_SUBNET_ID)
-    # should revert since the cert height < min cert height
+    # should revert since the cert position < min cert position
     with brownie.reverts():
         topos_executable.execute(
             c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
@@ -97,7 +97,7 @@ def test_execute_with_token_reverts_on_unverified_cert_id(
     invalid_cert_id = brownie.convert.to_bytes("0xdead", "bytes")
     dummy_address = accounts.add()
     topos_core_contract_B.verifyCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_with_token_data(
         dummy_address, c.DESTINATION_SUBNET_ID
@@ -115,7 +115,7 @@ def test_execute_with_token_reverts_on_false_destination_id(
     invalid_destination_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
     dummy_address = accounts.add()
     topos_core_contract_B.verifyCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_with_token_data(
         dummy_address, invalid_destination_subnet_id
@@ -133,7 +133,7 @@ def test_execute_with_token_reverts_on_contract_call_already_executed(
     dummy_address = accounts.add()
     authorize_origin(dummy_address, admin, topos_executable)
     topos_core_contract_B.verifyCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_HEIGHT), {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_with_token_data(
         dummy_address, c.DESTINATION_SUBNET_ID
@@ -148,19 +148,19 @@ def test_execute_with_token_reverts_on_contract_call_already_executed(
         )
 
 
-def test_execute_with_token_reverts_on_cert_height_lower_than_min_height(
+def test_execute_with_token_reverts_on_cert_position_lower_than_min_position(
     accounts, admin, topos_core_contract_B, topos_executable
 ):
     dummy_address = accounts.add()
-    cert_height = 3
+    cert_position = 3
     authorize_origin(dummy_address, admin, topos_executable)
     topos_core_contract_B.verifyCertificate(
-        get_encoded_cert_params(c.CERT_ID, cert_height), {"from": admin}
+        get_encoded_cert_params(c.CERT_ID, cert_position), {"from": admin}
     )
     data = get_call_contract_with_token_data(
         dummy_address, c.DESTINATION_SUBNET_ID
     )
-    # should revert since the cert height < min cert height
+    # should revert since the cert position < min cert position
     with brownie.reverts():
         topos_executable.executeWithToken(
             c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
@@ -173,7 +173,7 @@ def authorize_origin(sender, spender, topos_executable):
         c.ORIGIN_SUBNET_ID,
         sender,
         get_selector_hash(),
-        c.MINIMUM_CERT_HEIGHT,
+        c.MINIMUM_CERT_POSITION,
         {"from": spender},
     )
 
@@ -206,8 +206,8 @@ def get_call_contract_with_token_data(addr, subnet_id):
     ]
 
 
-def get_encoded_cert_params(cert_id, cert_height):
-    return eth_abi.encode(["bytes", "uint256"], [cert_id, cert_height])
+def get_encoded_cert_params(cert_id, cert_position):
+    return eth_abi.encode(["bytes", "uint256"], [cert_id, cert_position])
 
 
 def get_payload_hash():

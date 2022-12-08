@@ -3,14 +3,14 @@ import brownie
 # const
 APPROVE_AMOUNT = 10
 CERT_BYTES = "0xdeaf"
-CERT_HEIGHT = 5
+CERT_POSITION = 5
 CERT_ID = brownie.convert.to_bytes(CERT_BYTES, "bytes")
 DAILY_MINT_LIMIT = 100
 DESTINATION_SUBNET_ID = brownie.convert.to_bytes("0x02", "bytes32")
 DUMMY_DATA = brownie.convert.to_bytes("0x00", "bytes")
 ENDPOINT = brownie.convert.to_bytes("0xdead", "bytes")
 LOGO_URL = brownie.convert.to_bytes("0xdeed", "bytes")
-MINIMUM_CERT_HEIGHT = 4
+MINIMUM_CERT_POSITION = 4
 MINT_AMOUNT = 10
 MINT_CAP = 1000
 ORIGIN_SUBNET_ID = brownie.convert.to_bytes("0x01", "bytes32")

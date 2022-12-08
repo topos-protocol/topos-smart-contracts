@@ -26,7 +26,7 @@ interface IToposCoreContract {
 
     struct Certificate {
         bytes certId;
-        uint256 height;
+        uint256 position;
         bool isVerified;
     }
 
