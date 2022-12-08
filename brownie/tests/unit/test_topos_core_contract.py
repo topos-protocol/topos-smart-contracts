@@ -183,15 +183,15 @@ def test_execute_transfer_reverts_on_unverified_cert(
 def test_execute_transfer_reverts_on_invalid_subnet_id(
     admin, alice, bob, topos_core_contract_A
 ):
-    # default destination cert id is set to "0x01"
-    dummy_destination_subnet_id = brownie.convert.to_bytes("0x02", "bytes32")
+    # default target subnet id is set to "0x01"
+    dummy_target_subnet_id = brownie.convert.to_bytes("0x02", "bytes32")
     verify_cert(admin, topos_core_contract_A)
     # execute asset transfer args
     mint_token_values = [
         c.DUMMY_DATA,
         alice.address,
-        c.ORIGIN_SUBNET_ID,
-        dummy_destination_subnet_id,
+        c.SOURCE_SUBNET_ID,
+        dummy_target_subnet_id,
         bob.address,
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,
@@ -199,7 +199,7 @@ def test_execute_transfer_reverts_on_invalid_subnet_id(
     encoded_mint_token_params = eth_abi.encode(
         c.MINT_TOKEN_PARAMS, mint_token_values
     )
-    # should fail since the provided destination subnet id is different
+    # should fail since the provided target subnet id is different
     with brownie.reverts():
         topos_core_contract_A.executeAssetTransfer(
             c.CERT_ID, encoded_mint_token_params, c.DUMMY_DATA, {"from": admin}
@@ -241,8 +241,8 @@ def test_execute_transfer_reverts_on_token_does_not_exist(
     mint_token_values = [
         c.DUMMY_DATA,
         alice.address,
-        c.ORIGIN_SUBNET_ID,
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         bob.address,
         dummy_token_symbol,
         c.SEND_AMOUNT,
@@ -269,8 +269,8 @@ def test_execute_transfer_reverts_on_exceeding_daily_mint_limit(
     mint_token_values = [
         c.DUMMY_DATA,
         alice.address,
-        c.ORIGIN_SUBNET_ID,
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         bob.address,
         c.TOKEN_SYMBOL_X,
         send_amount,
@@ -312,8 +312,8 @@ def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
     mint_token_values = [
         c.DUMMY_DATA,
         alice.address,
-        c.ORIGIN_SUBNET_ID,
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         brownie.ZERO_ADDRESS,  # receiver is zero address
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,
@@ -407,7 +407,7 @@ def test_send_token_reverts_on_token_does_not_exist(
     # should revert since the dummy token wasn't deployed on ToposCoreContract
     with brownie.reverts():
         topos_core_contract_A.sendToken(
-            c.DESTINATION_SUBNET_ID,
+            c.TARGET_SUBNET_ID,
             bob,
             dummy_token_symbol,
             c.SEND_AMOUNT,
@@ -438,7 +438,7 @@ def test_send_token_reverts_on_zero_amount(
     # should revert since zero amount cannot be minted
     with brownie.reverts():
         topos_core_contract_A.sendToken(
-            c.DESTINATION_SUBNET_ID,
+            c.TARGET_SUBNET_ID,
             bob,
             c.TOKEN_SYMBOL_X,
             send_amount,
@@ -465,7 +465,7 @@ def test_send_token_reverts_on_external_token_burn_fail(
     # should fail because alice does not have enough balance to burn
     with brownie.reverts():
         topos_core_contract_A.sendToken(
-            c.DESTINATION_SUBNET_ID,
+            c.TARGET_SUBNET_ID,
             bob,
             c.TOKEN_SYMBOL_X,
             c.SEND_AMOUNT,
@@ -499,7 +499,7 @@ def test_send_token_external_token_emits_events(
         {"from": admin},
     )
     send_token_tx = topos_core_contract_A.sendToken(
-        c.DESTINATION_SUBNET_ID,
+        c.TARGET_SUBNET_ID,
         bob,
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,
@@ -512,10 +512,8 @@ def test_send_token_external_token_emits_events(
     ]
     assert send_token_tx.events["TokenSent"].values() == [
         alice.address,
-        brownie.convert.datatypes.HexString(c.ORIGIN_SUBNET_ID, "bytes32"),
-        brownie.convert.datatypes.HexString(
-            c.DESTINATION_SUBNET_ID, "bytes32"
-        ),
+        brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
+        brownie.convert.datatypes.HexString(c.TARGET_SUBNET_ID, "bytes32"),
         bob.address,
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,
@@ -531,7 +529,7 @@ def test_send_token_reverts_on_burn_fail(
     # should fail because alice does not have enough balance to burn
     with brownie.reverts():
         topos_core_contract_A.sendToken(
-            c.DESTINATION_SUBNET_ID,
+            c.TARGET_SUBNET_ID,
             bob,
             c.TOKEN_SYMBOL_X,
             c.SEND_AMOUNT,
@@ -564,7 +562,7 @@ def test_send_token_emits_events(
         c.SEND_AMOUNT,
     ]
     send_token_tx = topos_core_contract_A.sendToken(
-        c.DESTINATION_SUBNET_ID,
+        c.TARGET_SUBNET_ID,
         bob,
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,
@@ -577,10 +575,8 @@ def test_send_token_emits_events(
     ]
     assert send_token_tx.events["TokenSent"].values() == [
         alice.address,
-        brownie.convert.datatypes.HexString(c.ORIGIN_SUBNET_ID, "bytes32"),
-        brownie.convert.datatypes.HexString(
-            c.DESTINATION_SUBNET_ID, "bytes32"
-        ),
+        brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
+        brownie.convert.datatypes.HexString(c.TARGET_SUBNET_ID, "bytes32"),
         bob.address,
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,
@@ -588,22 +584,20 @@ def test_send_token_emits_events(
 
 
 def test_call_contract_emits_event(accounts, alice, topos_core_contract_A):
-    destination_contract_addr = accounts.add()
+    target_contract_addr = accounts.add()
     tx = topos_core_contract_A.callContract(
-        c.DESTINATION_SUBNET_ID,
-        destination_contract_addr,
+        c.TARGET_SUBNET_ID,
+        target_contract_addr,
         c.DUMMY_DATA,
         {"from": alice},
     )
     k = keccak.new(digest_bits=256)
     k.update(c.DUMMY_DATA)
     assert tx.events["ContractCall"].values() == [
-        brownie.convert.datatypes.HexString(c.ORIGIN_SUBNET_ID, "bytes32"),
+        brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         alice.address,
-        brownie.convert.datatypes.HexString(
-            c.DESTINATION_SUBNET_ID, "bytes32"
-        ),
-        destination_contract_addr.address,
+        brownie.convert.datatypes.HexString(c.TARGET_SUBNET_ID, "bytes32"),
+        target_contract_addr.address,
         "0x" + k.hexdigest(),  # payload hash
         brownie.convert.datatypes.HexString(c.DUMMY_DATA, "bytes"),
     ]
@@ -628,10 +622,10 @@ def test_call_contract_with_token_emits_event(
     burnable_mint_erc20.approve(
         topos_core_contract_A, c.APPROVE_AMOUNT, {"from": alice}
     )
-    destination_contract_addr = accounts.add()
+    target_contract_addr = accounts.add()
     tx = topos_core_contract_A.callContractWithToken(
-        c.DESTINATION_SUBNET_ID,
-        destination_contract_addr,
+        c.TARGET_SUBNET_ID,
+        target_contract_addr,
         c.DUMMY_DATA,
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,
@@ -640,12 +634,10 @@ def test_call_contract_with_token_emits_event(
     k = keccak.new(digest_bits=256)
     k.update(c.DUMMY_DATA)
     assert tx.events["ContractCallWithToken"].values() == [
-        brownie.convert.datatypes.HexString(c.ORIGIN_SUBNET_ID, "bytes32"),
+        brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         alice.address,
-        brownie.convert.datatypes.HexString(
-            c.DESTINATION_SUBNET_ID, "bytes32"
-        ),
-        destination_contract_addr.address,
+        brownie.convert.datatypes.HexString(c.TARGET_SUBNET_ID, "bytes32"),
+        target_contract_addr.address,
         "0x" + k.hexdigest(),  # payload hash
         brownie.convert.datatypes.HexString(c.DUMMY_DATA, "bytes"),
         c.TOKEN_SYMBOL_X,
@@ -656,7 +648,7 @@ def test_call_contract_with_token_emits_event(
 def test_verify_contract_call_data_reverts_on_cert_not_verified(
     admin, topos_core_contract_A
 ):
-    fixture_subnet_id = c.ORIGIN_SUBNET_ID
+    fixture_subnet_id = c.SOURCE_SUBNET_ID
     # should fail since the certificate is nor verified yet
     with brownie.reverts():
         topos_core_contract_A.verifyContractCallData(
@@ -667,7 +659,7 @@ def test_verify_contract_call_data_reverts_on_cert_not_verified(
 def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
     admin, topos_core_contract_A
 ):
-    fixture_subnet_id = c.DESTINATION_SUBNET_ID
+    fixture_subnet_id = c.TARGET_SUBNET_ID
     verify_cert(admin, topos_core_contract_A)
     # should revert since fixture is set to source_subnet_id
     with brownie.reverts():
@@ -679,7 +671,7 @@ def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
 def test_verify_contract_call_returns_cert_position(
     admin, topos_core_contract_A
 ):
-    fixture_subnet_id = c.ORIGIN_SUBNET_ID
+    fixture_subnet_id = c.SOURCE_SUBNET_ID
     verify_cert(admin, topos_core_contract_A)
     tx = topos_core_contract_A.verifyContractCallData(
         c.CERT_ID, fixture_subnet_id, {"from": admin}
@@ -721,8 +713,8 @@ def get_default_mint_val(alice, bob):
     mint_token_args = [
         c.DUMMY_DATA,
         alice.address,
-        c.ORIGIN_SUBNET_ID,
-        c.ORIGIN_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
+        c.SOURCE_SUBNET_ID,
         bob.address,
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,
