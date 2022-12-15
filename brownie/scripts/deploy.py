@@ -7,6 +7,7 @@ from brownie import (
     accounts,
     network,
     ConstAddressDeployer,
+    ERC20Test,
     SubnetRegistrator,
     TCENodeRegistrator,
     TokenDeployer,
@@ -17,6 +18,12 @@ from brownie import (
 # Contracts
 def const_address_deployer(_):
     ConstAddressDeployer.deploy({"from": accounts[0]})
+
+
+def erc20_test(args):
+    name = args[0]
+    symbol = args[1]
+    ERC20Test.deploy(name, symbol, {"from": accounts[0]})
 
 
 def subnet_registrator(_):
