@@ -109,10 +109,45 @@ $ npm run lint:fix
 
 ## Deployment
 
-In order to deploy the smart contracts run the basic deployment script:
+Add an account to Brownie accounts and assign an `id` to it:
 
 ```
-$ npm run deploy
+$ brownie accounts generate <id> # generate a new account
+
+$ brownie accounts new <id> # add an already existing account
+
+$ brownie accounts import <id> <path> # import an account from a JSON keystore file
+```
+
+Example:
+
+```
+$ brownie accounts new substrate_alice
+Brownie v1.19.2 - Python development framework for Ethereum
+
+Enter the private key you wish to add: 0x99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342
+Enter the password to encrypt this account with:
+SUCCESS: A new account '0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b' has been generated with the id 'substrate_alice'
+```
+
+In order to deploy the smart contracts, run the basic deployment script:
+
+```
+$ npm run deploy <contract_name> <id> <arg1> <arg2> -- --network <network_name>
+```
+
+Example:
+
+```
+$ npm run deploy ToposCoreContract substrate_alice 0x4897d0802e611AF187db47C7648e8B0Ef759e3aa 1 -- --network topos_subnet
+```
+
+There is no need to specify the `id` or the `network_name` for the `development` network
+
+Example:
+
+```
+$ npm run deploy ToposCoreContract 0x4897d0802e611AF187db47C7648e8B0Ef759e3aa 1
 ```
 
 ## Docker
