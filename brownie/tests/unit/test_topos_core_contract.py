@@ -203,6 +203,24 @@ def test_setup_reverts_on_zero_address_admin(
         )
 
 
+def test_setup_should_revert_on_non_proxy_call(
+    admin,
+    TokenDeployer,
+    ToposCoreContract,
+):
+    admin_values = [[admin.address], 1]
+    encoded_admin_params = eth_abi.encode(c.ADMIN_PARAMS, admin_values)
+    topos_core_contract_impl = deploy_new_tcc(
+        admin, TokenDeployer, ToposCoreContract
+    )
+    # should revert since delegate setup() cannot be called without proxy
+    with brownie.reverts():
+        topos_core_contract_impl.setup(
+            encoded_admin_params,
+            {"from": admin},
+        )
+
+
 def test_execute_transfer_reverts_on_unverified_cert(
     admin, alice, bob, topos_core_contract_A
 ):
@@ -715,6 +733,34 @@ def test_verify_contract_call_returns_cert_position(
     assert (
         tx.events["ContractCallDataVerified"]["certPosition"]
         == c.CERT_POSITION
+    )
+
+
+def test_upgrade_emits_event(
+    admin, topos_core_contract_A, CodeHash, TokenDeployer, ToposCoreContract
+):
+    admin_values = [[admin.address], 1]
+    encoded_admin_params = eth_abi.encode(c.ADMIN_PARAMS, admin_values)
+    topos_core_contract_impl = deploy_new_tcc(
+        admin, TokenDeployer, ToposCoreContract
+    )
+    # verify that the current delegate is not the same as the new delegate
+    assert (
+        topos_core_contract_A.implementation({"from": admin})
+        != topos_core_contract_impl.address
+    )
+    code_hash = CodeHash.deploy({"from": admin})
+    codehash = code_hash.getCodeHash(topos_core_contract_impl.address)
+    tx = topos_core_contract_A.upgrade(
+        topos_core_contract_impl.address,
+        codehash,
+        encoded_admin_params,
+        {"from": admin},
+    )
+    # the proxy storage should point to the new delegate address
+    assert (
+        tx.events["Upgraded"]["implementation"]
+        == topos_core_contract_impl.address
     )
 
 
