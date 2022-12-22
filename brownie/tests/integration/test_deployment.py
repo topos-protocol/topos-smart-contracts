@@ -5,10 +5,12 @@ import pytest
 
 from brownie import (
     accounts,
+    interface,
     ConstAddressDeployer,
     network,
     TokenDeployer,
     ToposCoreContract,
+    ToposCoreContractProxy,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -73,12 +75,33 @@ def deploy_token_deployer(networkSubnetId):
         "deployedAddress"
     ]
     LOGGER.info(f"TokenDeployer address: {token_deployer_address}")
-    topos_core_contract = ToposCoreContract.deploy(
+    topos_core_contract_impl = ToposCoreContract.deploy(
         token_deployer_address,
         networkSubnetId,
         {"from": accounts[0]},
     )
-    LOGGER.info(f"ToposCoreContract address: {topos_core_contract.address}")
+    LOGGER.info(
+        f"ToposCoreContract address: {topos_core_contract_impl.address}"
+    )
+    # set admin for ToposCoreContract
+    admin_threshold = 1
+    setup_params = eth_abi.encode(
+        ["address[]", "uint256"],
+        [[accounts[0].address], admin_threshold],
+    )
+
+    # deploy ToposCoreContractProxy
+    topos_core_contract_proxy = ToposCoreContractProxy.deploy(
+        topos_core_contract_impl.address,
+        setup_params,
+        {"from": accounts[0]},
+    )
+    LOGGER.info(
+        f"ToposCoreContractProxy address: {topos_core_contract_proxy.address}"
+    )
+    topos_core_contract = interface.IToposCoreContract(
+        topos_core_contract_proxy.address
+    )
     return (
         token_deployer_address,
         topos_core_contract,

@@ -5,11 +5,13 @@ import pytest
 
 from brownie import (
     accounts,
+    interface,
     BurnableMintableCappedERC20,
     ConstAddressDeployer,
     network,
     TokenDeployer,
     ToposCoreContract,
+    ToposCoreContractProxy,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -86,21 +88,34 @@ def deploy_initial_contracts(network_subnet_id):
     LOGGER.info(f"TokenDeployer address: {token_deployer_address}")
 
     # deploy ToposCoreContract
-    topos_core_contract = ToposCoreContract.deploy(
+    topos_core_contract_impl = ToposCoreContract.deploy(
         token_deployer_address,
         network_subnet_id,
         {"from": accounts[0]},
     )
-    LOGGER.info(f"ToposCoreContract address: {topos_core_contract.address}")
+    LOGGER.info(
+        "ToposCoreContract implementation address:"
+        + f"{topos_core_contract_impl.address}"
+    )
 
     # set admin for ToposCoreContract
     admin_threshold = 1
-    topos_core_contract.setup(
-        eth_abi.encode(
-            ["address[]", "uint256"],
-            [[accounts[0].address], admin_threshold],
-        ),
+    setup_params = eth_abi.encode(
+        ["address[]", "uint256"],
+        [[accounts[0].address], admin_threshold],
+    )
+
+    # deploy ToposCoreContractProxy
+    topos_core_contract_proxy = ToposCoreContractProxy.deploy(
+        topos_core_contract_impl.address,
+        setup_params,
         {"from": accounts[0]},
+    )
+    LOGGER.info(
+        f"ToposCoreContractProxy address: {topos_core_contract_proxy.address}"
+    )
+    topos_core_contract = interface.IToposCoreContract(
+        topos_core_contract_proxy.address
     )
 
     # deploy a token

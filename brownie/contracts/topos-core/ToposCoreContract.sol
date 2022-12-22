@@ -16,13 +16,17 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         External
     }
 
+    /// @dev Storage slot with the address of the current implementation. `keccak256('eip1967.proxy.implementation') - 1`.
+    bytes32 internal constant KEY_IMPLEMENTATION =
+        bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc);
+
     /// @notice Mapping to store verfied certificates
     /// @dev certId => certificate
     mapping(bytes => Certificate) verifiedCerts;
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
-    subnetId _networkSubnetId;
+    subnetId internal immutable _networkSubnetId;
 
     /// @notice Validator role
     /// 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a
@@ -38,7 +42,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     bytes32 internal constant PREFIX_TOKEN_DAILY_MINT_AMOUNT = keccak256("token-daily-mint-amount");
 
     /// @notice Internal token deployer (ERCBurnableMintable by default)
-    address internal _tokenDeployerImplementation;
+    address internal immutable _tokenDeployerImplementation;
 
     constructor(address tokenDeployerImplementation, subnetId networkSubnetId) {
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
@@ -72,6 +76,29 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
             _setTokenDailyMintLimit(symbol, limit);
         }
+    }
+
+    function upgrade(
+        address newImplementation,
+        bytes32 newImplementationCodeHash,
+        bytes calldata setupParams
+    ) external override onlyAdmin {
+        if (newImplementationCodeHash != newImplementation.codehash) revert InvalidCodeHash();
+
+        emit Upgraded(newImplementation);
+
+        // AUDIT: If `newImplementation.setup` performs `selfdestruct`, it will result in the loss of _this_ implementation (thereby losing the ToposCoreContract)
+        //        if `upgrade` is entered within the context of _this_ implementation itself.
+        if (setupParams.length != 0) {
+            // solhint-disable-next-line avoid-low-level-calls
+            (bool success, ) = newImplementation.delegatecall(
+                abi.encodeWithSelector(IToposCoreContract.setup.selector, setupParams)
+            );
+
+            if (!success) revert SetupFailed();
+        }
+
+        _setImplementation(newImplementation);
     }
 
     function deployToken(bytes calldata params) external {
@@ -124,6 +151,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function setup(bytes calldata params) external override {
         (address[] memory adminAddresses, uint256 newAdminThreshold) = abi.decode(params, (address[], uint256));
+        // Prevent setup from being called on a non-proxy (the implementation).
+        if (implementation() == address(0)) revert NotProxy();
 
         // NOTE: Admin epoch is incremented to easily invalidate current admin-related state.
         uint256 newAdminEpoch = _adminEpoch() + uint256(1);
@@ -224,15 +253,11 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* Public Methods *|
     \******************/
 
-    function verifyContractCallData(bytes calldata certId, subnetId targetSubnetId)
-        public
-        view
-        override
-        returns (uint256)
-    {
+    function verifyContractCallData(bytes calldata certId, subnetId targetSubnetId) public override returns (uint256) {
         Certificate memory storedCert = getVerfiedCert(certId);
         if (storedCert.isVerified == false) revert CertNotVerified();
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
+        emit ContractCallDataVerified(storedCert.position);
         return storedCert.position;
     }
 
@@ -254,6 +279,14 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function tokenAddresses(string memory symbol) public view override returns (address) {
         return getAddress(_getTokenAddressKey(symbol));
+    }
+
+    function implementation() public view override returns (address) {
+        return getAddress(KEY_IMPLEMENTATION);
+    }
+
+    function tokenDeployer() public view override returns (address) {
+        return _tokenDeployerImplementation;
     }
 
     /********************\
@@ -367,6 +400,10 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             _getIsSendTokenExecutedKey(txHash, sender, sourceSubnetId, targetSubnetId, receiver, symbol, amount),
             true
         );
+    }
+
+    function _setImplementation(address newImplementation) internal {
+        _setAddress(KEY_IMPLEMENTATION, newImplementation);
     }
 
     /********************\

@@ -12,20 +12,30 @@ def isolate(fn_isolation):
 
 
 def deploy_topos_core_contract(
-    accounts, subnet_id, TokenDeployer, ToposCoreContract
+    accounts,
+    interface,
+    subnet_id,
+    TokenDeployer,
+    ToposCoreContract,
+    ToposCoreContractProxy,
 ):
     admin_threshold = 1
     token_deployer = TokenDeployer.deploy({"from": accounts[0]})
-    topos_core_contract = ToposCoreContract.deploy(
+    topos_core_contract_impl = ToposCoreContract.deploy(
         token_deployer.address, subnet_id, {"from": accounts[0]}
     )
-    topos_core_contract.setup(
+    topos_core_contract_proxy = ToposCoreContractProxy.deploy(
+        topos_core_contract_impl.address,
         eth_abi.encode(
             ["address[]", "uint256"],
             [[accounts[0].address], admin_threshold],
         ),
         {"from": accounts[0]},
     )
+    topos_core_contract = interface.IToposCoreContract(
+        topos_core_contract_proxy.address
+    )
+
     return topos_core_contract
 
 
@@ -51,18 +61,40 @@ def subnet_registrator(accounts, SubnetRegistrator):
 
 
 @pytest.fixture(scope="module")
-def topos_core_contract_A(accounts, TokenDeployer, ToposCoreContract):
+def topos_core_contract_A(
+    accounts,
+    interface,
+    TokenDeployer,
+    ToposCoreContract,
+    ToposCoreContractProxy,
+):
     subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
     return deploy_topos_core_contract(
-        accounts, subnet_A_id, TokenDeployer, ToposCoreContract
+        accounts,
+        interface,
+        subnet_A_id,
+        TokenDeployer,
+        ToposCoreContract,
+        ToposCoreContractProxy,
     )
 
 
 @pytest.fixture(scope="module")
-def topos_core_contract_B(ToposCoreContract, TokenDeployer, accounts):
+def topos_core_contract_B(
+    accounts,
+    interface,
+    TokenDeployer,
+    ToposCoreContract,
+    ToposCoreContractProxy,
+):
     subnet_B_id = brownie.convert.to_bytes("0x02", "bytes32")
     return deploy_topos_core_contract(
-        accounts, subnet_B_id, TokenDeployer, ToposCoreContract
+        accounts,
+        interface,
+        subnet_B_id,
+        TokenDeployer,
+        ToposCoreContract,
+        ToposCoreContractProxy,
     )
 
 

@@ -8,20 +8,23 @@ interface IToposCoreContract {
     |* Errors *|
     \**********/
 
-    error InvalidTokenDeployer();
-    error InvalidAmount();
-    error TokenDoesNotExist(string symbol);
-    error TokenAlreadyExists(string symbol);
-    error TokenDeployFailed(string symbol);
-    error TokenContractDoesNotExist(address token);
-    error BurnFailed(string symbol);
-    error MintFailed(string symbol);
-    error InvalidSetDailyMintLimitsParams();
-    error ExceedDailyMintLimit(string symbol);
-    error CertNotVerified();
     error CertAlreadyVerified();
+    error CertNotVerified();
+    error BurnFailed(string symbol);
+    error ExceedDailyMintLimit(string symbol);
+    error InvalidAmount();
     error InvalidCert();
+    error InvalidCodeHash();
+    error InvalidSetDailyMintLimitsParams();
     error InvalidSubnetId();
+    error InvalidTokenDeployer();
+    error MintFailed(string symbol);
+    error NotProxy();
+    error SetupFailed();
+    error TokenAlreadyExists(string symbol);
+    error TokenContractDoesNotExist(address token);
+    error TokenDeployFailed(string symbol);
+    error TokenDoesNotExist(string symbol);
     error TransferAlreadyExecuted();
 
     struct Certificate {
@@ -69,6 +72,10 @@ interface IToposCoreContract {
 
     event TokenDailyMintLimitUpdated(string symbol, uint256 limit);
 
+    event Upgraded(address indexed implementation);
+
+    event ContractCallDataVerified(uint256 certPosition);
+
     /********************\
     |* Public Functions *|
     \********************/
@@ -102,6 +109,8 @@ interface IToposCoreContract {
 
     function verifyContractCallData(bytes calldata certId, subnetId targetSubnetId) external returns (uint256);
 
+    function deployToken(bytes calldata params) external;
+
     /***********\
     |* Getters *|
     \***********/
@@ -112,6 +121,8 @@ interface IToposCoreContract {
 
     function tokenAddresses(string memory symbol) external view returns (address);
 
+    function implementation() external view returns (address);
+
     function adminEpoch() external view returns (uint256);
 
     function adminThreshold(uint256 epoch) external view returns (uint256);
@@ -119,6 +130,8 @@ interface IToposCoreContract {
     function admins(uint256 epoch) external view returns (address[] memory);
 
     function getVerfiedCert(bytes calldata certId) external view returns (Certificate memory);
+
+    function tokenDeployer() external view returns (address);
 
     /*******************\
     |* Admin Functions *|
@@ -132,6 +145,12 @@ interface IToposCoreContract {
         string memory symbol,
         address account,
         uint256 amount
+    ) external;
+
+    function upgrade(
+        address newImplementation,
+        bytes32 newImplementationCodeHash,
+        bytes calldata setupParams
     ) external;
 
     /**********************\
