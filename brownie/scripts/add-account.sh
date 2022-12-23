@@ -8,5 +8,5 @@ spawn brownie accounts new $id
 expect "Enter the private key you wish to add:" 
 send "$privateKey\n"
 expect "Enter the password to encrypt this account with:" 
-send "[lindex $argv 2]\n"
+send "$password\n"
 expect "$ "
