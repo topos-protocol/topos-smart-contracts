@@ -3,6 +3,7 @@ name: Docker_build_push
 on:
   push:
     branches: main
+  pull_request:
   release:
     types: [created]
 
@@ -39,8 +40,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            type=ref,event=branch
+            type=ref,event=pr
             type=raw,value=test,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
+            type=pep440,pattern={{version}}
 
       - name: Push to GitHub Container Registry
         uses: docker/build-push-action@v3
