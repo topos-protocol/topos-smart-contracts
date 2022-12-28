@@ -14,15 +14,13 @@ contract ToposCoreContractProxy is EternalStorage {
         bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc);
 
     constructor(address tccImplementation, bytes memory params) {
-        _setAddress(KEY_IMPLEMENTATION, tccImplementation);
-
         if (tccImplementation.code.length == 0) revert InvalidImplementation();
+        _setAddress(KEY_IMPLEMENTATION, tccImplementation);
 
         // solhint-disable-next-line avoid-low-level-calls
         (bool success, ) = tccImplementation.delegatecall(
             abi.encodeWithSelector(IToposCoreContract.setup.selector, params)
         );
-
         if (!success) revert SetupFailed();
     }
 
