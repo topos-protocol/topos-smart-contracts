@@ -2,9 +2,12 @@
 pragma solidity ^0.8.9;
 
 contract CodeHash {
-    function getCodeHash(address targetContract) public view returns (bytes32) {
-        if (targetContract.codehash.length != 0) {
-            return targetContract.codehash;
+    /// @notice gets the codehash of a contract address
+    /// @param contractAddr a contract address
+    function getCodeHash(address contractAddr) public view returns (bytes32) {
+        // does not fail with wallet addresses
+        if (contractAddr.codehash.length != 0) {
+            return contractAddr.codehash;
         }
     }
 }
