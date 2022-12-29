@@ -85,7 +85,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     ) external override onlyAdmin {
         if (newImplementationCodeHash != newImplementation.codehash) revert InvalidCodeHash();
         _setImplementation(newImplementation);
-        emit Upgraded(newImplementation);
 
         // AUDIT: If `newImplementation.setup` performs `selfdestruct`, it will result in the loss of _this_ implementation (thereby losing the ToposCoreContract)
         //        if `upgrade` is entered within the context of _this_ implementation itself.
@@ -97,6 +96,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
             if (!success) revert SetupFailed();
         }
+        emit Upgraded(newImplementation);
     }
 
     function deployToken(bytes calldata params) external {
