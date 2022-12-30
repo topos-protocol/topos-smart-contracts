@@ -14,9 +14,9 @@ from brownie import (
     TCENodeRegistrator,
     TokenDeployer,
     ToposCoreContract,
-    ToposCoreContractProxy,
 )
 from eth_abi.packed import encode_packed
+
 
 # Contracts
 def erc20_test(args):
@@ -118,35 +118,6 @@ def topos_core_contract(args):
         {"from": accounts[0]},
     )
     LOG.info("address: " + tx.events["Deployed"]["deployedAddress"])
-
-
-def topos_core_contract_proxy(args):
-    topos_core_contract_impl_addr = args[0]
-    params = args[1]
-    salt = args[2]
-
-    # convert string input to bytes
-    param_bytes = bytes(params, "utf-8")
-    salt_bytes = bytes(salt, "utf-8")
-    # encode constructor arguments
-    contract_args = eth_abi.encode(
-        ["address", "bytes"],
-        [topos_core_contract_impl_addr, param_bytes],
-    )
-    # convert the bytecode from string to bytes
-    bytecode_no_args = convert.to_bytes(
-        ToposCoreContractProxy.bytecode, "bytes"
-    )
-    # encode the bytecode with constructor arguments
-    bytecode = encode_packed(
-        ["bytes", "bytes"], [bytecode_no_args, contract_args]
-    )
-
-    tx = const_address_deployer.deploy(
-        bytecode,
-        convert.to_bytes(salt_bytes, "bytes32"),
-        {"from": accounts[0]},
-    )
 
 
 # Internal Functions
