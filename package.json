@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@axelar-network/axelar-gmp-sdk-solidity": "^2.0.0",
+    "checksum": "^1.0.0",
     "ethers": "^5.7.2"
   }
 }
