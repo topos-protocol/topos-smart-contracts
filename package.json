@@ -18,6 +18,7 @@
     "clear-deployment": "rm -rf brownie/build/deployments",
     "coverage": "brownie test -C",
     "deploy": "brownie run deploy.py main",
+    "deploy_const_addr": "brownie run deploy_const_addr.py main",
     "install": "npm run install:flake8 && npm run install:black && npm run install:eth_abi && npm run install:Crypto",
     "install:Crypto": "pip3 install pycryptodome",
     "install:black": "pip3 install black",
