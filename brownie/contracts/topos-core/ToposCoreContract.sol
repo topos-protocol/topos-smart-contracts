@@ -55,7 +55,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* Admin Functions *|
     \*******************/
 
-    function pushCertificate(bytes memory certBytes) external onlyAdmin {
+    function pushCertificate(bytes memory certBytes) external {
         (bytes memory certId, uint256 certPosition) = abi.decode(certBytes, (bytes, uint256));
         Certificate memory storedCert = certificateStorage[certId];
         if (storedCert.isPresent == true) revert CertAlreadyPresent();
