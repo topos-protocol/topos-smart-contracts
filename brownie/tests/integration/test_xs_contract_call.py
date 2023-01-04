@@ -160,7 +160,6 @@ def approve_and_execute_on_receiving_subnet(
     source_contract_addr = contract_call_event["sourceContractAddr"]
     target_subnet_id = contract_call_event["targetSubnetId"]
     target_contract_addr = contract_call_event["targetContractAddr"]
-    payload_hash = contract_call_event["payloadHash"]
     payload = contract_call_event["payload"]
 
     # set the admin manually
@@ -181,7 +180,6 @@ def approve_and_execute_on_receiving_subnet(
         source_contract_addr,
         target_subnet_id,
         target_contract_addr,
-        payload_hash,
         payload,
         selector,
     ]

@@ -1,5 +1,4 @@
 import brownie
-from Crypto.Hash import keccak
 import eth_abi
 
 import const as c
@@ -591,14 +590,11 @@ def test_call_contract_emits_event(accounts, alice, topos_core_contract_A):
         c.DUMMY_DATA,
         {"from": alice},
     )
-    k = keccak.new(digest_bits=256)
-    k.update(c.DUMMY_DATA)
     assert tx.events["ContractCall"].values() == [
         brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         alice.address,
         brownie.convert.datatypes.HexString(c.TARGET_SUBNET_ID, "bytes32"),
         target_contract_addr.address,
-        "0x" + k.hexdigest(),  # payload hash
         brownie.convert.datatypes.HexString(c.DUMMY_DATA, "bytes"),
     ]
 
@@ -631,14 +627,11 @@ def test_call_contract_with_token_emits_event(
         c.SEND_AMOUNT,
         {"from": alice},
     )
-    k = keccak.new(digest_bits=256)
-    k.update(c.DUMMY_DATA)
     assert tx.events["ContractCallWithToken"].values() == [
         brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         alice.address,
         brownie.convert.datatypes.HexString(c.TARGET_SUBNET_ID, "bytes32"),
         target_contract_addr.address,
-        "0x" + k.hexdigest(),  # payload hash
         brownie.convert.datatypes.HexString(c.DUMMY_DATA, "bytes"),
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,

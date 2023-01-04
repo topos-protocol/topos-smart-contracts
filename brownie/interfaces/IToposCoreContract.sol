@@ -48,7 +48,6 @@ interface IToposCoreContract {
         address sourceContractAddr,
         subnetId targetSubnetId,
         address targetContractAddr,
-        bytes32 indexed payloadHash,
         bytes payload
     );
 
@@ -57,7 +56,6 @@ interface IToposCoreContract {
         address sourceContractAddr,
         subnetId targetSubnetId,
         address targetContractAddr,
-        bytes32 indexed payloadHash,
         bytes payload,
         string symbol,
         uint256 amount
