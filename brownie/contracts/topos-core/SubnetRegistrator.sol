@@ -11,6 +11,7 @@ contract SubnetRegistrator {
         bytes endpoint;
         bytes logoURL;
         string name;
+        string currencySymbol;
         bool isPresent;
     }
 
@@ -29,14 +30,16 @@ contract SubnetRegistrator {
     /// @param logoURL URL for the logo of a subnet
     /// @param name name of a subnet
     /// @param publicKey FROST public key of a subnet
+    /// @param currencySymbol currencySymbol for a subnet currency
     function registerSubnet(
         bytes calldata endpoint,
         bytes calldata logoURL,
         string calldata name,
-        SubnetPublicKey publicKey
+        SubnetPublicKey publicKey,
+        string calldata currencySymbol
     ) public {
         if (subnets[publicKey].isPresent) revert SubnetAlreadyRegistered(publicKey);
-        Subnet memory subnet = Subnet(endpoint, logoURL, name, true);
+        Subnet memory subnet = Subnet(endpoint, logoURL, name, currencySymbol, true);
         subnets[publicKey] = subnet;
         emit NewSubnetRegistered(publicKey);
     }
