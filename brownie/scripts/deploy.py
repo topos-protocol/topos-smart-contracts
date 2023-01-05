@@ -6,16 +6,22 @@ import re
 from brownie import (
     accounts,
     network,
+    CodeHash,
     ConstAddressDeployer,
     ERC20Test,
     SubnetRegistrator,
     TCENodeRegistrator,
     TokenDeployer,
     ToposCoreContract,
+    ToposCoreContractProxy,
 )
 
 
 # Contracts
+def code_hash(_):
+    CodeHash.deploy({"from": accounts[0]})
+
+
 def const_address_deployer(_):
     ConstAddressDeployer.deploy({"from": accounts[0]})
 
@@ -43,6 +49,14 @@ def topos_core_contract(args):
     subnet_id = args[1]
     ToposCoreContract.deploy(
         token_deployer_addr, subnet_id, {"from": accounts[0]}
+    )
+
+
+def topos_core_contract_proxy(args):
+    topos_core_contract_impl_addr = args[0]
+    params = args[1]
+    ToposCoreContractProxy.deploy(
+        topos_core_contract_impl_addr, params, {"from": accounts[0]}
     )
 
 
