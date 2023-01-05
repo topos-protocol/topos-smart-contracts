@@ -5,18 +5,18 @@ import eth_abi
 import const as c
 
 
-def test_verify_certificate_reverts_on_already_verified_certificate(
+def test_push_certificate_reverts_on_already_stored_certificate(
     admin, topos_core_contract_A
 ):
-    verify_cert(admin, topos_core_contract_A)
+    push_dummy_cert(admin, topos_core_contract_A)
     with brownie.reverts():
-        # retry verifying the same cert
-        verify_cert(admin, topos_core_contract_A)
+        # retry pushing the same cert
+        push_dummy_cert(admin, topos_core_contract_A)
 
 
-def test_verify_certificate_emits_event(admin, topos_core_contract_A):
-    tx = verify_cert(admin, topos_core_contract_A)
-    assert tx.events["CertVerified"].values() == [c.CERT_BYTES]
+def test_push_certificate_emits_event(admin, topos_core_contract_A):
+    tx = push_dummy_cert(admin, topos_core_contract_A)
+    assert tx.events["CertStored"].values() == [c.CERT_BYTES]
 
 
 def test_set_token_daily_mint_limits_reverts_on_mismatch_symbol_length(
@@ -71,7 +71,7 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
     ]
     encoded_token_params = eth_abi.encode(c.TOKEN_PARAMS, token_values)
     topos_core_contract_A.deployToken(encoded_token_params, {"from": admin})
-    verify_cert(admin, topos_core_contract_A)
+    push_dummy_cert(admin, topos_core_contract_A)
     tx = topos_core_contract_A.executeAssetTransfer(
         c.CERT_ID,
         get_default_mint_val(alice, bob),
@@ -221,10 +221,10 @@ def test_setup_should_revert_on_non_proxy_call(
         )
 
 
-def test_execute_transfer_reverts_on_unverified_cert(
+def test_execute_transfer_reverts_on_unknown_cert(
     admin, alice, bob, topos_core_contract_A
 ):
-    # should revert since the certificate wasn't verified
+    # should revert since the certificate is not present
     with brownie.reverts():
         topos_core_contract_A.executeAssetTransfer(
             c.CERT_ID,
@@ -239,7 +239,7 @@ def test_execute_transfer_reverts_on_invalid_subnet_id(
 ):
     # default target subnet id is set to "0x01"
     dummy_target_subnet_id = brownie.convert.to_bytes("0x02", "bytes32")
-    verify_cert(admin, topos_core_contract_A)
+    push_dummy_cert(admin, topos_core_contract_A)
     # execute asset transfer args
     mint_token_values = [
         c.DUMMY_DATA,
@@ -266,7 +266,7 @@ def test_execute_transfer_reverts_on_call_already_executed(
     topos_core_contract_A.deployToken(
         get_default_internal_token_val(), {"from": admin}
     )
-    verify_cert(admin, topos_core_contract_A)
+    push_dummy_cert(admin, topos_core_contract_A)
     topos_core_contract_A.executeAssetTransfer(
         c.CERT_ID,
         get_default_mint_val(alice, bob),
@@ -290,7 +290,7 @@ def test_execute_transfer_reverts_on_token_does_not_exist(
     topos_core_contract_A.deployToken(
         get_default_internal_token_val(), {"from": admin}
     )
-    verify_cert(admin, topos_core_contract_A)
+    push_dummy_cert(admin, topos_core_contract_A)
     # execute asset transfer args
     mint_token_values = [
         c.DUMMY_DATA,
@@ -318,7 +318,7 @@ def test_execute_transfer_reverts_on_exceeding_daily_mint_limit(
     topos_core_contract_A.deployToken(
         get_default_internal_token_val(), {"from": admin}
     )
-    verify_cert(admin, topos_core_contract_A)
+    push_dummy_cert(admin, topos_core_contract_A)
     # execute asset transfer args
     mint_token_values = [
         c.DUMMY_DATA,
@@ -361,7 +361,7 @@ def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
         c.MINT_AMOUNT,
         {"from": admin},
     )
-    verify_cert(admin, topos_core_contract_A)
+    push_dummy_cert(admin, topos_core_contract_A)
     # execute asset transfer args
     mint_token_values = [
         c.DUMMY_DATA,
@@ -404,7 +404,7 @@ def test_execute_transfer_external_token_transfer_emits_events(
         c.MINT_AMOUNT,
         {"from": admin},
     )
-    verify_cert(admin, topos_core_contract_A)
+    push_dummy_cert(admin, topos_core_contract_A)
     tx = topos_core_contract_A.executeAssetTransfer(
         c.CERT_ID,
         get_default_mint_val(alice, bob),
@@ -424,7 +424,7 @@ def test_execute_transfer_emits_event(
     topos_core_contract_A.deployToken(
         get_default_internal_token_val(), {"from": admin}
     )
-    verify_cert(admin, topos_core_contract_A)
+    push_dummy_cert(admin, topos_core_contract_A)
     tx = topos_core_contract_A.executeAssetTransfer(
         c.CERT_ID,
         get_default_mint_val(alice, bob),
@@ -699,11 +699,11 @@ def test_call_contract_with_token_emits_event(
     ]
 
 
-def test_verify_contract_call_data_reverts_on_cert_not_verified(
+def test_verify_contract_call_data_reverts_on_cert_not_present(
     admin, topos_core_contract_A
 ):
     fixture_subnet_id = c.SOURCE_SUBNET_ID
-    # should fail since the certificate is nor verified yet
+    # should fail since the certificate is not present
     with brownie.reverts():
         topos_core_contract_A.verifyContractCallData(
             c.CERT_ID, fixture_subnet_id, {"from": admin}
@@ -714,7 +714,7 @@ def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
     admin, topos_core_contract_A
 ):
     fixture_subnet_id = c.TARGET_SUBNET_ID
-    verify_cert(admin, topos_core_contract_A)
+    push_dummy_cert(admin, topos_core_contract_A)
     # should revert since fixture is set to source_subnet_id
     with brownie.reverts():
         topos_core_contract_A.verifyContractCallData(
@@ -726,7 +726,7 @@ def test_verify_contract_call_returns_cert_position(
     admin, topos_core_contract_A
 ):
     fixture_subnet_id = c.SOURCE_SUBNET_ID
-    verify_cert(admin, topos_core_contract_A)
+    push_dummy_cert(admin, topos_core_contract_A)
     tx = topos_core_contract_A.verifyContractCallData(
         c.CERT_ID, fixture_subnet_id, {"from": admin}
     )
@@ -765,8 +765,8 @@ def test_upgrade_emits_event(
 
 
 # internal functions #
-def verify_cert(admin, topos_core_contract_A):
-    return topos_core_contract_A.verifyCertificate(
+def push_dummy_cert(admin, topos_core_contract_A):
+    return topos_core_contract_A.pushCertificate(
         eth_abi.encode(["bytes", "uint256"], [c.CERT_ID, c.CERT_POSITION]),
         {"from": admin},
     )

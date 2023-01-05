@@ -51,7 +51,7 @@ def test_send_token():
     switch_network("B")
     deploy_initial_contracts(subnet_B_id)
     # if you don't validate a cert then the mint function would fail
-    validate_dummy_cert(topos_core_contract_B)
+    push_dummy_cert(topos_core_contract_B)
     mint_token(
         topos_core_contract_B,
         dummy_data,  # tx_hash
@@ -177,11 +177,11 @@ def send_token():
     return token_sent_event
 
 
-def validate_dummy_cert(topos_core_contract):
+def push_dummy_cert(topos_core_contract):
     cert_params = ["bytes", "uint256"]
     cert_values = [dummy_cert_id, dummy_cert_position]
     encoded_cert_params = eth_abi.encode(cert_params, cert_values)
-    topos_core_contract.verifyCertificate(
+    topos_core_contract.pushCertificate(
         encoded_cert_params, {"from": accounts[0]}
     )
 
