@@ -8,8 +8,8 @@ interface IToposCoreContract {
     |* Errors *|
     \**********/
 
-    error CertAlreadyVerified();
-    error CertNotVerified();
+    error CertNotPresent();
+    error CertAlreadyPresent();
     error BurnFailed(string symbol);
     error ExceedDailyMintLimit(string symbol);
     error InvalidAmount();
@@ -30,7 +30,7 @@ interface IToposCoreContract {
     struct Certificate {
         bytes certId;
         uint256 position;
-        bool isVerified;
+        bool isPresent;
     }
 
     /**********\
@@ -66,7 +66,7 @@ interface IToposCoreContract {
         uint256 amount
     );
 
-    event CertVerified(bytes certId);
+    event CertStored(bytes certId);
 
     event TokenDeployed(string symbol, address tokenAddresses);
 
@@ -129,7 +129,7 @@ interface IToposCoreContract {
 
     function admins(uint256 epoch) external view returns (address[] memory);
 
-    function getVerfiedCert(bytes calldata certId) external view returns (Certificate memory);
+    function getStorageCert(bytes calldata certId) external view returns (Certificate memory);
 
     function tokenDeployer() external view returns (address);
 
@@ -139,7 +139,7 @@ interface IToposCoreContract {
 
     function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
 
-    function verifyCertificate(bytes calldata certBytes) external;
+    function pushCertificate(bytes calldata certBytes) external;
 
     function giveToken(
         string memory symbol,

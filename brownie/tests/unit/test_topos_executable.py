@@ -25,16 +25,16 @@ def test_authorize_origin_emits_event(accounts, admin, topos_executable):
     ]
 
 
-def test_execute_reverts_on_unverified_cert_id(
+def test_execute_reverts_on_unknown_cert_id(
     accounts, admin, topos_core_contract_B, topos_executable
 ):
     invalid_cert_id = brownie.convert.to_bytes("0xdead", "bytes")
     dummy_address = accounts.add()
-    topos_core_contract_B.verifyCertificate(
+    topos_core_contract_B.pushCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_data(dummy_address, c.TARGET_SUBNET_ID)
-    # should revert since the cert is unverified
+    # should revert since the cert is not present
     with brownie.reverts():
         topos_executable.execute(
             invalid_cert_id, data, c.DUMMY_DATA, {"from": admin}
@@ -46,7 +46,7 @@ def test_execute_reverts_on_false_target_subnet_id(
 ):
     invalid_target_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
     dummy_address = accounts.add()
-    topos_core_contract_B.verifyCertificate(
+    topos_core_contract_B.pushCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_data(dummy_address, invalid_target_subnet_id)
@@ -62,7 +62,7 @@ def test_execute_reverts_on_contract_call_already_executed(
 ):
     dummy_address = accounts.add()
     authorize_origin(dummy_address, admin, topos_executable)
-    topos_core_contract_B.verifyCertificate(
+    topos_core_contract_B.pushCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_data(dummy_address, c.TARGET_SUBNET_ID)
@@ -80,7 +80,7 @@ def test_execute_reverts_on_cert_position_lower_than_min_position(
     dummy_address = accounts.add()
     cert_position = 3
     authorize_origin(dummy_address, admin, topos_executable)
-    topos_core_contract_B.verifyCertificate(
+    topos_core_contract_B.pushCertificate(
         get_encoded_cert_params(c.CERT_ID, cert_position), {"from": admin}
     )
     data = get_call_contract_data(dummy_address, c.TARGET_SUBNET_ID)
@@ -91,16 +91,16 @@ def test_execute_reverts_on_cert_position_lower_than_min_position(
         )
 
 
-def test_execute_with_token_reverts_on_unverified_cert_id(
+def test_execute_with_token_reverts_on_unknown_cert_id(
     accounts, admin, topos_core_contract_B, topos_executable
 ):
     invalid_cert_id = brownie.convert.to_bytes("0xdead", "bytes")
     dummy_address = accounts.add()
-    topos_core_contract_B.verifyCertificate(
+    topos_core_contract_B.pushCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_with_token_data(dummy_address, c.TARGET_SUBNET_ID)
-    # should revert since the cert is unverified
+    # should revert since the cert is not present
     with brownie.reverts():
         topos_executable.executeWithToken(
             invalid_cert_id, data, c.DUMMY_DATA, {"from": admin}
@@ -112,7 +112,7 @@ def test_execute_with_token_reverts_on_false_target_subnet_id(
 ):
     invalid_target_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
     dummy_address = accounts.add()
-    topos_core_contract_B.verifyCertificate(
+    topos_core_contract_B.pushCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_with_token_data(
@@ -130,7 +130,7 @@ def test_execute_with_token_reverts_on_contract_call_already_executed(
 ):
     dummy_address = accounts.add()
     authorize_origin(dummy_address, admin, topos_executable)
-    topos_core_contract_B.verifyCertificate(
+    topos_core_contract_B.pushCertificate(
         get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
     )
     data = get_call_contract_with_token_data(dummy_address, c.TARGET_SUBNET_ID)
@@ -150,7 +150,7 @@ def test_execute_with_token_reverts_on_cert_position_lower_than_min_position(
     dummy_address = accounts.add()
     cert_position = 3
     authorize_origin(dummy_address, admin, topos_executable)
-    topos_core_contract_B.verifyCertificate(
+    topos_core_contract_B.pushCertificate(
         get_encoded_cert_params(c.CERT_ID, cert_position), {"from": admin}
     )
     data = get_call_contract_with_token_data(dummy_address, c.TARGET_SUBNET_ID)

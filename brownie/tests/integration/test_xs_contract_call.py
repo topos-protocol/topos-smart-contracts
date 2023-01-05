@@ -52,7 +52,7 @@ def test_cross_subnet_contract_call():
     switch_network("B")
     deploy_initial_contracts(subnet_B_id)
     # if you don't validate a cert then the mint function would fail
-    validate_dummy_cert(topos_core_contract_B)
+    push_dummy_cert(topos_core_contract_B)
     approve_and_execute_on_receiving_subnet(set_remote_value_tx)
     assert xs_arbitrary_call_B.value() == arbitrary_call_value
 
@@ -156,11 +156,11 @@ def switch_network(subnet_network):
         network.connect("development-two")
 
 
-def validate_dummy_cert(topos_core_contract):
+def push_dummy_cert(topos_core_contract):
     cert_params = ["bytes", "uint256"]
     cert_values = [dummy_cert_id, dummy_cert_position]
     encoded_cert_params = eth_abi.encode(cert_params, cert_values)
-    topos_core_contract.verifyCertificate(
+    topos_core_contract.pushCertificate(
         encoded_cert_params, {"from": accounts[0]}
     )
 

@@ -20,9 +20,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     bytes32 internal constant KEY_IMPLEMENTATION =
         bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc);
 
-    /// @notice Mapping to store verfied certificates
+    /// @notice Mapping to store certificates
     /// @dev certId => certificate
-    mapping(bytes => Certificate) verifiedCerts;
+    mapping(bytes => Certificate) certificateStorage;
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
@@ -55,14 +55,13 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* Admin Functions *|
     \*******************/
 
-    function verifyCertificate(bytes memory certBytes) external onlyAdmin {
+    function pushCertificate(bytes memory certBytes) external {
         (bytes memory certId, uint256 certPosition) = abi.decode(certBytes, (bytes, uint256));
-        Certificate memory storedCert = verifiedCerts[certId];
-        if (storedCert.isVerified == true) revert CertAlreadyVerified();
-        if (!_verfiyCertificate(certId)) revert InvalidCert();
-        Certificate memory newCert = Certificate({certId: certId, position: certPosition, isVerified: true});
-        verifiedCerts[certId] = newCert;
-        emit CertVerified(certId);
+        Certificate memory storedCert = certificateStorage[certId];
+        if (storedCert.isPresent == true) revert CertAlreadyPresent();
+        Certificate memory newCert = Certificate({certId: certId, position: certPosition, isPresent: true});
+        certificateStorage[certId] = newCert;
+        emit CertStored(certId);
     }
 
     function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external override onlyAdmin {
@@ -163,8 +162,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         bytes calldata crossSubnetTx,
         bytes calldata /*crossSubnetTxProof*/
     ) external {
-        Certificate memory storedCert = getVerfiedCert(certId);
-        if (storedCert.isVerified == false) revert CertNotVerified();
+        Certificate memory storedCert = getStorageCert(certId);
+        if (storedCert.isPresent == false) revert CertNotPresent();
         (
             bytes memory txHash,
             address sender,
@@ -252,8 +251,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     \******************/
 
     function verifyContractCallData(bytes calldata certId, subnetId targetSubnetId) public override returns (uint256) {
-        Certificate memory storedCert = getVerfiedCert(certId);
-        if (storedCert.isVerified == false) revert CertNotVerified();
+        Certificate memory storedCert = getStorageCert(certId);
+        if (storedCert.isPresent == false) revert CertNotPresent();
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
         emit ContractCallDataVerified(storedCert.position);
         return storedCert.position;
@@ -263,8 +262,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* Getters *|
     \***********/
 
-    function getVerfiedCert(bytes calldata certId) public view returns (Certificate memory) {
-        return verifiedCerts[certId];
+    function getStorageCert(bytes calldata certId) public view returns (Certificate memory) {
+        return certificateStorage[certId];
     }
 
     function tokenDailyMintLimit(string memory symbol) public view override returns (uint256) {
@@ -452,12 +451,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function _getTokenAddressKey(string memory symbol) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(PREFIX_TOKEN_ADDRESS, symbol));
-    }
-
-    function _verfiyCertificate(
-        bytes memory /*cert*/
-    ) internal pure returns (bool) {
-        return true;
     }
 
     function _getIsSendTokenExecutedKey(
