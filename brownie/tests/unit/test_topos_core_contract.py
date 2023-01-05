@@ -132,39 +132,93 @@ def test_deploy_token_emits_events(admin, topos_core_contract_A):
 
 
 def test_setup_reverts_on_mismatch_admin_threshold(
-    admin, topos_core_contract_A
+    admin, TokenDeployer, ToposCoreContract, ToposCoreContractProxy
 ):
     new_admin_values = [[admin.address], 2]
     encoded_admin_params = eth_abi.encode(c.ADMIN_PARAMS, new_admin_values)
+    topos_core_contract_impl = deploy_new_tcc(
+        admin, TokenDeployer, ToposCoreContract
+    )
     # should revert no. of admin address does not match the threshold
     with brownie.reverts():
-        topos_core_contract_A.setup(encoded_admin_params, {"from": admin})
+        # `setup()` is part of the ToposCoreContractProxy constructor
+        ToposCoreContractProxy.deploy(
+            topos_core_contract_impl.address,
+            encoded_admin_params,
+            {"from": admin},
+        )
 
 
 def test_setup_reverts_on_admin_threshold_cannot_be_zero(
-    admin, topos_core_contract_A
+    admin, TokenDeployer, ToposCoreContract, ToposCoreContractProxy
 ):
     new_admin_values = [[admin.address], 0]
     encoded_admin_params = eth_abi.encode(c.ADMIN_PARAMS, new_admin_values)
+    topos_core_contract_impl = deploy_new_tcc(
+        admin, TokenDeployer, ToposCoreContract
+    )
     # should revert since the threshold can't be zero
     with brownie.reverts():
-        topos_core_contract_A.setup(encoded_admin_params, {"from": admin})
+        # `setup()` is part of the ToposCoreContractProxy constructor
+        ToposCoreContractProxy.deploy(
+            topos_core_contract_impl.address,
+            encoded_admin_params,
+            {"from": admin},
+        )
 
 
-def test_setup_reverts_on_duplicate_admin(admin, topos_core_contract_A):
+def test_setup_reverts_on_duplicate_admin(
+    admin, TokenDeployer, ToposCoreContract, ToposCoreContractProxy
+):
     new_admin_values = [[admin.address, admin.address], 2]
     encoded_admin_params = eth_abi.encode(c.ADMIN_PARAMS, new_admin_values)
+    topos_core_contract_impl = deploy_new_tcc(
+        admin, TokenDeployer, ToposCoreContract
+    )
     # should revert since you can't have two admins with the same address
     with brownie.reverts():
-        topos_core_contract_A.setup(encoded_admin_params, {"from": admin})
+        # `setup()` is part of the ToposCoreContractProxy constructor
+        ToposCoreContractProxy.deploy(
+            topos_core_contract_impl.address,
+            encoded_admin_params,
+            {"from": admin},
+        )
 
 
-def test_setup_reverts_on_zero_address_admin(admin, topos_core_contract_A):
+def test_setup_reverts_on_zero_address_admin(
+    admin, TokenDeployer, ToposCoreContract, ToposCoreContractProxy
+):
     new_admin_values = [[brownie.ZERO_ADDRESS], 1]
     encoded_admin_params = eth_abi.encode(c.ADMIN_PARAMS, new_admin_values)
+    topos_core_contract_impl = deploy_new_tcc(
+        admin, TokenDeployer, ToposCoreContract
+    )
     # should revert since the admin address can't be zero address
     with brownie.reverts():
-        topos_core_contract_A.setup(encoded_admin_params, {"from": admin})
+        # `setup()` is part of the ToposCoreContractProxy constructor
+        ToposCoreContractProxy.deploy(
+            topos_core_contract_impl.address,
+            encoded_admin_params,
+            {"from": admin},
+        )
+
+
+def test_setup_should_revert_on_non_proxy_call(
+    admin,
+    TokenDeployer,
+    ToposCoreContract,
+):
+    admin_values = [[admin.address], 1]
+    encoded_admin_params = eth_abi.encode(c.ADMIN_PARAMS, admin_values)
+    topos_core_contract_impl = deploy_new_tcc(
+        admin, TokenDeployer, ToposCoreContract
+    )
+    # should revert since delegate setup() cannot be called without proxy
+    with brownie.reverts():
+        topos_core_contract_impl.setup(
+            encoded_admin_params,
+            {"from": admin},
+        )
 
 
 def test_execute_transfer_reverts_on_unverified_cert(
@@ -676,7 +730,38 @@ def test_verify_contract_call_returns_cert_position(
     tx = topos_core_contract_A.verifyContractCallData(
         c.CERT_ID, fixture_subnet_id, {"from": admin}
     )
-    assert tx == c.CERT_POSITION
+    assert (
+        tx.events["ContractCallDataVerified"]["certPosition"]
+        == c.CERT_POSITION
+    )
+
+
+def test_upgrade_emits_event(
+    admin, topos_core_contract_A, CodeHash, TokenDeployer, ToposCoreContract
+):
+    admin_values = [[admin.address], 1]
+    encoded_admin_params = eth_abi.encode(c.ADMIN_PARAMS, admin_values)
+    topos_core_contract_impl = deploy_new_tcc(
+        admin, TokenDeployer, ToposCoreContract
+    )
+    # verify that the current delegate is not the same as the new delegate
+    assert (
+        topos_core_contract_A.implementation({"from": admin})
+        != topos_core_contract_impl.address
+    )
+    code_hash = CodeHash.deploy({"from": admin})
+    codehash = code_hash.getCodeHash(topos_core_contract_impl.address)
+    tx = topos_core_contract_A.upgrade(
+        topos_core_contract_impl.address,
+        codehash,
+        encoded_admin_params,
+        {"from": admin},
+    )
+    # the proxy storage should point to the new delegate address
+    assert (
+        tx.events["Upgraded"]["implementation"]
+        == topos_core_contract_impl.address
+    )
 
 
 # internal functions #
@@ -720,3 +805,10 @@ def get_default_mint_val(alice, bob):
         c.SEND_AMOUNT,
     ]
     return eth_abi.encode(c.MINT_TOKEN_PARAMS, mint_token_args)
+
+
+def deploy_new_tcc(admin, TokenDeployer, ToposCoreContract):
+    token_deployer = TokenDeployer.deploy({"from": admin})
+    return ToposCoreContract.deploy(
+        token_deployer.address, c.SOURCE_SUBNET_ID, {"from": admin}
+    )
