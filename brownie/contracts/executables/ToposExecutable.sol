@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import {IToposCoreContract, subnetId} from "./../../interfaces/IToposCoreContract.sol";
+import {IToposCoreContract, certificateId, subnetId} from "./../../interfaces/IToposCoreContract.sol";
 import {IToposExecutable} from "./../../interfaces/IToposExecutable.sol";
 
 contract ToposExecutable is IToposExecutable {
@@ -39,7 +39,7 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function execute(
-        bytes calldata certId,
+        certificateId certId,
         ContractCallData memory contractCallData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
@@ -63,7 +63,7 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function executeWithToken(
-        bytes calldata certId,
+        certificateId certId,
         ContractCallWithTokenData memory contractCallWithTokenData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
