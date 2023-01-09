@@ -14,17 +14,34 @@ const main = async function (
   ...args
 ) {
   const provider = new ethers.providers.JsonRpcProvider(endpoint);
+  const privateKey = process.env.PRIVATE_KEY;
+
+  if (!privateKey || ethers.utils.isHexString(value, 32)) {
+    console.error('ERROR: Please provide a valid private key! (PRIVATE_KEY)');
+    return;
+  }
+
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-  let rawdata = fs.readFileSync(contractJsonPath);
-  let contractJson = JSON.parse(rawdata);
+  let rawdata;
+  try {
+    rawdata = fs.readFileSync(contractJsonPath);
+  } catch (error) {
+    console.error(
+      `ERROR: Could not find a contract JSON file at ${contractJsonPath}`,
+    );
+    return;
+  }
 
-  console.log('ConstAddressDeployer address: ', CONST_ADDRESS_DEPLOYER_ADDR);
-  console.log('Wallet: ', wallet.address);
-  console.log('contractJson: ', checksum(JSON.stringify(contractJson)));
-  console.log('salt: ', salt);
-  console.log('args: ', args);
-  console.log('gasLimit: ', gasLimit);
+  let contractJson;
+  try {
+    contractJson = JSON.parse(rawdata);
+  } catch (error) {
+    console.error(
+      `ERROR: Could not parse the contract JSON file found at ${contractJsonPath}`,
+    );
+    return;
+  }
 
   axelarUtils
     .deployContractConstant(
