@@ -1,5 +1,4 @@
 const axelarUtils = require('@axelar-network/axelar-gmp-sdk-solidity');
-const checksum = require('checksum');
 const ethers = require('ethers');
 const fs = require('fs');
 
