@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {IToposCoreContract, certificateId, subnetId} from "./../../interfaces/IToposCoreContract.sol";
+import {IToposCoreContract, CertificateId, subnetId} from "./../../interfaces/IToposCoreContract.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IBurnableMintableCappedERC20} from "./../../interfaces/IBurnableMintableCappedERC20.sol";
 import {ITokenDeployer} from "./../../interfaces/ITokenDeployer.sol";
@@ -21,8 +21,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc);
 
     /// @notice Mapping to store certificates
-    /// @dev certificateId(bytes32) => certificate(bytes)
-    mapping(certificateId => Certificate) certificateStorage;
+    /// @dev CertificateId(bytes32) => certificate(bytes)
+    mapping(CertificateId => Certificate) certificateStorage;
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
@@ -56,7 +56,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     \*******************/
 
     function pushCertificate(bytes memory certBytes) external {
-        (certificateId certId, uint256 certPosition) = abi.decode(certBytes, (certificateId, uint256));
+        (CertificateId certId, uint256 certPosition) = abi.decode(certBytes, (CertificateId, uint256));
         Certificate memory storedCert = certificateStorage[certId];
         if (storedCert.isPresent == true) revert CertAlreadyPresent();
         Certificate memory newCert = Certificate({id: certId, position: certPosition, isPresent: true});
@@ -158,7 +158,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     }
 
     function executeAssetTransfer(
-        certificateId certId,
+        CertificateId certId,
         bytes calldata crossSubnetTx,
         bytes calldata /*crossSubnetTxProof*/
     ) external {
@@ -250,7 +250,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* Public Methods *|
     \******************/
 
-    function verifyContractCallData(certificateId certId, subnetId targetSubnetId) public override returns (uint256) {
+    function verifyContractCallData(CertificateId certId, subnetId targetSubnetId) public override returns (uint256) {
         Certificate memory storedCert = getStorageCert(certId);
         if (storedCert.isPresent == false) revert CertNotPresent();
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
@@ -262,7 +262,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* Getters *|
     \***********/
 
-    function getStorageCert(certificateId certId) public view returns (Certificate memory) {
+    function getStorageCert(CertificateId certId) public view returns (Certificate memory) {
         return certificateStorage[certId];
     }
 

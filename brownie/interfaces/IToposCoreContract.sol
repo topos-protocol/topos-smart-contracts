@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-type certificateId is bytes32; // user-defined type for certificate IDs
+type CertificateId is bytes32; // user-defined type for certificate IDs
 type subnetId is bytes32; // user-defined type for subnet IDs
 
 interface IToposCoreContract {
@@ -29,7 +29,7 @@ interface IToposCoreContract {
     error TransferAlreadyExecuted();
 
     struct Certificate {
-        certificateId id;
+        CertificateId id;
         uint256 position;
         bool isPresent;
     }
@@ -67,7 +67,7 @@ interface IToposCoreContract {
         uint256 amount
     );
 
-    event CertStored(certificateId certId);
+    event CertStored(CertificateId certId);
 
     event TokenDeployed(string symbol, address tokenAddresses);
 
@@ -89,7 +89,7 @@ interface IToposCoreContract {
     ) external;
 
     function executeAssetTransfer(
-        certificateId certId,
+        CertificateId certId,
         bytes calldata crossSubnetTx,
         bytes calldata crossSubnetTxProof
     ) external;
@@ -108,7 +108,7 @@ interface IToposCoreContract {
         uint256 amount
     ) external;
 
-    function verifyContractCallData(certificateId certId, subnetId targetSubnetId) external returns (uint256);
+    function verifyContractCallData(CertificateId certId, subnetId targetSubnetId) external returns (uint256);
 
     function deployToken(bytes calldata params) external;
 
@@ -130,7 +130,7 @@ interface IToposCoreContract {
 
     function admins(uint256 epoch) external view returns (address[] memory);
 
-    function getStorageCert(certificateId certId) external view returns (Certificate memory);
+    function getStorageCert(CertificateId certId) external view returns (Certificate memory);
 
     function tokenDeployer() external view returns (address);
 

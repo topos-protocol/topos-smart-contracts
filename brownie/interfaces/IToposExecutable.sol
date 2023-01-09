@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import {IToposCoreContract, certificateId, subnetId} from "./IToposCoreContract.sol";
+import {IToposCoreContract, CertificateId, subnetId} from "./IToposCoreContract.sol";
 
 interface IToposExecutable {
     error NotAdmin();
@@ -52,13 +52,13 @@ interface IToposExecutable {
     ) external;
 
     function execute(
-        certificateId certId,
+        CertificateId certId,
         ContractCallData memory contractCallData,
         bytes calldata crossSubnetTxProof
     ) external;
 
     function executeWithToken(
-        certificateId certId,
+        CertificateId certId,
         ContractCallWithTokenData memory contractCallWithTokenData,
         bytes calldata crossSubnetTxProof
     ) external;
