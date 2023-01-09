@@ -109,6 +109,8 @@ $ npm run lint:fix
 
 ## Deployment
 
+To deploy contracts with `DEPLOY2`, refer to the [next section](#deployment-with-deploy2).
+
 Add an account to Brownie accounts and assign an `id` to it:
 
 ```
@@ -148,6 +150,15 @@ Example:
 
 ```
 $ npm run deploy ToposCoreContract 0x4897d0802e611AF187db47C7648e8B0Ef759e3aa 1
+```
+
+## Deployment with DEPLOY2
+
+A NodeJS script is made available to deploy contracts with `DEPLOY2`, i.e., with constant addresses. The script is to be used with a deployed instance of `ConstAddressDeployer`. See an example below:
+
+```
+npm run deploy2 http://myChainRPCEndpoint myCompiledContract.json MySecretSalt ACustomGasLimit|null MyConstructorArg AnotherConstructorArg
+# npm run deploy http://node-1:8545 brownie/build/contracts/ToposCoreContract.json $TOPOS_CORE_SALT 2000000 0xF121424e3F7d73fCD79DcBCA67E8F10BeBE67b00 0x3100000000000000000000000000000000000000000000000000000000000000
 ```
 
 ## Docker
