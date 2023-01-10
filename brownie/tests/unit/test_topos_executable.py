@@ -179,7 +179,6 @@ def get_call_contract_data(addr, subnet_id):
         addr,  # source_contract_addr
         subnet_id,
         addr,  # target_contract_addr
-        get_payload_hash(),
         c.PAYLOAD,
         get_selector_hash(),
     ]
@@ -192,7 +191,6 @@ def get_call_contract_with_token_data(addr, subnet_id):
         addr,  # source_contract_addr
         subnet_id,
         addr,  # target_contract_addr
-        get_payload_hash(),
         c.PAYLOAD,
         c.TOKEN_SYMBOL_X,
         c.SEND_AMOUNT,
@@ -202,12 +200,6 @@ def get_call_contract_with_token_data(addr, subnet_id):
 
 def get_encoded_cert_params(cert_id, cert_position):
     return eth_abi.encode(["bytes", "uint256"], [cert_id, cert_position])
-
-
-def get_payload_hash():
-    k = keccak.new(digest_bits=256)
-    k.update(c.PAYLOAD)
-    return "0x" + k.hexdigest()
 
 
 def get_selector_hash():
