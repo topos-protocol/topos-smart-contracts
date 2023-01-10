@@ -188,7 +188,6 @@ contract ToposExecutable is IToposExecutable {
                     contractCallData.sourceContractAddr,
                     contractCallData.targetSubnetId,
                     contractCallData.targetContractAddr,
-                    contractCallData.payloadHash,
                     contractCallData.payload,
                     contractCallData.selector
                 )
@@ -209,7 +208,6 @@ contract ToposExecutable is IToposExecutable {
                     contractCallWithTokenData.sourceContractAddr,
                     contractCallWithTokenData.targetSubnetId,
                     contractCallWithTokenData.targetContractAddr,
-                    contractCallWithTokenData.payloadHash,
                     contractCallWithTokenData.payload,
                     contractCallWithTokenData.symbol,
                     contractCallWithTokenData.amount,
