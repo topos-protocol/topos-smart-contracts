@@ -9,6 +9,8 @@ contract ConstAddressDeployer {
 
     event Deployed(bytes32 indexed bytecodeHash, bytes32 indexed salt, address indexed deployedAddress);
 
+    constructor() {}
+
     /**
      * @dev Deploys a contract using `CREATE2`. The address where the contract
      * will be deployed can be known in advance via {deployedAddress}.
