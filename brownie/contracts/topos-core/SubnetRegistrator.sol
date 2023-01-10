@@ -8,8 +8,8 @@ contract SubnetRegistrator {
     error SubnetNotRegistered(SubnetPublicKey publicKey);
 
     struct Subnet {
-        bytes endpoint;
-        bytes logoURL;
+        string endpoint;
+        string logoURL;
         string name;
         string currencySymbol;
         bool isPresent;
@@ -32,8 +32,8 @@ contract SubnetRegistrator {
     /// @param publicKey FROST public key of a subnet
     /// @param currencySymbol currencySymbol for a subnet currency
     function registerSubnet(
-        bytes calldata endpoint,
-        bytes calldata logoURL,
+        string calldata endpoint,
+        string calldata logoURL,
         string calldata name,
         SubnetPublicKey publicKey,
         string calldata currencySymbol
