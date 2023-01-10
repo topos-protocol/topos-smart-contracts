@@ -158,7 +158,7 @@ A NodeJS script is made available to deploy contracts with `DEPLOY2`, i.e., with
 
 ```
 npm run deploy2 http://myChainRPCEndpoint myCompiledContract.json MySecretSalt ACustomGasLimit|null MyConstructorArg AnotherConstructorArg
-# npm run deploy http://127.0.0.1:8545 brownie/build/contracts/ToposCoreContract.json $TOPOS_CORE_SALT 2000000 0xF121424e3F7d73fCD79DcBCA67E8F10BeBE67b00 0x3100000000000000000000000000000000000000000000000000000000000000
+# npm run deploy2 http://127.0.0.1:8545 brownie/build/contracts/ToposCoreContract.json $TOPOS_CORE_SALT 2000000 0xF121424e3F7d73fCD79DcBCA67E8F10BeBE67b00 0x3100000000000000000000000000000000000000000000000000000000000000
 ```
 
 ## Docker
