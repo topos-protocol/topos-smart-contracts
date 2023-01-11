@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import {IToposCoreContract, subnetId} from "./IToposCoreContract.sol";
+import {IToposCoreContract, CertificateId, SubnetId} from "./IToposCoreContract.sol";
 
 interface IToposExecutable {
     error NotAdmin();
@@ -12,7 +12,7 @@ interface IToposExecutable {
     error UnauthorizedOrigin();
 
     event OriginAuthorized(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
         bytes32 selector,
         uint256 minimumCertPosition
@@ -20,9 +20,9 @@ interface IToposExecutable {
 
     struct ContractCallData {
         bytes txHash;
-        subnetId sourceSubnetId;
+        SubnetId sourceSubnetId;
         address sourceContractAddr;
-        subnetId targetSubnetId;
+        SubnetId targetSubnetId;
         address targetContractAddr;
         bytes payload;
         bytes32 selector; // keccak256 hash of a function name eg. keccak256("executeContractCall")
@@ -30,9 +30,9 @@ interface IToposExecutable {
 
     struct ContractCallWithTokenData {
         bytes txHash;
-        subnetId sourceSubnetId;
+        SubnetId sourceSubnetId;
         address sourceContractAddr;
-        subnetId targetSubnetId;
+        SubnetId targetSubnetId;
         address targetContractAddr;
         bytes payload;
         string symbol;
@@ -43,20 +43,20 @@ interface IToposExecutable {
     function toposCoreContract() external view returns (IToposCoreContract);
 
     function authorizeOrigin(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
         bytes32 selector,
         uint256 minimumCertPosition
     ) external;
 
     function execute(
-        bytes calldata certId,
+        CertificateId certId,
         ContractCallData memory contractCallData,
         bytes calldata crossSubnetTxProof
     ) external;
 
     function executeWithToken(
-        bytes calldata certId,
+        CertificateId certId,
         ContractCallWithTokenData memory contractCallWithTokenData,
         bytes calldata crossSubnetTxProof
     ) external;

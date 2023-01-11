@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 import {EternalStorage} from "./EternalStorage.sol";
-import {IToposCoreContract, subnetId} from "./../../interfaces/IToposCoreContract.sol";
+import {IToposCoreContract, SubnetId} from "./../../interfaces/IToposCoreContract.sol";
 
 contract ToposCoreContractProxy is EternalStorage {
     error InvalidImplementation();
