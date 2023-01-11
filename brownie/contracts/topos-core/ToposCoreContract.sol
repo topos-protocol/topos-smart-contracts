@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {IToposCoreContract, CertificateId, subnetId} from "./../../interfaces/IToposCoreContract.sol";
+import {IToposCoreContract, CertificateId, SubnetId} from "./../../interfaces/IToposCoreContract.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IBurnableMintableCappedERC20} from "./../../interfaces/IBurnableMintableCappedERC20.sol";
 import {ITokenDeployer} from "./../../interfaces/ITokenDeployer.sol";
@@ -26,7 +26,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
-    subnetId internal immutable _networkSubnetId;
+    SubnetId internal immutable _networkSubnetId;
 
     /// @notice Validator role
     /// 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a
@@ -44,7 +44,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     /// @notice Internal token deployer (ERCBurnableMintable by default)
     address internal immutable _tokenDeployerImplementation;
 
-    constructor(address tokenDeployerImplementation, subnetId networkSubnetId) {
+    constructor(address tokenDeployerImplementation, SubnetId networkSubnetId) {
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
 
         _tokenDeployerImplementation = tokenDeployerImplementation;
@@ -167,12 +167,12 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         (
             bytes memory txHash,
             address sender,
-            subnetId sourceSubnetId,
-            subnetId targetSubnetId,
+            SubnetId sourceSubnetId,
+            SubnetId targetSubnetId,
             address receiver,
             string memory symbol,
             uint256 amount
-        ) = abi.decode(crossSubnetTx, (bytes, address, subnetId, subnetId, address, string, uint256));
+        ) = abi.decode(crossSubnetTx, (bytes, address, SubnetId, SubnetId, address, string, uint256));
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
         if (_isSendTokenExecuted(txHash, sender, sourceSubnetId, targetSubnetId, receiver, symbol, amount))
             revert TransferAlreadyExecuted();
@@ -182,7 +182,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     }
 
     function sendToken(
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address receiver,
         string calldata symbol,
         uint256 amount
@@ -192,7 +192,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     }
 
     function callContract(
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes calldata payload
     ) external {
@@ -207,7 +207,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     }
 
     function callContractWithToken(
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes calldata payload,
         string calldata symbol,
@@ -250,7 +250,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* Public Methods *|
     \******************/
 
-    function verifyContractCallData(CertificateId certId, subnetId targetSubnetId) public override returns (uint256) {
+    function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) public override returns (uint256) {
         Certificate memory storedCert = getStorageCert(certId);
         if (storedCert.isPresent == false) revert CertNotPresent();
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
@@ -387,8 +387,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     function _setSendTokenExecuted(
         bytes memory txHash,
         address sender,
-        subnetId sourceSubnetId,
-        subnetId targetSubnetId,
+        SubnetId sourceSubnetId,
+        SubnetId targetSubnetId,
         address receiver,
         string memory symbol,
         uint256 amount
@@ -411,8 +411,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         return TokenType(getUint(_getTokenTypeKey(symbol)));
     }
 
-    function _validateTargetSubnetId(subnetId targetSubnetId) internal view returns (bool) {
-        if (subnetId.unwrap(targetSubnetId) != subnetId.unwrap(_networkSubnetId)) {
+    function _validateTargetSubnetId(SubnetId targetSubnetId) internal view returns (bool) {
+        if (SubnetId.unwrap(targetSubnetId) != SubnetId.unwrap(_networkSubnetId)) {
             return false;
         }
         return true;
@@ -421,8 +421,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     function _isSendTokenExecuted(
         bytes memory txHash,
         address sender,
-        subnetId sourceSubnetId,
-        subnetId targetSubnetId,
+        SubnetId sourceSubnetId,
+        SubnetId targetSubnetId,
         address receiver,
         string memory symbol,
         uint256 amount
@@ -456,8 +456,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     function _getIsSendTokenExecutedKey(
         bytes memory txHash,
         address sender,
-        subnetId sourceSubnetId,
-        subnetId targetSubnetId,
+        SubnetId sourceSubnetId,
+        SubnetId targetSubnetId,
         address receiver,
         string memory symbol,
         uint256 amount

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import {IToposCoreContract, CertificateId, subnetId} from "./IToposCoreContract.sol";
+import {IToposCoreContract, CertificateId, SubnetId} from "./IToposCoreContract.sol";
 
 interface IToposExecutable {
     error NotAdmin();
@@ -12,7 +12,7 @@ interface IToposExecutable {
     error UnauthorizedOrigin();
 
     event OriginAuthorized(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
         bytes32 selector,
         uint256 minimumCertPosition
@@ -20,9 +20,9 @@ interface IToposExecutable {
 
     struct ContractCallData {
         bytes txHash;
-        subnetId sourceSubnetId;
+        SubnetId sourceSubnetId;
         address sourceContractAddr;
-        subnetId targetSubnetId;
+        SubnetId targetSubnetId;
         address targetContractAddr;
         bytes32 payloadHash;
         bytes payload;
@@ -31,9 +31,9 @@ interface IToposExecutable {
 
     struct ContractCallWithTokenData {
         bytes txHash;
-        subnetId sourceSubnetId;
+        SubnetId sourceSubnetId;
         address sourceContractAddr;
-        subnetId targetSubnetId;
+        SubnetId targetSubnetId;
         address targetContractAddr;
         bytes32 payloadHash;
         bytes payload;
@@ -45,7 +45,7 @@ interface IToposExecutable {
     function toposCoreContract() external view returns (IToposCoreContract);
 
     function authorizeOrigin(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
         bytes32 selector,
         uint256 minimumCertPosition

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 type CertificateId is bytes32; // user-defined type for certificate IDs
-type subnetId is bytes32; // user-defined type for subnet IDs
+type SubnetId is bytes32; // user-defined type for subnet IDs
 
 interface IToposCoreContract {
     /**********\
@@ -40,26 +40,26 @@ interface IToposCoreContract {
 
     event TokenSent(
         address indexed sender,
-        subnetId sourceSubnetId,
-        subnetId targetSubnetId,
+        SubnetId sourceSubnetId,
+        SubnetId targetSubnetId,
         address receiver,
         string symbol,
         uint256 amount
     );
 
     event ContractCall(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes32 indexed payloadHash,
         bytes payload
     );
 
     event ContractCallWithToken(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes32 indexed payloadHash,
         bytes payload,
@@ -82,7 +82,7 @@ interface IToposCoreContract {
     \********************/
 
     function sendToken(
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address receiver,
         string calldata symbol,
         uint256 amount
@@ -95,20 +95,20 @@ interface IToposCoreContract {
     ) external;
 
     function callContract(
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes calldata payload
     ) external;
 
     function callContractWithToken(
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes calldata payload,
         string calldata symbol,
         uint256 amount
     ) external;
 
-    function verifyContractCallData(CertificateId certId, subnetId targetSubnetId) external returns (uint256);
+    function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) external returns (uint256);
 
     function deployToken(bytes calldata params) external;
 
