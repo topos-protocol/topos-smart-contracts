@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-type subnetId is bytes32; // type of subnet IDs
+type CertificateId is bytes32; // user-defined type for certificate IDs
+type SubnetId is bytes32; // user-defined type for subnet IDs
 
 interface IToposCoreContract {
     /**********\
@@ -28,7 +29,7 @@ interface IToposCoreContract {
     error TransferAlreadyExecuted();
 
     struct Certificate {
-        bytes certId;
+        CertificateId id;
         uint256 position;
         bool isPresent;
     }
@@ -39,32 +40,32 @@ interface IToposCoreContract {
 
     event TokenSent(
         address indexed sender,
-        subnetId sourceSubnetId,
-        subnetId targetSubnetId,
+        SubnetId sourceSubnetId,
+        SubnetId targetSubnetId,
         address receiver,
         string symbol,
         uint256 amount
     );
 
     event ContractCall(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes payload
     );
 
     event ContractCallWithToken(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes payload,
         string symbol,
         uint256 amount
     );
 
-    event CertStored(bytes certId);
+    event CertStored(CertificateId certId);
 
     event TokenDeployed(string symbol, address tokenAddresses);
 
@@ -79,33 +80,33 @@ interface IToposCoreContract {
     \********************/
 
     function sendToken(
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address receiver,
         string calldata symbol,
         uint256 amount
     ) external;
 
     function executeAssetTransfer(
-        bytes calldata certId,
+        CertificateId certId,
         bytes calldata crossSubnetTx,
         bytes calldata crossSubnetTxProof
     ) external;
 
     function callContract(
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes calldata payload
     ) external;
 
     function callContractWithToken(
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes calldata payload,
         string calldata symbol,
         uint256 amount
     ) external;
 
-    function verifyContractCallData(bytes calldata certId, subnetId targetSubnetId) external returns (uint256);
+    function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) external returns (uint256);
 
     function deployToken(bytes calldata params) external;
 
@@ -127,7 +128,7 @@ interface IToposCoreContract {
 
     function admins(uint256 epoch) external view returns (address[] memory);
 
-    function getStorageCert(bytes calldata certId) external view returns (Certificate memory);
+    function getStorageCert(CertificateId certId) external view returns (Certificate memory);
 
     function tokenDeployer() external view returns (address);
 

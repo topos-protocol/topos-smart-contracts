@@ -199,7 +199,7 @@ def get_call_contract_with_token_data(addr, subnet_id):
 
 
 def get_encoded_cert_params(cert_id, cert_position):
-    return eth_abi.encode(["bytes", "uint256"], [cert_id, cert_position])
+    return eth_abi.encode(["bytes32", "uint256"], [cert_id, cert_position])
 
 
 def get_selector_hash():

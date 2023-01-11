@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import {IToposCoreContract, subnetId} from "./../../interfaces/IToposCoreContract.sol";
+import {IToposCoreContract, CertificateId, SubnetId} from "./../../interfaces/IToposCoreContract.sol";
 import {IToposExecutable} from "./../../interfaces/IToposExecutable.sol";
 
 contract ToposExecutable is IToposExecutable {
@@ -29,7 +29,7 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function authorizeOrigin(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
         bytes32 selector,
         uint256 minimumCertPosition
@@ -39,7 +39,7 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function execute(
-        bytes calldata certId,
+        CertificateId certId,
         ContractCallData memory contractCallData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
@@ -63,7 +63,7 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function executeWithToken(
-        bytes calldata certId,
+        CertificateId certId,
         ContractCallWithTokenData memory contractCallWithTokenData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
@@ -105,14 +105,14 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _execute(
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes32 selector,
         bytes memory payload
     ) internal virtual {}
 
     function _executeWithToken(
-        subnetId targetSubnetId,
+        SubnetId targetSubnetId,
         address targetContractAddr,
         bytes32 selector,
         bytes memory payload,
@@ -141,7 +141,7 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _setAuthorizedOrigin(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
         bytes32 selector,
         uint256 minimumCertPosition
@@ -166,7 +166,7 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _isAuthorizedOrigin(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
         bytes32 selector
     ) internal view returns (uint256) {
@@ -221,7 +221,7 @@ contract ToposExecutable is IToposExecutable {
     }
 
     function _getAuthorizedOriginsKey(
-        subnetId sourceSubnetId,
+        SubnetId sourceSubnetId,
         address sourceContractAddr,
         bytes32 selector
     ) internal pure returns (bytes32) {

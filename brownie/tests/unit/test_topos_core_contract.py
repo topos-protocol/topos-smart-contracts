@@ -760,7 +760,7 @@ def test_upgrade_emits_event(
 # internal functions #
 def push_dummy_cert(admin, topos_core_contract_A):
     return topos_core_contract_A.pushCertificate(
-        eth_abi.encode(["bytes", "uint256"], [c.CERT_ID, c.CERT_POSITION]),
+        eth_abi.encode(["bytes32", "uint256"], [c.CERT_ID, c.CERT_POSITION]),
         {"from": admin},
     )
 
