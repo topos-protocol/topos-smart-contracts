@@ -10,7 +10,6 @@ interface IToposCoreContract {
     \**********/
 
     error CertNotPresent();
-    error CertAlreadyPresent();
     error BurnFailed(string symbol);
     error ExceedDailyMintLimit(string symbol);
     error InvalidAmount();
@@ -31,7 +30,6 @@ interface IToposCoreContract {
     struct Certificate {
         CertificateId id;
         uint256 position;
-        bool isPresent;
     }
 
     /**********\
@@ -131,6 +129,12 @@ interface IToposCoreContract {
     function getStorageCert(CertificateId certId) external view returns (Certificate memory);
 
     function tokenDeployer() external view returns (address);
+
+    function certificateExists(CertificateId certId) external view returns (bool);
+
+    function getCertificateCount() external view returns (uint256);
+
+    function getCertIdAtIndex(uint256 index) external view returns (CertificateId);
 
     /*******************\
     |* Admin Functions *|

@@ -8,8 +8,11 @@ import {ITokenDeployer} from "./../../interfaces/ITokenDeployer.sol";
 
 import {DepositHandler} from "./DepositHandler.sol";
 import {AdminMultisigBase} from "./AdminMultisigBase.sol";
+import "./Bytes32Sets.sol";
 
 contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
+    using Bytes32SetsLib for Bytes32SetsLib.Set;
+
     enum TokenType {
         InternalBurnable,
         InternalBurnableFrom,
@@ -44,6 +47,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     /// @notice Internal token deployer (ERCBurnableMintable by default)
     address internal immutable _tokenDeployerImplementation;
 
+    /// @notice Set of certificate IDs
+    Bytes32SetsLib.Set certificateSet;
+
     constructor(address tokenDeployerImplementation, SubnetId networkSubnetId) {
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
 
@@ -54,15 +60,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     /*******************\
     |* Admin Functions *|
     \*******************/
-
-    function pushCertificate(bytes memory certBytes) external {
-        (CertificateId certId, uint256 certPosition) = abi.decode(certBytes, (CertificateId, uint256));
-        Certificate memory storedCert = certificateStorage[certId];
-        if (storedCert.isPresent == true) revert CertAlreadyPresent();
-        Certificate memory newCert = Certificate({id: certId, position: certPosition, isPresent: true});
-        certificateStorage[certId] = newCert;
-        emit CertStored(certId);
-    }
 
     function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external override onlyAdmin {
         if (symbols.length != limits.length) revert InvalidSetDailyMintLimitsParams();
@@ -146,6 +143,15 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     |* External Functions *|
     \**********************/
 
+    function pushCertificate(bytes memory certBytes) external {
+        (CertificateId certId, uint256 certPosition) = abi.decode(certBytes, (CertificateId, uint256));
+        certificateSet.insert(CertificateId.unwrap(certId));
+        Certificate storage newCert = certificateStorage[certId];
+        newCert.id = certId;
+        newCert.position = certPosition;
+        emit CertStored(certId);
+    }
+
     function setup(bytes calldata params) external override {
         (address[] memory adminAddresses, uint256 newAdminThreshold) = abi.decode(params, (address[], uint256));
         // Prevent setup from being called on a non-proxy (the implementation).
@@ -162,8 +168,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         bytes calldata crossSubnetTx,
         bytes calldata /*crossSubnetTxProof*/
     ) external {
-        Certificate memory storedCert = getStorageCert(certId);
-        if (storedCert.isPresent == false) revert CertNotPresent();
+        if (!certificateExists(certId)) revert CertNotPresent();
         (
             bytes memory txHash,
             address sender,
@@ -243,8 +248,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     \******************/
 
     function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) public override returns (uint256) {
+        if (!certificateExists(certId)) revert CertNotPresent();
         Certificate memory storedCert = getStorageCert(certId);
-        if (storedCert.isPresent == false) revert CertNotPresent();
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
         emit ContractCallDataVerified(storedCert.position);
         return storedCert.position;
@@ -253,6 +258,18 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     /***********\
     |* Getters *|
     \***********/
+
+    function certificateExists(CertificateId certId) public view returns (bool) {
+        return certificateSet.exists(CertificateId.unwrap(certId));
+    }
+
+    function getCertificateCount() public view returns (uint256) {
+        return certificateSet.count();
+    }
+
+    function getCertIdAtIndex(uint256 index) public view returns (CertificateId) {
+        return CertificateId.wrap(certificateSet.keyAtIndex(index));
+    }
 
     function getStorageCert(CertificateId certId) public view returns (Certificate memory) {
         return certificateStorage[certId];
