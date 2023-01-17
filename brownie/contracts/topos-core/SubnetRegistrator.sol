@@ -14,7 +14,7 @@ contract SubnetRegistrator {
         string currencySymbol;
     }
 
-    /// @notice Set of subnet public keys
+    /// @notice Set of subnet IDs
     Bytes32SetsLib.Set subnetSet;
 
     /// @notice Mapping to store the registered subnets
@@ -22,15 +22,15 @@ contract SubnetRegistrator {
     mapping(SubnetId => Subnet) public subnets;
 
     /// @notice New subnet registration event
-    event NewSubnetRegistered(SubnetId publicKey);
+    event NewSubnetRegistered(SubnetId subnetId);
 
     /// @notice Subnet removal event
-    event SubnetRemoved(SubnetId publicKey);
+    event SubnetRemoved(SubnetId subnetId);
 
     /// @notice Check if the subnet is already registered
-    /// @param publicKey FROST public key of a subnet
-    function subnetExists(SubnetId publicKey) external view returns (bool) {
-        return subnetSet.exists(SubnetId.unwrap(publicKey));
+    /// @param subnetId FROST public key of a subnet
+    function subnetExists(SubnetId subnetId) external view returns (bool) {
+        return subnetSet.exists(SubnetId.unwrap(subnetId));
     }
 
     /// @notice Gets the count of the registered subnets
@@ -48,29 +48,29 @@ contract SubnetRegistrator {
     /// @param endpoint JSON RPC endpoint of a subnet
     /// @param logoURL URL for the logo of a subnet
     /// @param name name of a subnet
-    /// @param publicKey FROST public key of a subnet
+    /// @param subnetId FROST public key of a subnet
     /// @param currencySymbol currencySymbol for a subnet currency
     function registerSubnet(
         string calldata endpoint,
         string calldata logoURL,
         string calldata name,
-        SubnetId publicKey,
+        SubnetId subnetId,
         string calldata currencySymbol
     ) public {
-        subnetSet.insert(SubnetId.unwrap(publicKey));
-        Subnet storage subnet = subnets[publicKey];
+        subnetSet.insert(SubnetId.unwrap(subnetId));
+        Subnet storage subnet = subnets[subnetId];
         subnet.endpoint = endpoint;
         subnet.logoURL = logoURL;
         subnet.name = name;
         subnet.currencySymbol = currencySymbol;
-        emit NewSubnetRegistered(publicKey);
+        emit NewSubnetRegistered(subnetId);
     }
 
     /// @notice Remove an already registered subnet
-    /// @param publicKey FROST public key of a subnet
-    function removeSubnet(SubnetId publicKey) public {
-        subnetSet.remove(SubnetId.unwrap(publicKey));
-        delete subnets[publicKey];
-        emit SubnetRemoved(publicKey);
+    /// @param subnetId FROST public key of a subnet
+    function removeSubnet(SubnetId subnetId) public {
+        subnetSet.remove(SubnetId.unwrap(subnetId));
+        delete subnets[subnetId];
+        emit SubnetRemoved(subnetId);
     }
 }

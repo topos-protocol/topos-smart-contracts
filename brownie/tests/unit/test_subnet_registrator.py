@@ -15,29 +15,27 @@ def test_register_subnet_reverts_on_already_registered(
 def test_register_subnet_emits_event(alice, subnet_registrator):
     tx = register_subnet(alice, subnet_registrator)
     assert (
-        subnet_registrator.subnetExists(c.SUBNET_PUBLIC_KEY, {"from": alice})
-        is True
+        subnet_registrator.subnetExists(c.SUBNET_ID, {"from": alice}) is True
     )
     assert tx.events["NewSubnetRegistered"].values() == [
-        brownie.convert.datatypes.HexString(c.SUBNET_PUBLIC_KEY, "bytes")
+        brownie.convert.datatypes.HexString(c.SUBNET_ID, "bytes")
     ]
 
 
 def test_remove_subnet_reverts_on_not_registered(alice, subnet_registrator):
     # should revert since subnet is not registered
     with brownie.reverts():
-        subnet_registrator.removeSubnet(c.SUBNET_PUBLIC_KEY, {"from": alice})
+        subnet_registrator.removeSubnet(c.SUBNET_ID, {"from": alice})
 
 
 def test_remove_subnet_emits_event(alice, subnet_registrator):
     register_subnet(alice, subnet_registrator)
-    tx = subnet_registrator.removeSubnet(c.SUBNET_PUBLIC_KEY, {"from": alice})
+    tx = subnet_registrator.removeSubnet(c.SUBNET_ID, {"from": alice})
     assert (
-        subnet_registrator.subnetExists(c.SUBNET_PUBLIC_KEY, {"from": alice})
-        is False
+        subnet_registrator.subnetExists(c.SUBNET_ID, {"from": alice}) is False
     )
     assert tx.events["SubnetRemoved"].values() == [
-        brownie.convert.datatypes.HexString(c.SUBNET_PUBLIC_KEY, "bytes")
+        brownie.convert.datatypes.HexString(c.SUBNET_ID, "bytes")
     ]
 
 
@@ -62,7 +60,7 @@ def register_subnet(alice, subnet_registrator):
         c.ENDPOINT,
         c.LOGO_URL,
         c.SUBNET_NAME,
-        c.SUBNET_PUBLIC_KEY,
+        c.SUBNET_ID,
         c.SUBNET_CURRENCY_SYMBOL,
         {"from": alice},
     )
