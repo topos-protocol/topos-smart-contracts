@@ -38,6 +38,12 @@ contract SubnetRegistrator {
         return subnetSet.count();
     }
 
+    /// @notice Gets the subnet Id at the provided Index
+    /// @param index index at which the Subnet ID is stored
+    function getSubnetIdAtIndex(uint256 index) external view returns (SubnetId) {
+        return SubnetId.wrap(subnetSet.keyAtIndex(index));
+    }
+
     /// @notice Register a new subnet
     /// @param endpoint JSON RPC endpoint of a subnet
     /// @param logoURL URL for the logo of a subnet

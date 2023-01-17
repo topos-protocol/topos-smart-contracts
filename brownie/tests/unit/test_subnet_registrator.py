@@ -47,6 +47,15 @@ def test_get_subnet_count_returns_count(alice, subnet_registrator):
     assert subnet_registrator.getSubnetCount({"from": alice}) == subnet_count
 
 
+def test_get_subnet_id_at_index_returns_subnet_id(alice, subnet_registrator):
+    index = 0  # only one registered subnet
+    register_subnet(alice, subnet_registrator)
+    assert (
+        subnet_registrator.getSubnetIdAtIndex(index, {"from": alice})
+        == c.SUBNET_BYTES
+    )
+
+
 # internal functions #
 def register_subnet(alice, subnet_registrator):
     return subnet_registrator.registerSubnet(
