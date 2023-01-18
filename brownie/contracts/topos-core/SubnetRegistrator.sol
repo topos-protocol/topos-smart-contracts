@@ -12,6 +12,7 @@ contract SubnetRegistrator {
         string logoURL;
         string name;
         string currencySymbol;
+        uint256 chainId;
     }
 
     /// @notice Set of subnet IDs
@@ -50,12 +51,14 @@ contract SubnetRegistrator {
     /// @param name name of a subnet
     /// @param subnetId FROST public key of a subnet
     /// @param currencySymbol currencySymbol for a subnet currency
+    /// @param chainId subnet network ID
     function registerSubnet(
         string calldata endpoint,
         string calldata logoURL,
         string calldata name,
         SubnetId subnetId,
-        string calldata currencySymbol
+        string calldata currencySymbol,
+        uint256 chainId
     ) public {
         subnetSet.insert(SubnetId.unwrap(subnetId));
         Subnet storage subnet = subnets[subnetId];
@@ -63,6 +66,7 @@ contract SubnetRegistrator {
         subnet.logoURL = logoURL;
         subnet.name = name;
         subnet.currencySymbol = currencySymbol;
+        subnet.chainId = chainId;
         emit NewSubnetRegistered(subnetId);
     }
 
