@@ -13,15 +13,34 @@ def test_push_certificate_reverts_on_already_stored_certificate(
         push_dummy_cert(admin, topos_core_contract_A)
 
 
+def test_get_certificate_count_returns_count(admin, topos_core_contract_A):
+    count = 1
+    push_dummy_cert(admin, topos_core_contract_A)
+    assert topos_core_contract_A.getCertificateCount({"from": admin}) == count
+
+
 def test_push_certificate_emits_event(admin, topos_core_contract_A):
     tx = push_dummy_cert(admin, topos_core_contract_A)
+    assert (
+        topos_core_contract_A.certificateExists(c.CERT_ID, {"from": admin})
+        is True
+    )
     assert tx.events["CertStored"].values() == [c.CERT_BYTES]
+
+
+def test_get_cert_id_at_index_returns_cert_id(admin, topos_core_contract_A):
+    index = 0  # only one imported certificate
+    push_dummy_cert(admin, topos_core_contract_A)
+    assert (
+        topos_core_contract_A.getCertIdAtIndex(index, {"from": admin})
+        == c.CERT_BYTES
+    )
 
 
 def test_set_token_daily_mint_limits_reverts_on_mismatch_symbol_length(
     admin, topos_core_contract_A
 ):
-    # symbol and limit array lenghts should be 1:1 ratio
+    # symbol and limit array lengths should be 1:1 ratio
     symbols = [c.TOKEN_SYMBOL_X, c.TOKEN_SYMBOL_Y]
     mint_limits = [c.MINT_AMOUNT]
     with brownie.reverts():
