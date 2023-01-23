@@ -62,8 +62,10 @@ def test_send_token():
         symbol,
         amount,
     )
-    token_address = topos_core_contract_B.tokenAddresses(token_symbol)
-    burnable_mint_erc20_B = BurnableMintableCappedERC20.at(token_address)
+    token = topos_core_contract_B.getTokenBySymbol(token_symbol)
+    burnable_mint_erc20_B = BurnableMintableCappedERC20.at(
+        token["tokenAddress"]
+    )
     fast_forward_nonce(1)
     assert burnable_mint_erc20_B.balanceOf(receiver) == send_amount
 
