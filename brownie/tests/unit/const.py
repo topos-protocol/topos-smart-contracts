@@ -5,6 +5,7 @@ APPROVE_AMOUNT = 10
 CERT_BYTES = "0xdeaf"
 CERT_POSITION = 5
 CERT_ID = brownie.convert.to_bytes(CERT_BYTES, "bytes32")
+CHAIN_ID = 1
 DAILY_MINT_LIMIT = 100
 TARGET_SUBNET_ID = brownie.convert.to_bytes("0x02", "bytes32")
 DUMMY_DATA = brownie.convert.to_bytes("0x00", "bytes")
