@@ -62,5 +62,6 @@ def register_subnet(alice, subnet_registrator):
         c.SUBNET_NAME,
         c.SUBNET_ID,
         c.SUBNET_CURRENCY_SYMBOL,
+        c.CHAIN_ID,
         {"from": alice},
     )
