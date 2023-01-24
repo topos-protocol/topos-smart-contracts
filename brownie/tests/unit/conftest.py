@@ -11,32 +11,30 @@ def isolate(fn_isolation):
     pass
 
 
-def deploy_topos_core_contract(
+def deploy_topos_core(
     accounts,
     interface,
     subnet_id,
     TokenDeployer,
-    ToposCoreContract,
-    ToposCoreContractProxy,
+    ToposCore,
+    ToposCoreProxy,
 ):
     admin_threshold = 1
     token_deployer = TokenDeployer.deploy({"from": accounts[0]})
-    topos_core_contract_impl = ToposCoreContract.deploy(
+    topos_core_impl = ToposCore.deploy(
         token_deployer.address, subnet_id, {"from": accounts[0]}
     )
-    topos_core_contract_proxy = ToposCoreContractProxy.deploy(
-        topos_core_contract_impl.address,
+    topos_core_proxy = ToposCoreProxy.deploy(
+        topos_core_impl.address,
         eth_abi.encode(
             ["address[]", "uint256"],
             [[accounts[0].address], admin_threshold],
         ),
         {"from": accounts[0]},
     )
-    topos_core_contract = interface.IToposCoreContract(
-        topos_core_contract_proxy.address
-    )
+    topos_core = interface.IToposCore(topos_core_proxy.address)
 
-    return topos_core_contract
+    return topos_core
 
 
 @pytest.fixture(scope="session")
@@ -61,48 +59,46 @@ def subnet_registrator(accounts, SubnetRegistrator):
 
 
 @pytest.fixture(scope="module")
-def topos_core_contract_A(
+def topos_core_A(
     accounts,
     interface,
     TokenDeployer,
-    ToposCoreContract,
-    ToposCoreContractProxy,
+    ToposCore,
+    ToposCoreProxy,
 ):
     subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
-    return deploy_topos_core_contract(
+    return deploy_topos_core(
         accounts,
         interface,
         subnet_A_id,
         TokenDeployer,
-        ToposCoreContract,
-        ToposCoreContractProxy,
+        ToposCore,
+        ToposCoreProxy,
     )
 
 
 @pytest.fixture(scope="module")
-def topos_core_contract_B(
+def topos_core_B(
     accounts,
     interface,
     TokenDeployer,
-    ToposCoreContract,
-    ToposCoreContractProxy,
+    ToposCore,
+    ToposCoreProxy,
 ):
     subnet_B_id = brownie.convert.to_bytes("0x02", "bytes32")
-    return deploy_topos_core_contract(
+    return deploy_topos_core(
         accounts,
         interface,
         subnet_B_id,
         TokenDeployer,
-        ToposCoreContract,
-        ToposCoreContractProxy,
+        ToposCore,
+        ToposCoreProxy,
     )
 
 
 @pytest.fixture(scope="module")
-def topos_executable(accounts, ToposExecutable, topos_core_contract_B):
-    return ToposExecutable.deploy(
-        topos_core_contract_B.address, {"from": accounts[0]}
-    )
+def topos_executable(accounts, ToposExecutable, topos_core_B):
+    return ToposExecutable.deploy(topos_core_B.address, {"from": accounts[0]})
 
 
 @pytest.fixture(scope="module")

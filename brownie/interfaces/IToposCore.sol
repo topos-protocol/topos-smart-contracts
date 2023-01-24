@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 type CertificateId is bytes32; // user-defined type for certificate IDs
 type SubnetId is bytes32; // user-defined type for subnet IDs
 
-interface IToposCoreContract {
+interface IToposCore {
     /**********\
     |* Errors *|
     \**********/

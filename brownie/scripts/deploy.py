@@ -12,8 +12,8 @@ from brownie import (
     SubnetRegistrator,
     TCENodeRegistrator,
     TokenDeployer,
-    ToposCoreContract,
-    ToposCoreContractProxy,
+    ToposCore,
+    ToposCoreProxy,
 )
 
 
@@ -44,20 +44,16 @@ def token_deployer(_):
     TokenDeployer.deploy({"from": accounts[0]})
 
 
-def topos_core_contract(args):
+def topos_core(args):
     token_deployer_addr = args[0]
     subnet_id = args[1]
-    ToposCoreContract.deploy(
-        token_deployer_addr, subnet_id, {"from": accounts[0]}
-    )
+    ToposCore.deploy(token_deployer_addr, subnet_id, {"from": accounts[0]})
 
 
-def topos_core_contract_proxy(args):
-    topos_core_contract_impl_addr = args[0]
+def topos_core_proxy(args):
+    topos_core_impl_addr = args[0]
     params = args[1]
-    ToposCoreContractProxy.deploy(
-        topos_core_contract_impl_addr, params, {"from": accounts[0]}
-    )
+    ToposCoreProxy.deploy(topos_core_impl_addr, params, {"from": accounts[0]})
 
 
 # Internal Functions

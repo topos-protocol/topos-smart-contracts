@@ -12,8 +12,8 @@ from brownie import (
     CrossSubnetArbitraryCallCreationCode,
     network,
     TokenDeployer,
-    ToposCoreContract,
-    ToposCoreContractProxy,
+    ToposCore,
+    ToposCoreProxy,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ def test_cross_subnet_contract_call():
     switch_network("B")
     deploy_initial_contracts(subnet_B_id)
     # if you don't validate a cert then the mint function would fail
-    push_dummy_cert(topos_core_contract_B)
+    push_dummy_cert(topos_core_B)
     approve_and_execute_on_receiving_subnet(set_remote_value_tx)
     assert xs_arbitrary_call_B.value() == arbitrary_call_value
 
@@ -76,42 +76,36 @@ def deploy_initial_contracts(network_subnet_id):
     ]
     LOGGER.info(f"TokenDeployer address: {token_deployer_address}")
 
-    # deploy ToposCoreContract
-    topos_core_contract_impl = ToposCoreContract.deploy(
+    # deploy ToposCore
+    topos_core_impl = ToposCore.deploy(
         token_deployer_address,
         network_subnet_id,
         {"from": accounts[0]},
     )
-    LOGGER.info(
-        f"ToposCoreContract address: {topos_core_contract_impl.address}"
-    )
+    LOGGER.info(f"ToposCore address: {topos_core_impl.address}")
 
-    # set admin for ToposCoreContract
+    # set admin for ToposCore
     admin_threshold = 1
     setup_params = eth_abi.encode(
         ["address[]", "uint256"],
         [[accounts[0].address], admin_threshold],
     )
 
-    # deploy ToposCoreContractProxy
-    topos_core_contract_proxy = ToposCoreContractProxy.deploy(
-        topos_core_contract_impl.address,
+    # deploy ToposCoreProxy
+    topos_core_proxy = ToposCoreProxy.deploy(
+        topos_core_impl.address,
         setup_params,
         {"from": accounts[0]},
     )
-    LOGGER.info(
-        f"ToposCoreContractProxy address: {topos_core_contract_proxy.address}"
-    )
-    topos_core_contract = interface.IToposCoreContract(
-        topos_core_contract_proxy.address
-    )
+    LOGGER.info(f"ToposCoreProxy address: {topos_core_proxy.address}")
+    topos_core = interface.IToposCore(topos_core_proxy.address)
 
     # deploy the cross subnet arbitrary call creation code getter contract
     creation_code_getter = CrossSubnetArbitraryCallCreationCode.deploy(
         {"from": accounts[0]},
     )
     xs_arbitrary_call_creation_code = creation_code_getter.getCreationBytecode(
-        topos_core_contract.address
+        topos_core.address
     )
 
     # deploy the cross subnet arbitrary call contract
@@ -129,9 +123,9 @@ def deploy_initial_contracts(network_subnet_id):
         f"CrossSubnetArbitraryCall address: {xs_arbitrary_call_address}"
     )
 
-    # set admin for ToposCoreContract
+    # set admin for ToposCore
     admin_threshold = 1
-    topos_core_contract.setup(
+    topos_core.setup(
         eth_abi.encode(
             ["address[]", "uint256"],
             [[accounts[0].address], admin_threshold],
@@ -142,9 +136,9 @@ def deploy_initial_contracts(network_subnet_id):
         global xs_arbitrary_call_A
         xs_arbitrary_call_A = xs_arbitrary_call
     if network_subnet_id == subnet_B_id:
-        global topos_core_contract_B
+        global topos_core_B
         global xs_arbitrary_call_B
-        topos_core_contract_B = topos_core_contract
+        topos_core_B = topos_core
         xs_arbitrary_call_B = xs_arbitrary_call
 
 
@@ -156,13 +150,11 @@ def switch_network(subnet_network):
         network.connect("development-two")
 
 
-def push_dummy_cert(topos_core_contract):
+def push_dummy_cert(topos_core):
     cert_params = ["bytes32", "uint256"]
     cert_values = [dummy_cert_id, dummy_cert_position]
     encoded_cert_params = eth_abi.encode(cert_params, cert_values)
-    topos_core_contract.pushCertificate(
-        encoded_cert_params, {"from": accounts[0]}
-    )
+    topos_core.pushCertificate(encoded_cert_params, {"from": accounts[0]})
 
 
 def set_remote_value_on_sending_subnet():
