@@ -29,7 +29,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     /// @notice Mapping to store Tokens
     /// @dev TokenKey(bytes32) => Token
-    mapping(bytes32 => Token) tokenStorage;
+    mapping(bytes32 => Token) public tokenStorage;
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
@@ -292,10 +292,6 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function getTokenBySymbol(string memory symbol) public view override returns (Token memory) {
         bytes32 tokenKey = _getTokenKey(symbol);
-        return tokenStorage[tokenKey];
-    }
-
-    function getTokenByKey(bytes32 tokenKey) public view returns (Token memory) {
         return tokenStorage[tokenKey];
     }
 

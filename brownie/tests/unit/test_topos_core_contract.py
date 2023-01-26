@@ -76,7 +76,7 @@ def test_get_token_by_key_returns_token(admin, topos_core_contract_A):
     token_key_hash = topos_core_contract_A.getTokenKeyAtIndex(
         index, {"from": admin}
     )
-    assert topos_core_contract_A.getTokenByKey(
+    assert topos_core_contract_A.tokenStorage(
         token_key_hash, {"from": admin}
     ) == [c.TOKEN_SYMBOL_X, token_address]
 

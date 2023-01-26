@@ -141,7 +141,7 @@ interface IToposCoreContract {
 
     function getCertIdAtIndex(uint256 index) external view returns (CertificateId);
 
-    function getTokenByKey(bytes32 tokenKey) external view returns (Token memory);
+    function tokenStorage(bytes32 tokenKey) external view returns (string memory, address);
 
     function getTokenCount() external view returns (uint256);
 
