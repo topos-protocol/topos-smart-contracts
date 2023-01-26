@@ -42,7 +42,7 @@ const main = async function (
     return;
   }
 
-  axelarUtils
+  return axelarUtils
     .deployContractConstant(
       CONST_ADDRESS_DEPLOYER_ADDR,
       wallet,
@@ -57,6 +57,8 @@ const main = async function (
           contract.address
         }`,
       );
+
+      return contract.address;
     })
     .catch(console.error);
 };
