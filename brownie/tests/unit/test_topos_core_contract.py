@@ -47,6 +47,19 @@ def test_get_token_count_returns_count(admin, topos_core_contract_A):
     assert topos_core_contract_A.getTokenCount({"from": admin}) == count
 
 
+def test_get_token_count_for_multiple_returns_count(
+    admin, topos_core_contract_A
+):
+    count = 2
+    topos_core_contract_A.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
+    topos_core_contract_A.deployToken(
+        get_secondary_internal_token_val(), {"from": admin}
+    )
+    assert topos_core_contract_A.getTokenCount({"from": admin}) == count
+
+
 def test_get_token_key_at_index_returns_token_key_hash(
     admin, topos_core_contract_A
 ):
@@ -54,16 +67,34 @@ def test_get_token_key_at_index_returns_token_key_hash(
     topos_core_contract_A.deployToken(
         get_default_internal_token_val(), {"from": admin}
     )
-    key_prefix = brownie.convert.to_bytes(
-        get_hash("token-key".encode("utf-8")), "bytes32"
-    )
-    encoded_key = encode_abi_packed(
-        ["bytes32", "string"], [key_prefix, c.TOKEN_SYMBOL_X]
-    )
-    token_key_hash = "0x" + get_hash(encoded_key)
+    token_key_hash = get_token_key_hash(c.TOKEN_SYMBOL_X)
     assert (
         topos_core_contract_A.getTokenKeyAtIndex(index, {"from": admin})
         == token_key_hash
+    )
+
+
+def test_get_token_key_at_index_for_multiple_returns_token_key_hash(
+    admin, topos_core_contract_A
+):
+    index = 0  # default token
+    index_1 = 1  # second token
+    topos_core_contract_A.deployToken(
+        get_default_internal_token_val(), {"from": admin}
+    )
+    topos_core_contract_A.deployToken(
+        get_secondary_internal_token_val(), {"from": admin}
+    )
+    token_key_hash = get_token_key_hash(c.TOKEN_SYMBOL_X)
+    token_key_hash_second = get_token_key_hash(c.TOKEN_SYMBOL_Y)
+
+    assert (
+        topos_core_contract_A.getTokenKeyAtIndex(index, {"from": admin})
+        == token_key_hash
+    )
+    assert (
+        topos_core_contract_A.getTokenKeyAtIndex(index_1, {"from": admin})
+        == token_key_hash_second
     )
 
 
@@ -831,6 +862,17 @@ def get_default_internal_token_val():
     return encode(c.TOKEN_PARAMS, token_values)
 
 
+def get_secondary_internal_token_val():
+    token_values = [
+        c.TOKEN_NAME,
+        c.TOKEN_SYMBOL_Y,
+        c.MINT_CAP,
+        brownie.ZERO_ADDRESS,  # address zero since not yet deployed
+        c.DAILY_MINT_LIMIT,
+    ]
+    return encode(c.TOKEN_PARAMS, token_values)
+
+
 def get_default_external_token_val(address):
     token_values = [
         c.TOKEN_NAME,
@@ -866,3 +908,13 @@ def get_hash(input):
     k = keccak.new(digest_bits=256)
     k.update(input)
     return k.hexdigest()
+
+
+def get_token_key_hash(symbol):
+    key_prefix = brownie.convert.to_bytes(
+        get_hash("token-key".encode("utf-8")), "bytes32"
+    )
+    encoded_key = encode_abi_packed(
+        ["bytes32", "string"], [key_prefix, symbol]
+    )
+    return "0x" + get_hash(encoded_key)
