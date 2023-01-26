@@ -142,7 +142,7 @@ def deploy_initial_contracts(network_subnet_id):
     )
     LOGGER.info(
         "TokenX address: "
-        + f"{deploy_token_tx.events['TokenDeployed']['tokenAddresses']}"
+        + f"{deploy_token_tx.events['TokenDeployed']['tokenAddress']}"
     )
 
     if network_subnet_id == subnet_A_id:
@@ -154,7 +154,7 @@ def deploy_initial_contracts(network_subnet_id):
         )
         # get ERC20 contract at the deployed address
         burnable_mint_erc20 = BurnableMintableCappedERC20.at(
-            deploy_token_tx.events["TokenDeployed"]["tokenAddresses"]
+            deploy_token_tx.events["TokenDeployed"]["tokenAddress"]
         )
         # approve toposCoreContract to spend on behalf of the sender
         burnable_mint_erc20.approve(

@@ -72,7 +72,7 @@ def test_get_token_by_key_returns_token(admin, topos_core_contract_A):
     tx = topos_core_contract_A.deployToken(
         get_default_internal_token_val(), {"from": admin}
     )
-    token_address = tx.events["TokenDeployed"]["tokenAddresses"]
+    token_address = tx.events["TokenDeployed"]["tokenAddress"]
     token_key_hash = topos_core_contract_A.getTokenKeyAtIndex(
         index, {"from": admin}
     )
@@ -182,7 +182,7 @@ def test_deploy_token_emits_events(admin, topos_core_contract_A):
     tx = topos_core_contract_A.deployToken(
         get_default_internal_token_val(), {"from": admin}
     )
-    token_address = tx.events["TokenDeployed"]["tokenAddresses"]
+    token_address = tx.events["TokenDeployed"]["tokenAddress"]
     assert tx.events["TokenDailyMintLimitUpdated"].values() == [
         c.TOKEN_SYMBOL_X,
         c.DAILY_MINT_LIMIT,
@@ -507,7 +507,7 @@ def test_send_token_reverts_on_token_does_not_exist(
         c.TOKEN_SYMBOL_X, alice, c.MINT_AMOUNT, {"from": admin}
     )
     burnable_mint_erc20 = BurnableMintableCappedERC20.at(
-        tx.events["TokenDeployed"]["tokenAddresses"]
+        tx.events["TokenDeployed"]["tokenAddress"]
     )
     burnable_mint_erc20.approve(
         topos_core_contract_A, c.APPROVE_AMOUNT, {"from": alice}
@@ -538,7 +538,7 @@ def test_send_token_reverts_on_zero_amount(
         c.TOKEN_SYMBOL_X, alice, c.MINT_AMOUNT, {"from": admin}
     )
     burnable_mint_erc20 = BurnableMintableCappedERC20.at(
-        tx.events["TokenDeployed"]["tokenAddresses"]
+        tx.events["TokenDeployed"]["tokenAddress"]
     )
     burnable_mint_erc20.approve(
         topos_core_contract_A, c.APPROVE_AMOUNT, {"from": alice}
@@ -659,7 +659,7 @@ def test_send_token_emits_events(
         c.TOKEN_SYMBOL_X, alice, c.MINT_AMOUNT, {"from": admin}
     )
     burnable_mint_erc20 = BurnableMintableCappedERC20.at(
-        tx.events["TokenDeployed"]["tokenAddresses"]
+        tx.events["TokenDeployed"]["tokenAddress"]
     )
     approve_tx = burnable_mint_erc20.approve(
         topos_core_contract_A, c.APPROVE_AMOUNT, {"from": alice}
@@ -722,7 +722,7 @@ def test_call_contract_with_token_emits_event(
         c.TOKEN_SYMBOL_X, alice, c.MINT_AMOUNT, {"from": admin}
     )
     burnable_mint_erc20 = BurnableMintableCappedERC20.at(
-        tx.events["TokenDeployed"]["tokenAddresses"]
+        tx.events["TokenDeployed"]["tokenAddress"]
     )
     burnable_mint_erc20.approve(
         topos_core_contract_A, c.APPROVE_AMOUNT, {"from": alice}

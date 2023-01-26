@@ -70,7 +70,7 @@ interface IToposCoreContract {
 
     event CertStored(CertificateId certId);
 
-    event TokenDeployed(string symbol, address tokenAddresses);
+    event TokenDeployed(string symbol, address tokenAddress);
 
     event TokenDailyMintLimitUpdated(string symbol, uint256 limit);
 
