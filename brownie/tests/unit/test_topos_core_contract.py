@@ -182,6 +182,8 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
 def test_deploy_token_reverts_on_token_already_deployed(
     admin, topos_core_contract_A
 ):
+    count = 1  # only one instance of a token deployed at once
+    index = 0
     topos_core_contract_A.deployToken(
         get_default_internal_token_val(), {"from": admin}
     )
@@ -190,6 +192,12 @@ def test_deploy_token_reverts_on_token_already_deployed(
         topos_core_contract_A.deployToken(
             get_default_internal_token_val(), {"from": admin}
         )
+    assert topos_core_contract_A.getTokenCount({"from": admin}) == count
+    token_key_hash = get_token_key_hash(c.TOKEN_SYMBOL_X)
+    assert (
+        topos_core_contract_A.getTokenKeyAtIndex(index, {"from": admin})
+        == token_key_hash
+    )
 
 
 def test_deploy_token_external_token_emits_events(
