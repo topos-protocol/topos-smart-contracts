@@ -33,7 +33,7 @@ def test_get_count(admin, bytes_32_sets_test):
     assert get_count(admin, bytes_32_sets_test) == count
 
 
-def test_Key_at_index(admin, bytes_32_sets_test):
+def test_key_at_index(admin, bytes_32_sets_test):
     index = 0
     insert_test_key(admin, bytes_32_sets_test)
     assert get_key_at_index(admin, bytes_32_sets_test, index) == HexString(
