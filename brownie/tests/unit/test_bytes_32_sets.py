@@ -13,7 +13,7 @@ def test_insert_reverts_on_key_already_exists(admin, bytes_32_sets_test):
 
 def test_insert_inputs_data(admin, bytes_32_sets_test):
     insert_test_key(admin, bytes_32_sets_test)
-    assert test_key_exists(admin, bytes_32_sets_test) is True
+    assert key_exists(admin, bytes_32_sets_test) is True
 
 
 def test_remove_reverts_on_key_does_not_exist(admin, bytes_32_sets_test):
@@ -24,7 +24,7 @@ def test_remove_reverts_on_key_does_not_exist(admin, bytes_32_sets_test):
 def test_remove_deletes_data(admin, bytes_32_sets_test):
     insert_test_key(admin, bytes_32_sets_test)
     remove_test_key(admin, bytes_32_sets_test)
-    assert test_key_exists(admin, bytes_32_sets_test) is False
+    assert key_exists(admin, bytes_32_sets_test) is False
 
 
 def test_get_count(admin, bytes_32_sets_test):
@@ -54,7 +54,7 @@ def get_count(admin, bytes_32_sets_test):
     return bytes_32_sets_test.count({"from": admin})
 
 
-def test_key_exists(admin, bytes_32_sets_test):
+def key_exists(admin, bytes_32_sets_test):
     return bytes_32_sets_test.exists(c.TEST_KEY, {"from": admin})
 
 
