@@ -32,6 +32,11 @@ interface IToposCoreContract {
         uint256 position;
     }
 
+    struct Token {
+        string symbol;
+        address tokenAddress;
+    }
+
     /**********\
     |* Events *|
     \**********/
@@ -65,7 +70,7 @@ interface IToposCoreContract {
 
     event CertStored(CertificateId certId);
 
-    event TokenDeployed(string symbol, address tokenAddresses);
+    event TokenDeployed(string symbol, address tokenAddress);
 
     event TokenDailyMintLimitUpdated(string symbol, uint256 limit);
 
@@ -116,7 +121,7 @@ interface IToposCoreContract {
 
     function tokenDailyMintAmount(string memory symbol) external view returns (uint256);
 
-    function tokenAddresses(string memory symbol) external view returns (address);
+    function getTokenBySymbol(string memory symbol) external view returns (Token memory);
 
     function implementation() external view returns (address);
 
@@ -135,6 +140,12 @@ interface IToposCoreContract {
     function getCertificateCount() external view returns (uint256);
 
     function getCertIdAtIndex(uint256 index) external view returns (CertificateId);
+
+    function tokens(bytes32 tokenKey) external view returns (string memory, address);
+
+    function getTokenCount() external view returns (uint256);
+
+    function getTokenKeyAtIndex(uint256 index) external view returns (bytes32);
 
     /*******************\
     |* Admin Functions *|

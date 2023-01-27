@@ -44,7 +44,7 @@ def test_constant_address_deployment():
     tokenATx = topos_core_contract_A.deployToken(
         tokenAParams, {"from": accounts[0]}
     )
-    tokenAAddress = tokenATx.events["TokenDeployed"]["tokenAddresses"]
+    tokenAAddress = tokenATx.events["TokenDeployed"]["tokenAddress"]
     LOGGER.info(f"TestToken address: {tokenAAddress}")
 
     LOGGER.info("Switching to subnet network B")
@@ -56,7 +56,7 @@ def test_constant_address_deployment():
     tokenBTx = topos_core_contract_B.deployToken(
         tokenBParams, {"from": accounts[0]}
     )
-    tokenBAddress = tokenBTx.events["TokenDeployed"]["tokenAddresses"]
+    tokenBAddress = tokenBTx.events["TokenDeployed"]["tokenAddress"]
     LOGGER.info(f"TestToken address: {tokenBAddress}")
     assert tokenAAddress == tokenBAddress
 
