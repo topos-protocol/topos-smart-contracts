@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {IToposCoreContract, CertificateId, SubnetId} from "./../../interfaces/IToposCoreContract.sol";
+import {IToposCore, CertificateId, SubnetId} from "./../../interfaces/IToposCore.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IBurnableMintableCappedERC20} from "./../../interfaces/IBurnableMintableCappedERC20.sol";
 import {ITokenDeployer} from "./../../interfaces/ITokenDeployer.sol";
@@ -10,7 +10,7 @@ import {DepositHandler} from "./DepositHandler.sol";
 import {AdminMultisigBase} from "./AdminMultisigBase.sol";
 import "./Bytes32Sets.sol";
 
-contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
+contract ToposCore is IToposCore, AdminMultisigBase {
     using Bytes32SetsLib for Bytes32SetsLib.Set;
 
     enum TokenType {
@@ -89,12 +89,12 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         if (newImplementationCodeHash != newImplementation.codehash) revert InvalidCodeHash();
         _setImplementation(newImplementation);
 
-        // AUDIT: If `newImplementation.setup` performs `selfdestruct`, it will result in the loss of _this_ implementation (thereby losing the ToposCoreContract)
+        // AUDIT: If `newImplementation.setup` performs `selfdestruct`, it will result in the loss of _this_ implementation (thereby losing the ToposCore)
         //        if `upgrade` is entered within the context of _this_ implementation itself.
         if (setupParams.length != 0) {
             // solhint-disable-next-line avoid-low-level-calls
             (bool success, ) = newImplementation.delegatecall(
-                abi.encodeWithSelector(IToposCoreContract.setup.selector, setupParams)
+                abi.encodeWithSelector(IToposCore.setup.selector, setupParams)
             );
 
             if (!success) revert SetupFailed();

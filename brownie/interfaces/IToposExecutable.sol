@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import {IToposCoreContract, CertificateId, SubnetId} from "./IToposCoreContract.sol";
+import {IToposCore, CertificateId, SubnetId} from "./IToposCore.sol";
 
 interface IToposExecutable {
     error NotAdmin();
@@ -40,7 +40,7 @@ interface IToposExecutable {
         bytes32 selector;
     }
 
-    function toposCoreContract() external view returns (IToposCoreContract);
+    function toposCore() external view returns (IToposCore);
 
     function authorizeOrigin(
         SubnetId sourceSubnetId,
