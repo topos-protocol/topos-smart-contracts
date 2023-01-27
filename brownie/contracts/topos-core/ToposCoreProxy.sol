@@ -2,9 +2,9 @@
 pragma solidity ^0.8.9;
 
 import {EternalStorage} from "./EternalStorage.sol";
-import {IToposCoreContract, SubnetId} from "./../../interfaces/IToposCoreContract.sol";
+import {IToposCore, SubnetId} from "./../../interfaces/IToposCore.sol";
 
-contract ToposCoreContractProxy is EternalStorage {
+contract ToposCoreProxy is EternalStorage {
     error InvalidImplementation();
     error SetupFailed();
     error NativeCurrencyNotAccepted();
@@ -18,9 +18,7 @@ contract ToposCoreContractProxy is EternalStorage {
         _setAddress(KEY_IMPLEMENTATION, tccImplementation);
 
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, ) = tccImplementation.delegatecall(
-            abi.encodeWithSelector(IToposCoreContract.setup.selector, params)
-        );
+        (bool success, ) = tccImplementation.delegatecall(abi.encodeWithSelector(IToposCore.setup.selector, params));
         if (!success) revert SetupFailed();
     }
 

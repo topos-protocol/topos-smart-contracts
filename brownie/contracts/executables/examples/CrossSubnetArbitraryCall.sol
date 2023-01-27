@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import {ToposExecutable} from "./../ToposExecutable.sol";
-import {SubnetId} from "./../../../interfaces/IToposCoreContract.sol";
+import {SubnetId} from "./../../../interfaces/IToposCore.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract CrossSubnetArbitraryCall is ToposExecutable {
@@ -15,7 +15,7 @@ contract CrossSubnetArbitraryCall is ToposExecutable {
 
     bytes32 internal constant SELECTOR_CHANGE_VALUE = keccak256("changeValue");
 
-    constructor(address toposCoreContract_) ToposExecutable(toposCoreContract_) {}
+    constructor(address toposCore_) ToposExecutable(toposCore_) {}
 
     // Call this function to update the value of this contract along with all its siblings'.
     function setRemoteValue(
@@ -24,7 +24,7 @@ contract CrossSubnetArbitraryCall is ToposExecutable {
         string calldata value_
     ) external payable {
         bytes memory payload = abi.encode(value_);
-        toposCoreContract.callContract(targetSubnetId, targetContractAddr, payload);
+        toposCore.callContract(targetSubnetId, targetContractAddr, payload);
     }
 
     // Handles calls created by setAndSend. Updates this contract's value

@@ -9,8 +9,8 @@ from brownie import (
     ConstAddressDeployer,
     network,
     TokenDeployer,
-    ToposCoreContract,
-    ToposCoreContractProxy,
+    ToposCore,
+    ToposCoreProxy,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -37,25 +37,21 @@ deploy_token_calldata = [
 def test_constant_address_deployment():
     LOGGER.info("Switching to subnet network A")
     switch_network("A")
-    _, topos_core_contract_A, _ = deploy_token_deployer(
+    _, topos_core_A, _ = deploy_token_deployer(
         brownie.convert.to_bytes("0x01", "bytes32")  # subnet Id
     )
     tokenAParams = eth_abi.encode(deploy_token_params, deploy_token_calldata)
-    tokenATx = topos_core_contract_A.deployToken(
-        tokenAParams, {"from": accounts[0]}
-    )
+    tokenATx = topos_core_A.deployToken(tokenAParams, {"from": accounts[0]})
     tokenAAddress = tokenATx.events["TokenDeployed"]["tokenAddress"]
     LOGGER.info(f"TestToken address: {tokenAAddress}")
 
     LOGGER.info("Switching to subnet network B")
     switch_network("B")
-    _, topos_core_contract_B, _ = deploy_token_deployer(
+    _, topos_core_B, _ = deploy_token_deployer(
         brownie.convert.to_bytes("0x02", "bytes32")
     )
     tokenBParams = eth_abi.encode(deploy_token_params, deploy_token_calldata)
-    tokenBTx = topos_core_contract_B.deployToken(
-        tokenBParams, {"from": accounts[0]}
-    )
+    tokenBTx = topos_core_B.deployToken(tokenBParams, {"from": accounts[0]})
     tokenBAddress = tokenBTx.events["TokenDeployed"]["tokenAddress"]
     LOGGER.info(f"TestToken address: {tokenBAddress}")
     assert tokenAAddress == tokenBAddress
@@ -75,36 +71,30 @@ def deploy_token_deployer(networkSubnetId):
         "deployedAddress"
     ]
     LOGGER.info(f"TokenDeployer address: {token_deployer_address}")
-    topos_core_contract_impl = ToposCoreContract.deploy(
+    topos_core_impl = ToposCore.deploy(
         token_deployer_address,
         networkSubnetId,
         {"from": accounts[0]},
     )
-    LOGGER.info(
-        f"ToposCoreContract address: {topos_core_contract_impl.address}"
-    )
-    # set admin for ToposCoreContract
+    LOGGER.info(f"ToposCore address: {topos_core_impl.address}")
+    # set admin for ToposCore
     admin_threshold = 1
     setup_params = eth_abi.encode(
         ["address[]", "uint256"],
         [[accounts[0].address], admin_threshold],
     )
 
-    # deploy ToposCoreContractProxy
-    topos_core_contract_proxy = ToposCoreContractProxy.deploy(
-        topos_core_contract_impl.address,
+    # deploy ToposCoreProxy
+    topos_core_proxy = ToposCoreProxy.deploy(
+        topos_core_impl.address,
         setup_params,
         {"from": accounts[0]},
     )
-    LOGGER.info(
-        f"ToposCoreContractProxy address: {topos_core_contract_proxy.address}"
-    )
-    topos_core_contract = interface.IToposCoreContract(
-        topos_core_contract_proxy.address
-    )
+    LOGGER.info(f"ToposCoreProxy address: {topos_core_proxy.address}")
+    topos_core = interface.IToposCore(topos_core_proxy.address)
     return (
         token_deployer_address,
-        topos_core_contract,
+        topos_core,
         const_address_deployer,
     )
 

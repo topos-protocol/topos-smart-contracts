@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.9;
 
-import {IToposCoreContract, CertificateId, SubnetId} from "./../../interfaces/IToposCoreContract.sol";
+import {IToposCore, CertificateId, SubnetId} from "./../../interfaces/IToposCore.sol";
 import {IToposExecutable} from "./../../interfaces/IToposExecutable.sol";
 
 contract ToposExecutable is IToposExecutable {
-    IToposCoreContract public toposCoreContract;
+    IToposCore public toposCore;
     mapping(bytes32 => bool) private _boolStorage;
     mapping(bytes32 => uint256) private _uint256Storage;
 
@@ -20,10 +20,10 @@ contract ToposExecutable is IToposExecutable {
         _;
     }
 
-    constructor(address toposCoreContract_) {
-        if (toposCoreContract_ == address(0)) revert InvalidAddress();
+    constructor(address toposCore_) {
+        if (toposCore_ == address(0)) revert InvalidAddress();
 
-        toposCoreContract = IToposCoreContract(toposCoreContract_);
+        toposCore = IToposCore(toposCore_);
         // deployer becomes admin
         _setAdmin(msg.sender);
     }
@@ -43,7 +43,7 @@ contract ToposExecutable is IToposExecutable {
         ContractCallData memory contractCallData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        uint256 certPosition = toposCoreContract.verifyContractCallData(certId, contractCallData.targetSubnetId);
+        uint256 certPosition = toposCore.verifyContractCallData(certId, contractCallData.targetSubnetId);
         if (_isContractCallExecuted(contractCallData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertPosition = _isAuthorizedOrigin(
             contractCallData.sourceSubnetId,
@@ -67,10 +67,7 @@ contract ToposExecutable is IToposExecutable {
         ContractCallWithTokenData memory contractCallWithTokenData,
         bytes calldata /*crossSubnetTxProof*/
     ) external override {
-        uint256 certPosition = toposCoreContract.verifyContractCallData(
-            certId,
-            contractCallWithTokenData.targetSubnetId
-        );
+        uint256 certPosition = toposCore.verifyContractCallData(certId, contractCallWithTokenData.targetSubnetId);
         if (_isContractCallAndMintExecuted(contractCallWithTokenData) == true) revert ContractCallAlreadyExecuted();
         uint256 minimumCertPosition = _isAuthorizedOrigin(
             contractCallWithTokenData.sourceSubnetId,

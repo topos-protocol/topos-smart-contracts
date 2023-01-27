@@ -141,7 +141,7 @@ $ npm run deploy <contract_name> <id> <arg1> <arg2> -- --network <network_name>
 Example:
 
 ```
-$ npm run deploy ToposCoreContract substrate_alice 0x4897d0802e611AF187db47C7648e8B0Ef759e3aa 1 -- --network topos_subnet
+$ npm run deploy ToposCore substrate_alice 0x4897d0802e611AF187db47C7648e8B0Ef759e3aa 1 -- --network topos_subnet
 ```
 
 There is no need to specify the `id` or the `network_name` for the `development` network
@@ -149,7 +149,7 @@ There is no need to specify the `id` or the `network_name` for the `development`
 Example:
 
 ```
-$ npm run deploy ToposCoreContract 0x4897d0802e611AF187db47C7648e8B0Ef759e3aa 1
+$ npm run deploy ToposCore 0x4897d0802e611AF187db47C7648e8B0Ef759e3aa 1
 ```
 
 ## Deployment of a single contract with CREATE2
@@ -158,7 +158,7 @@ A NodeJS script is made available to deploy contracts with `CREATE2`, i.e., with
 
 ```
 npm run deploy2 http://myChainRPCEndpoint myCompiledContract.json MySecretSalt ACustomGasLimit|null MyConstructorArg AnotherConstructorArg
-# npm run deploy2 http://127.0.0.1:8545 brownie/build/contracts/ToposCoreContract.json $TOPOS_CORE_SALT 2000000 0xF121424e3F7d73fCD79DcBCA67E8F10BeBE67b00 0x3100000000000000000000000000000000000000000000000000000000000000
+# npm run deploy2 http://127.0.0.1:8545 brownie/build/contracts/ToposCore.json $TOPOS_CORE_SALT 2000000 0xF121424e3F7d73fCD79DcBCA67E8F10BeBE67b00 0x3100000000000000000000000000000000000000000000000000000000000000
 ```
 
 ## Deployment of the full Topos Messaging Protocol
