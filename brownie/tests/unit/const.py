@@ -22,6 +22,7 @@ SUBNET_BYTES = "0xdeaf"
 SUBNET_NAME = "Test Subnet"
 SUBNET_ID = brownie.convert.to_bytes(SUBNET_BYTES, "bytes")
 SUBNET_CURRENCY_SYMBOL = "SUB"
+TEST_KEY = brownie.convert.to_bytes("0xaabb", "bytes32")
 TOKEN_NAME = "TokenX"
 TOKEN_SYMBOL_X = "TKX"
 TOKEN_SYMBOL_Y = "TKY"
