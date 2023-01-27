@@ -53,6 +53,12 @@ def bob(accounts):
 
 
 @pytest.fixture(scope="module")
+def bytes_32_sets_test(accounts, Bytes32SetsTest):
+    bytes_32_sets_test = Bytes32SetsTest.deploy({"from": accounts[0]})
+    return bytes_32_sets_test
+
+
+@pytest.fixture(scope="module")
 def subnet_registrator(accounts, SubnetRegistrator):
     subnet_registrator = SubnetRegistrator.deploy({"from": accounts[0]})
     return subnet_registrator

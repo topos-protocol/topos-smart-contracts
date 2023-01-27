@@ -66,3 +66,29 @@ library Bytes32SetsLib {
         return self.keyList[index];
     }
 }
+
+contract Bytes32SetsTest {
+    using Bytes32SetsLib for Bytes32SetsLib.Set;
+
+    Bytes32SetsLib.Set testSet;
+
+    function insert(bytes32 key) public {
+        testSet.insert(key);
+    }
+
+    function remove(bytes32 key) public {
+        testSet.remove(key);
+    }
+
+    function count() public view returns (uint256) {
+        return testSet.count();
+    }
+
+    function exists(bytes32 key) public view returns (bool) {
+        return testSet.exists(key);
+    }
+
+    function keyAtIndex(uint256 index) public view returns (bytes32) {
+        return testSet.keyAtIndex(index);
+    }
+}
