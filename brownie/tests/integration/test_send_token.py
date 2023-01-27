@@ -62,8 +62,10 @@ def test_send_token():
         symbol,
         amount,
     )
-    token_address = topos_core_contract_B.tokenAddresses(token_symbol)
-    burnable_mint_erc20_B = BurnableMintableCappedERC20.at(token_address)
+    token = topos_core_contract_B.getTokenBySymbol(token_symbol)
+    burnable_mint_erc20_B = BurnableMintableCappedERC20.at(
+        token["tokenAddress"]
+    )
     fast_forward_nonce(1)
     assert burnable_mint_erc20_B.balanceOf(receiver) == send_amount
 
@@ -140,7 +142,7 @@ def deploy_initial_contracts(network_subnet_id):
     )
     LOGGER.info(
         "TokenX address: "
-        + f"{deploy_token_tx.events['TokenDeployed']['tokenAddresses']}"
+        + f"{deploy_token_tx.events['TokenDeployed']['tokenAddress']}"
     )
 
     if network_subnet_id == subnet_A_id:
@@ -152,7 +154,7 @@ def deploy_initial_contracts(network_subnet_id):
         )
         # get ERC20 contract at the deployed address
         burnable_mint_erc20 = BurnableMintableCappedERC20.at(
-            deploy_token_tx.events["TokenDeployed"]["tokenAddresses"]
+            deploy_token_tx.events["TokenDeployed"]["tokenAddress"]
         )
         # approve toposCoreContract to spend on behalf of the sender
         burnable_mint_erc20.approve(

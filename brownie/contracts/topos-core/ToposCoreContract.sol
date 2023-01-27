@@ -27,6 +27,10 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     /// @dev CertificateId(bytes32) => certificate(bytes)
     mapping(CertificateId => Certificate) certificateStorage;
 
+    /// @notice Mapping to store Tokens
+    /// @dev TokenKey(bytes32) => Token
+    mapping(bytes32 => Token) public tokens;
+
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
     SubnetId internal immutable _networkSubnetId;
@@ -36,7 +40,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     bytes32 internal constant VALIDATOR = keccak256(abi.encodePacked("VALIDATOR"));
 
     // AUDIT: slot names should be prefixed with some standard string
-    bytes32 internal constant PREFIX_TOKEN_ADDRESS = keccak256("token-address");
+    bytes32 internal constant PREFIX_TOKEN_KEY = keccak256("token-key");
     bytes32 internal constant PREFIX_TOKEN_TYPE = keccak256("token-type");
     bytes32 internal constant PREFIX_CONTRACT_CALL_EXECUTED = keccak256("contract-call-executed");
     bytes32 internal constant PREFIX_CONTRACT_CALL_EXECUTED_WITH_MINT = keccak256("contract-call-executed-with-mint");
@@ -49,6 +53,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     /// @notice Set of certificate IDs
     Bytes32SetsLib.Set certificateSet;
+
+    /// @notice Set of Token Keys derived from token symbols
+    Bytes32SetsLib.Set tokenSet;
 
     constructor(address tokenDeployerImplementation, SubnetId networkSubnetId) {
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
@@ -68,7 +75,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             string memory symbol = symbols[i];
             uint256 limit = limits[i];
 
-            if (tokenAddresses(symbol) == address(0)) revert TokenDoesNotExist(symbol);
+            if (getTokenBySymbol(symbol).tokenAddress == address(0)) revert TokenDoesNotExist(symbol);
 
             _setTokenDailyMintLimit(symbol, limit);
         }
@@ -100,7 +107,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
             .decode(params, (string, string, uint256, address, uint256));
 
         // Ensure that this symbol has not been taken.
-        if (tokenAddresses(symbol) != address(0)) revert TokenAlreadyExists(symbol);
+        if (getTokenBySymbol(symbol).tokenAddress != address(0)) revert TokenAlreadyExists(symbol);
 
         if (tokenAddress == address(0)) {
             // If token address is no specified, it indicates a request to deploy one.
@@ -283,8 +290,9 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         return getUint(_getTokenDailyMintAmountKey(symbol, block.timestamp / 1 days));
     }
 
-    function tokenAddresses(string memory symbol) public view override returns (address) {
-        return getAddress(_getTokenAddressKey(symbol));
+    function getTokenBySymbol(string memory symbol) public view override returns (Token memory) {
+        bytes32 tokenKey = _getTokenKey(symbol);
+        return tokens[tokenKey];
     }
 
     function implementation() public view override returns (address) {
@@ -293,6 +301,14 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
 
     function tokenDeployer() public view override returns (address) {
         return _tokenDeployerImplementation;
+    }
+
+    function getTokenCount() public view returns (uint256) {
+        return tokenSet.count();
+    }
+
+    function getTokenKeyAtIndex(uint256 index) public view returns (bytes32) {
+        return tokenSet.keyAtIndex(index);
     }
 
     /********************\
@@ -310,7 +326,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         address account,
         uint256 amount
     ) internal {
-        address tokenAddress = tokenAddresses(symbol);
+        address tokenAddress = getTokenBySymbol(symbol).tokenAddress;
 
         if (tokenAddress == address(0)) revert TokenDoesNotExist(symbol);
 
@@ -333,7 +349,7 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         string memory symbol,
         uint256 amount
     ) internal {
-        address tokenAddress = tokenAddresses(symbol);
+        address tokenAddress = getTokenBySymbol(symbol).tokenAddress;
 
         if (tokenAddress == address(0)) revert TokenDoesNotExist(symbol);
         if (amount == 0) revert InvalidAmount();
@@ -390,7 +406,11 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
     }
 
     function _setTokenAddress(string memory symbol, address tokenAddress) internal {
-        _setAddress(_getTokenAddressKey(symbol), tokenAddress);
+        bytes32 tokenKey = _getTokenKey(symbol);
+        tokenSet.insert(tokenKey);
+        Token storage token = tokens[tokenKey];
+        token.symbol = symbol;
+        token.tokenAddress = tokenAddress;
     }
 
     function _setSendTokenExecuted(
@@ -458,8 +478,8 @@ contract ToposCoreContract is IToposCoreContract, AdminMultisigBase {
         return keccak256(abi.encodePacked(PREFIX_TOKEN_TYPE, symbol));
     }
 
-    function _getTokenAddressKey(string memory symbol) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(PREFIX_TOKEN_ADDRESS, symbol));
+    function _getTokenKey(string memory symbol) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(PREFIX_TOKEN_KEY, symbol));
     }
 
     function _getIsSendTokenExecutedKey(
