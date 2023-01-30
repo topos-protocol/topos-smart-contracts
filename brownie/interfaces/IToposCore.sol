@@ -131,7 +131,7 @@ interface IToposCore {
 
     function admins(uint256 epoch) external view returns (address[] memory);
 
-    function getStorageCert(CertificateId certId) external view returns (Certificate memory);
+    function certificates(CertificateId certId) external view returns (CertificateId, uint256);
 
     function tokenDeployer() external view returns (address);
 
