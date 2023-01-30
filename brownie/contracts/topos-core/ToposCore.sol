@@ -25,7 +25,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     /// @notice Mapping to store certificates
     /// @dev CertificateId(bytes32) => certificate(bytes)
-    mapping(CertificateId => Certificate) certificateStorage;
+    mapping(CertificateId => Certificate) public certificates;
 
     /// @notice Mapping to store Tokens
     /// @dev TokenKey(bytes32) => Token
@@ -153,7 +153,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     function pushCertificate(bytes memory certBytes) external {
         (CertificateId certId, uint256 certPosition) = abi.decode(certBytes, (CertificateId, uint256));
         certificateSet.insert(CertificateId.unwrap(certId));
-        Certificate storage newCert = certificateStorage[certId];
+        Certificate storage newCert = certificates[certId];
         newCert.id = certId;
         newCert.position = certPosition;
         emit CertStored(certId);
@@ -256,7 +256,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) public override returns (uint256) {
         if (!certificateExists(certId)) revert CertNotPresent();
-        Certificate memory storedCert = getStorageCert(certId);
+        Certificate memory storedCert = certificates[certId];
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
         emit ContractCallDataVerified(storedCert.position);
         return storedCert.position;
@@ -276,10 +276,6 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     function getCertIdAtIndex(uint256 index) public view returns (CertificateId) {
         return CertificateId.wrap(certificateSet.keyAtIndex(index));
-    }
-
-    function getStorageCert(CertificateId certId) public view returns (Certificate memory) {
-        return certificateStorage[certId];
     }
 
     function tokenDailyMintLimit(string memory symbol) public view override returns (uint256) {
