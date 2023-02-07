@@ -5,11 +5,23 @@ APPROVE_AMOUNT = 10
 CERT_BYTES = "0xdeaf"
 CERT_POSITION = 5
 CERT_ID = brownie.convert.to_bytes(CERT_BYTES, "bytes32")
+CERT_PARAMS = [
+    "bytes32",
+    "bytes32",
+    "bytes32",
+    "bytes32",
+    "bytes32[]",
+    "uint32",
+    "bytes32",
+    "bytes",
+    "bytes",
+]
 CHAIN_ID = 1
 DAILY_MINT_LIMIT = 100
 TARGET_SUBNET_ID = brownie.convert.to_bytes("0x02", "bytes32")
 DUMMY_DATA = brownie.convert.to_bytes("0x00", "bytes")
 ENDPOINT = "http://127.0.0.1"
+HASH = brownie.convert.to_bytes("0x0004", "bytes32")
 LOGO_URL = "http://image-url.com"
 MINIMUM_CERT_POSITION = 4
 MINT_AMOUNT = 10
@@ -49,3 +61,4 @@ MINT_TOKEN_PARAMS = [
     "string",  # symbol
     "uint256",  # amount
 ]
+VERIFIER = 1

@@ -799,7 +799,21 @@ def test_upgrade_emits_event(
 # internal functions #
 def push_dummy_cert(admin, topos_core_A):
     return topos_core_A.pushCertificate(
-        encode(["bytes32", "uint256"], [c.CERT_ID, c.CERT_POSITION]),
+        encode(
+            c.CERT_PARAMS,
+            [
+                c.CERT_ID,
+                c.SOURCE_SUBNET_ID,
+                c.HASH,
+                c.HASH,
+                [c.TARGET_SUBNET_ID],
+                c.VERIFIER,
+                c.CERT_ID,
+                c.DUMMY_DATA,
+                c.DUMMY_DATA,
+            ],
+        ),
+        c.CERT_POSITION,
         {"from": admin},
     )
 
