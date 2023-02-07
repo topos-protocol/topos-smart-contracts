@@ -133,7 +133,7 @@ def test_set_token_daily_mint_limits_emits_event(admin, topos_core_A):
 
 
 def test_set_token_daily_mint_limits_allow_zero_limit(
-    admin, alice, bob, topos_core_A
+    admin, bob, topos_core_B
 ):
     # token to be deployed args
     token_values = [
@@ -144,11 +144,12 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
         0,  # 0 daily mint limit = unlimited mint limit
     ]
     encoded_token_params = encode(c.TOKEN_PARAMS, token_values)
-    topos_core_A.deployToken(encoded_token_params, {"from": admin})
-    push_dummy_cert(admin, topos_core_A)
-    tx = topos_core_A.executeAssetTransfer(
+    topos_core_B.deployToken(encoded_token_params, {"from": admin})
+    push_dummy_cert(admin, topos_core_B)
+    tx = topos_core_B.executeAssetTransfer(
         c.CERT_ID,
-        get_default_mint_val(alice, bob),
+        c.TX_INDEX,
+        c.TX_RAW_HEX,
         c.DUMMY_DATA,
         {"from": admin},
     )
@@ -289,116 +290,87 @@ def test_setup_should_revert_on_non_proxy_call(
         )
 
 
-def test_execute_transfer_reverts_on_unknown_cert(
-    admin, alice, bob, topos_core_A
-):
+def test_execute_transfer_reverts_on_unknown_cert(admin, topos_core_B):
     # should revert since the certificate is not present
     with brownie.reverts():
-        topos_core_A.executeAssetTransfer(
+        topos_core_B.executeAssetTransfer(
             c.CERT_ID,
-            get_default_mint_val(alice, bob),
+            c.TX_INDEX,
+            c.TX_RAW_HEX,
             c.DUMMY_DATA,
             {"from": admin},
         )
 
 
-def test_execute_transfer_reverts_on_invalid_subnet_id(
-    admin, alice, bob, topos_core_A
-):
-    # default target subnet id is set to "0x01"
-    dummy_target_subnet_id = brownie.convert.to_bytes("0x02", "bytes32")
+def test_execute_transfer_reverts_on_invalid_subnet_id(admin, topos_core_A):
+    # subnet id of topos_core_A = "0x01"
     push_dummy_cert(admin, topos_core_A)
-    # execute asset transfer args
-    mint_token_values = [
-        c.DUMMY_DATA,
-        alice.address,
-        c.SOURCE_SUBNET_ID,
-        dummy_target_subnet_id,
-        bob.address,
-        c.TOKEN_SYMBOL_X,
-        c.SEND_AMOUNT,
-    ]
-    encoded_mint_token_params = encode(c.MINT_TOKEN_PARAMS, mint_token_values)
-    # should fail since the provided target subnet id is different
+    # should fail since the provided target subnet id is not "0x02"
     with brownie.reverts():
         topos_core_A.executeAssetTransfer(
-            c.CERT_ID, encoded_mint_token_params, c.DUMMY_DATA, {"from": admin}
+            c.CERT_ID,
+            c.TX_INDEX,
+            c.TX_RAW_HEX,
+            c.DUMMY_DATA,
+            {"from": admin},
         )
 
 
 def test_execute_transfer_reverts_on_call_already_executed(
-    admin, alice, bob, topos_core_A
+    admin, topos_core_B
 ):
-    topos_core_A.deployToken(get_default_internal_token_val(), {"from": admin})
-    push_dummy_cert(admin, topos_core_A)
-    topos_core_A.executeAssetTransfer(
+    topos_core_B.deployToken(get_default_internal_token_val(), {"from": admin})
+    push_dummy_cert(admin, topos_core_B)
+    topos_core_B.executeAssetTransfer(
         c.CERT_ID,
-        get_default_mint_val(alice, bob),
+        c.TX_INDEX,
+        c.TX_RAW_HEX,
         c.DUMMY_DATA,
         {"from": admin},
     )
     # resending the same call should fail
     with brownie.reverts():
-        topos_core_A.executeAssetTransfer(
+        topos_core_B.executeAssetTransfer(
             c.CERT_ID,
-            get_default_mint_val(alice, bob),
+            c.TX_INDEX,
+            c.TX_RAW_HEX,
             c.DUMMY_DATA,
             {"from": admin},
         )
 
 
-def test_execute_transfer_reverts_on_token_does_not_exist(
-    admin, alice, bob, topos_core_A
-):
-    dummy_token_symbol = "DUMMY"
-    topos_core_A.deployToken(get_default_internal_token_val(), {"from": admin})
-    push_dummy_cert(admin, topos_core_A)
-    # execute asset transfer args
-    mint_token_values = [
-        c.DUMMY_DATA,
-        alice.address,
-        c.SOURCE_SUBNET_ID,
-        c.SOURCE_SUBNET_ID,
-        bob.address,
-        dummy_token_symbol,
-        c.SEND_AMOUNT,
-    ]
-    encoded_mint_token_params = encode(c.MINT_TOKEN_PARAMS, mint_token_values)
+def test_execute_transfer_reverts_on_token_does_not_exist(admin, topos_core_B):
+    push_dummy_cert(admin, topos_core_B)
     # should fail since the dummy token wasn't deployed on ToposCore
     with brownie.reverts():
-        topos_core_A.executeAssetTransfer(
-            c.CERT_ID, encoded_mint_token_params, c.DUMMY_DATA, {"from": admin}
+        topos_core_B.executeAssetTransfer(
+            c.CERT_ID,
+            c.TX_INDEX,
+            c.TX_RAW_HEX,
+            c.DUMMY_DATA,
+            {"from": admin},
         )
 
 
 def test_execute_transfer_reverts_on_exceeding_daily_mint_limit(
-    admin, alice, bob, topos_core_A
+    admin, topos_core_B
 ):
-    send_amount = 110
-    topos_core_A.deployToken(get_default_internal_token_val(), {"from": admin})
-    push_dummy_cert(admin, topos_core_A)
-    # execute asset transfer args
-    mint_token_values = [
-        c.DUMMY_DATA,
-        alice.address,
-        c.SOURCE_SUBNET_ID,
-        c.SOURCE_SUBNET_ID,
-        bob.address,
-        c.TOKEN_SYMBOL_X,
-        send_amount,
-    ]
-    encoded_mint_token_params = encode(c.MINT_TOKEN_PARAMS, mint_token_values)
+    topos_core_B.deployToken(get_default_internal_token_val(), {"from": admin})
+    push_dummy_cert(admin, topos_core_B)
     # should fail since the send_amount is greater than DAILY_MINT_LIMIT
     with brownie.reverts():
-        topos_core_A.executeAssetTransfer(
-            c.CERT_ID, encoded_mint_token_params, c.DUMMY_DATA, {"from": admin}
+        topos_core_B.executeAssetTransfer(
+            c.CERT_ID,
+            c.TX_INDEX,
+            c.TX_RAW_HEX_MINT_EXCEED,
+            c.DUMMY_DATA,
+            {"from": admin},
         )
 
 
 def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
     admin,
-    alice,
-    topos_core_A,
+    topos_core_B,
     BurnableMintableCappedERC20,
 ):
     # deploy an external erc20 token
@@ -406,41 +378,33 @@ def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
         c.TOKEN_NAME, c.TOKEN_SYMBOL_X, c.MINT_CAP, {"from": admin}
     )
     # register the external token on ToposCore
-    topos_core_A.deployToken(
+    topos_core_B.deployToken(
         get_default_external_token_val(burn_mint_erc20.address),
         {"from": admin},
     )
 
     # mint amount for ToposCore
     burn_mint_erc20.mint(
-        topos_core_A.address,
+        topos_core_B.address,
         c.MINT_AMOUNT,
         {"from": admin},
     )
-    push_dummy_cert(admin, topos_core_A)
-    # execute asset transfer args
-    mint_token_values = [
-        c.DUMMY_DATA,
-        alice.address,
-        c.SOURCE_SUBNET_ID,
-        c.SOURCE_SUBNET_ID,
-        brownie.ZERO_ADDRESS,  # receiver is zero address
-        c.TOKEN_SYMBOL_X,
-        c.SEND_AMOUNT,
-    ]
-    encoded_mint_token_params = encode(c.MINT_TOKEN_PARAMS, mint_token_values)
+    push_dummy_cert(admin, topos_core_B)
     # should revert since the receiver address cannot be zero address
     with brownie.reverts():
-        topos_core_A.executeAssetTransfer(
-            c.CERT_ID, encoded_mint_token_params, c.DUMMY_DATA, {"from": admin}
+        topos_core_B.executeAssetTransfer(
+            c.CERT_ID,
+            c.TX_INDEX,
+            c.TX_RAW_HEX_ZERO_ADDRESS,
+            c.DUMMY_DATA,
+            {"from": admin},
         )
 
 
 def test_execute_transfer_external_token_transfer_emits_events(
     admin,
-    alice,
     bob,
-    topos_core_A,
+    topos_core_B,
     BurnableMintableCappedERC20,
 ):
     # deploy an external erc20 token
@@ -448,36 +412,38 @@ def test_execute_transfer_external_token_transfer_emits_events(
         c.TOKEN_NAME, c.TOKEN_SYMBOL_X, c.MINT_CAP, {"from": admin}
     )
     # register the external token on ToposCore
-    topos_core_A.deployToken(
+    topos_core_B.deployToken(
         get_default_external_token_val(burn_mint_erc20.address),
         {"from": admin},
     )
     # mint amount for ToposCore
     burn_mint_erc20.mint(
-        topos_core_A.address,
+        topos_core_B.address,
         c.MINT_AMOUNT,
         {"from": admin},
     )
-    push_dummy_cert(admin, topos_core_A)
-    tx = topos_core_A.executeAssetTransfer(
+    push_dummy_cert(admin, topos_core_B)
+    tx = topos_core_B.executeAssetTransfer(
         c.CERT_ID,
-        get_default_mint_val(alice, bob),
+        c.TX_INDEX,
+        c.TX_RAW_HEX,
         c.DUMMY_DATA,
         {"from": admin},
     )
     assert tx.events["Transfer"].values() == [
-        topos_core_A.address,
+        topos_core_B.address,
         bob.address,
         c.SEND_AMOUNT,
     ]
 
 
-def test_execute_transfer_emits_event(admin, alice, bob, topos_core_A):
-    topos_core_A.deployToken(get_default_internal_token_val(), {"from": admin})
-    push_dummy_cert(admin, topos_core_A)
-    tx = topos_core_A.executeAssetTransfer(
+def test_execute_transfer_emits_event(admin, bob, topos_core_B):
+    topos_core_B.deployToken(get_default_internal_token_val(), {"from": admin})
+    push_dummy_cert(admin, topos_core_B)
+    tx = topos_core_B.executeAssetTransfer(
         c.CERT_ID,
-        get_default_mint_val(alice, bob),
+        c.TX_INDEX,
+        c.TX_RAW_HEX,
         c.DUMMY_DATA,
         {"from": admin},
     )
@@ -837,11 +803,8 @@ def get_default_external_token_val(address):
     return encode(c.TOKEN_PARAMS, token_values)
 
 
-def get_default_mint_val(alice, bob):
+def get_default_mint_val(bob):
     mint_token_args = [
-        c.DUMMY_DATA,
-        alice.address,
-        c.SOURCE_SUBNET_ID,
         c.SOURCE_SUBNET_ID,
         bob.address,
         c.TOKEN_SYMBOL_X,

@@ -172,24 +172,22 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     function executeAssetTransfer(
         CertificateId certId,
-        bytes calldata crossSubnetTx,
+        uint256 index,
+        bytes calldata txn,
         bytes calldata /*crossSubnetTxProof*/
     ) external {
         if (!certificateExists(certId)) revert CertNotPresent();
-        (
-            bytes memory txHash,
-            address sender,
-            SubnetId sourceSubnetId,
-            SubnetId targetSubnetId,
-            address receiver,
-            string memory symbol,
-            uint256 amount
-        ) = abi.decode(crossSubnetTx, (bytes, address, SubnetId, SubnetId, address, string, uint256));
+        // In order to validate the transaction pass the entire transaction bytes which is then hashed.
+        // The transaction hash is used as a leaf to validate the inclusion proof.
+        bytes32 txHash = keccak256(abi.encodePacked(txn));
+        (SubnetId targetSubnetId, address receiver, string memory symbol, uint256 amount) = abi.decode(
+            txn[index + 4:], // omit the 4 bytes function selector
+            (SubnetId, address, string, uint256)
+        );
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
-        if (_isSendTokenExecuted(txHash, sender, sourceSubnetId, targetSubnetId, receiver, symbol, amount))
-            revert TransferAlreadyExecuted();
+        if (_isSendTokenExecuted(txHash)) revert TransferAlreadyExecuted();
         // prevent re-entrancy
-        _setSendTokenExecuted(txHash, sender, sourceSubnetId, targetSubnetId, receiver, symbol, amount);
+        _setSendTokenExecuted(txHash);
         _mintToken(symbol, receiver, amount);
     }
 
@@ -409,19 +407,8 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         token.tokenAddress = tokenAddress;
     }
 
-    function _setSendTokenExecuted(
-        bytes memory txHash,
-        address sender,
-        SubnetId sourceSubnetId,
-        SubnetId targetSubnetId,
-        address receiver,
-        string memory symbol,
-        uint256 amount
-    ) internal {
-        _setBool(
-            _getIsSendTokenExecutedKey(txHash, sender, sourceSubnetId, targetSubnetId, receiver, symbol, amount),
-            true
-        );
+    function _setSendTokenExecuted(bytes32 txHash) internal {
+        _setBool(_getIsSendTokenExecutedKey(txHash), true);
     }
 
     function _setImplementation(address newImplementation) internal {
@@ -437,25 +424,11 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     }
 
     function _validateTargetSubnetId(SubnetId targetSubnetId) internal view returns (bool) {
-        if (SubnetId.unwrap(targetSubnetId) != SubnetId.unwrap(_networkSubnetId)) {
-            return false;
-        }
-        return true;
+        return SubnetId.unwrap(targetSubnetId) == SubnetId.unwrap(_networkSubnetId);
     }
 
-    function _isSendTokenExecuted(
-        bytes memory txHash,
-        address sender,
-        SubnetId sourceSubnetId,
-        SubnetId targetSubnetId,
-        address receiver,
-        string memory symbol,
-        uint256 amount
-    ) internal view returns (bool) {
-        return
-            getBool(
-                _getIsSendTokenExecutedKey(txHash, sender, sourceSubnetId, targetSubnetId, receiver, symbol, amount)
-            );
+    function _isSendTokenExecuted(bytes32 txHash) internal view returns (bool) {
+        return getBool(_getIsSendTokenExecutedKey(txHash));
     }
 
     /********************\
@@ -478,27 +451,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         return keccak256(abi.encodePacked(PREFIX_TOKEN_KEY, symbol));
     }
 
-    function _getIsSendTokenExecutedKey(
-        bytes memory txHash,
-        address sender,
-        SubnetId sourceSubnetId,
-        SubnetId targetSubnetId,
-        address receiver,
-        string memory symbol,
-        uint256 amount
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    PREFIX_SEND_TOKEN_EXECUTED,
-                    txHash,
-                    sender,
-                    sourceSubnetId,
-                    targetSubnetId,
-                    receiver,
-                    symbol,
-                    amount
-                )
-            );
+    function _getIsSendTokenExecutedKey(bytes32 txHash) internal pure returns (bytes32) {
+        return keccak256(abi.encode(PREFIX_SEND_TOKEN_EXECUTED, txHash));
     }
 }

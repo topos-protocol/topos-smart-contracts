@@ -91,7 +91,8 @@ interface IToposCore {
 
     function executeAssetTransfer(
         CertificateId certId,
-        bytes calldata crossSubnetTx,
+        uint256 index,
+        bytes calldata txn,
         bytes calldata crossSubnetTxProof
     ) external;
 
