@@ -77,7 +77,7 @@ interface IToposCore {
         uint256 amount
     );
 
-    event CertStored(CertificateId certId, bytes32 txRoot);
+    event CertStored(CertificateId id, bytes32 txRoot);
 
     event TokenDeployed(string symbol, address tokenAddress);
 
@@ -99,7 +99,7 @@ interface IToposCore {
     ) external;
 
     function executeAssetTransfer(
-        CertificateId certId,
+        bytes32 txRootHash,
         uint256 indexOfDataInTxRaw,
         bytes calldata txRaw,
         bytes calldata crossSubnetTxProof
@@ -159,7 +159,9 @@ interface IToposCore {
 
     function tokenDeployer() external view returns (address);
 
-    function certificateExists(CertificateId certId) external view returns (bool);
+    function certificateExists(CertificateId id) external view returns (bool);
+
+    function certForTxRoot(bytes32 txRootHash) external view returns (CertificateId);
 
     function getCertificateCount() external view returns (uint256);
 

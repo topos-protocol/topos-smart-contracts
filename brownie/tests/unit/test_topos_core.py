@@ -150,7 +150,7 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
     topos_core_B.deployToken(encoded_token_params, {"from": admin})
     push_dummy_cert(admin, topos_core_B)
     tx = topos_core_B.executeAssetTransfer(
-        c.CERT_ID,
+        c.TX_ROOT,
         c.INDEX_OF_DATA_IN_TX_RAW,
         c.TX_RAW,
         c.DUMMY_DATA,
@@ -301,7 +301,7 @@ def test_execute_transfer_reverts_on_tx_raw_index_out_of_bounds(
     # should revert since the index is out of bounds
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
-            c.CERT_ID,
+            c.TX_ROOT,
             c.INDEX_OF_DATA_IN_TX_RAW_OUT_OF_BOUNDS,
             c.TX_RAW,
             c.DUMMY_DATA,
@@ -327,7 +327,7 @@ def test_execute_transfer_reverts_on_invalid_subnet_id(admin, topos_core_A):
     # should fail since the provided target subnet id is not "0x02"
     with brownie.reverts():
         topos_core_A.executeAssetTransfer(
-            c.CERT_ID,
+            c.TX_ROOT,
             c.INDEX_OF_DATA_IN_TX_RAW,
             c.TX_RAW,
             c.DUMMY_DATA,
@@ -341,7 +341,7 @@ def test_execute_transfer_reverts_on_call_already_executed(
     topos_core_B.deployToken(get_default_internal_token_val(), {"from": admin})
     push_dummy_cert(admin, topos_core_B)
     topos_core_B.executeAssetTransfer(
-        c.CERT_ID,
+        c.TX_ROOT,
         c.INDEX_OF_DATA_IN_TX_RAW,
         c.TX_RAW,
         c.DUMMY_DATA,
@@ -350,7 +350,7 @@ def test_execute_transfer_reverts_on_call_already_executed(
     # resending the same call should fail
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
-            c.CERT_ID,
+            c.TX_ROOT,
             c.INDEX_OF_DATA_IN_TX_RAW,
             c.TX_RAW,
             c.DUMMY_DATA,
@@ -363,7 +363,7 @@ def test_execute_transfer_reverts_on_token_does_not_exist(admin, topos_core_B):
     # should fail since the dummy token wasn't deployed on ToposCore
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
-            c.CERT_ID,
+            c.TX_ROOT,
             c.INDEX_OF_DATA_IN_TX_RAW,
             c.TX_RAW,
             c.DUMMY_DATA,
@@ -379,7 +379,7 @@ def test_execute_transfer_reverts_on_exceeding_daily_mint_limit(
     # should fail since the send_amount is greater than DAILY_MINT_LIMIT
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
-            c.CERT_ID,
+            c.TX_ROOT,
             c.INDEX_OF_DATA_IN_TX_RAW,
             c.TX_RAW_MINT_EXCEED,
             c.DUMMY_DATA,
@@ -412,7 +412,7 @@ def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
     # should revert since the receiver address cannot be zero address
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
-            c.CERT_ID,
+            c.TX_ROOT,
             c.INDEX_OF_DATA_IN_TX_RAW,
             c.TX_RAW_ZERO_ADDRESS,
             c.DUMMY_DATA,
@@ -443,7 +443,7 @@ def test_execute_transfer_external_token_transfer_emits_events(
     )
     push_dummy_cert(admin, topos_core_B)
     tx = topos_core_B.executeAssetTransfer(
-        c.CERT_ID,
+        c.TX_ROOT,
         c.INDEX_OF_DATA_IN_TX_RAW,
         c.TX_RAW,
         c.DUMMY_DATA,
@@ -460,7 +460,7 @@ def test_execute_transfer_emits_event(admin, bob, topos_core_B):
     topos_core_B.deployToken(get_default_internal_token_val(), {"from": admin})
     push_dummy_cert(admin, topos_core_B)
     tx = topos_core_B.executeAssetTransfer(
-        c.CERT_ID,
+        c.TX_ROOT,
         c.INDEX_OF_DATA_IN_TX_RAW,
         c.TX_RAW,
         c.DUMMY_DATA,
