@@ -189,8 +189,8 @@ def push_dummy_cert(admin, topos_core_B, cert_position):
             [
                 c.CERT_ID,
                 c.SOURCE_SUBNET_ID,
-                c.HASH,
-                c.HASH,
+                c.STATE_ROOT,
+                c.TX_ROOT,
                 [c.TARGET_SUBNET_ID],
                 c.VERIFIER,
                 c.CERT_ID,
