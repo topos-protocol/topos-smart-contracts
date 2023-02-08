@@ -155,7 +155,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
             CertificateId prevId,
             SubnetId sourceSubnetId,
             bytes32 stateRoot,
-            bytes32 txRootHash,
+            bytes32 txRoot,
             SubnetId[] memory targetSubnets,
             uint32 verifier,
             CertificateId id,
@@ -170,7 +170,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         newCert.prevId = prevId;
         newCert.sourceSubnetId = sourceSubnetId;
         newCert.stateRoot = stateRoot;
-        newCert.txRootHash = txRootHash;
+        newCert.txRoot = txRoot;
         newCert.targetSubnets = targetSubnets;
         newCert.verifier = verifier;
         newCert.id = id;
@@ -349,7 +349,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
             storedCert.prevId,
             storedCert.sourceSubnetId,
             storedCert.stateRoot,
-            storedCert.txRootHash,
+            storedCert.txRoot,
             storedCert.targetSubnets,
             storedCert.verifier,
             storedCert.id,

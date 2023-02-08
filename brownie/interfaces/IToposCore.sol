@@ -31,7 +31,7 @@ interface IToposCore {
         CertificateId prevId;
         SubnetId sourceSubnetId;
         bytes32 stateRoot;
-        bytes32 txRootHash;
+        bytes32 txRoot;
         SubnetId[] targetSubnets;
         uint32 verifier;
         CertificateId id;
