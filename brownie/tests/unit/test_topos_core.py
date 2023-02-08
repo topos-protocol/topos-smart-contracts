@@ -151,7 +151,7 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
     push_dummy_cert(admin, topos_core_B)
     tx = topos_core_B.executeAssetTransfer(
         c.CERT_ID,
-        c.TX_INDEX,
+        c.INDEX_OF_DATA_IN_TX_RAW,
         c.TX_RAW_HEX,
         c.DUMMY_DATA,
         {"from": admin},
@@ -298,7 +298,7 @@ def test_execute_transfer_reverts_on_unknown_cert(admin, topos_core_B):
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
             c.CERT_ID,
-            c.TX_INDEX,
+            c.INDEX_OF_DATA_IN_TX_RAW,
             c.TX_RAW_HEX,
             c.DUMMY_DATA,
             {"from": admin},
@@ -312,7 +312,7 @@ def test_execute_transfer_reverts_on_invalid_subnet_id(admin, topos_core_A):
     with brownie.reverts():
         topos_core_A.executeAssetTransfer(
             c.CERT_ID,
-            c.TX_INDEX,
+            c.INDEX_OF_DATA_IN_TX_RAW,
             c.TX_RAW_HEX,
             c.DUMMY_DATA,
             {"from": admin},
@@ -326,7 +326,7 @@ def test_execute_transfer_reverts_on_call_already_executed(
     push_dummy_cert(admin, topos_core_B)
     topos_core_B.executeAssetTransfer(
         c.CERT_ID,
-        c.TX_INDEX,
+        c.INDEX_OF_DATA_IN_TX_RAW,
         c.TX_RAW_HEX,
         c.DUMMY_DATA,
         {"from": admin},
@@ -335,7 +335,7 @@ def test_execute_transfer_reverts_on_call_already_executed(
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
             c.CERT_ID,
-            c.TX_INDEX,
+            c.INDEX_OF_DATA_IN_TX_RAW,
             c.TX_RAW_HEX,
             c.DUMMY_DATA,
             {"from": admin},
@@ -348,7 +348,7 @@ def test_execute_transfer_reverts_on_token_does_not_exist(admin, topos_core_B):
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
             c.CERT_ID,
-            c.TX_INDEX,
+            c.INDEX_OF_DATA_IN_TX_RAW,
             c.TX_RAW_HEX,
             c.DUMMY_DATA,
             {"from": admin},
@@ -364,7 +364,7 @@ def test_execute_transfer_reverts_on_exceeding_daily_mint_limit(
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
             c.CERT_ID,
-            c.TX_INDEX,
+            c.INDEX_OF_DATA_IN_TX_RAW,
             c.TX_RAW_HEX_MINT_EXCEED,
             c.DUMMY_DATA,
             {"from": admin},
@@ -397,7 +397,7 @@ def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
             c.CERT_ID,
-            c.TX_INDEX,
+            c.INDEX_OF_DATA_IN_TX_RAW,
             c.TX_RAW_HEX_ZERO_ADDRESS,
             c.DUMMY_DATA,
             {"from": admin},
@@ -428,7 +428,7 @@ def test_execute_transfer_external_token_transfer_emits_events(
     push_dummy_cert(admin, topos_core_B)
     tx = topos_core_B.executeAssetTransfer(
         c.CERT_ID,
-        c.TX_INDEX,
+        c.INDEX_OF_DATA_IN_TX_RAW,
         c.TX_RAW_HEX,
         c.DUMMY_DATA,
         {"from": admin},
@@ -445,7 +445,7 @@ def test_execute_transfer_emits_event(admin, bob, topos_core_B):
     push_dummy_cert(admin, topos_core_B)
     tx = topos_core_B.executeAssetTransfer(
         c.CERT_ID,
-        c.TX_INDEX,
+        c.INDEX_OF_DATA_IN_TX_RAW,
         c.TX_RAW_HEX,
         c.DUMMY_DATA,
         {"from": admin},

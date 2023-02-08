@@ -39,7 +39,7 @@ def test_send_token():
     LOGGER.info("Switching to subnet network A")
     switch_network("A")
     deploy_initial_contracts(subnet_A_id)
-    index, raw_tx = send_token()
+    index_of_data_in_tx_raw, raw_tx = send_token()
 
     # Network B
     LOGGER.info("Switching to subnet network B")
@@ -47,7 +47,7 @@ def test_send_token():
     deploy_initial_contracts(subnet_B_id)
     # if you don't validate a cert then the mint function would fail
     push_dummy_cert(topos_core_B)
-    mint_token(topos_core_B, index, raw_tx)
+    mint_token(topos_core_B, index_of_data_in_tx_raw, raw_tx)
     token = topos_core_B.getTokenBySymbol(token_symbol)
     burnable_mint_erc20_B = BurnableMintableCappedERC20.at(
         token["tokenAddress"]
@@ -159,11 +159,13 @@ def send_token():
     raw_tx = get_raw_transaction_positional_args(
         "http://127.0.0.1:8545", tx.txid
     )
-    index = int(raw_tx.index(tx.input[2:]) / 2)  # [2:] removes 0x prefix
+    index_of_data_in_tx_raw = int(
+        raw_tx.index(tx.input[2:]) / 2
+    )  # [2:] removes 0x prefix
     # LOGGER.info(f"TRANSACTION HEX: {raw_tx}")
     # LOGGER.info(f"TRANSACTION HASH: {tx.txid}")
     # LOGGER.info(f"TRANSACTION INDEX: {index}")
-    return (index, raw_tx)
+    return (index_of_data_in_tx_raw, raw_tx)
 
 
 def push_dummy_cert(topos_core):
@@ -195,10 +197,10 @@ def push_dummy_cert(topos_core):
     )
 
 
-def mint_token(topos_core, index, raw_tx):
+def mint_token(topos_core, index_of_data_in_tx_raw, raw_tx):
     topos_core.executeAssetTransfer(
         dummy_cert_id,  # certId
-        index,
+        index_of_data_in_tx_raw,
         raw_tx,
         dummy_data,  # xs_subnet_inclusion_proof
         {"from": accounts[0]},

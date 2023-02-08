@@ -21,7 +21,7 @@ DAILY_MINT_LIMIT = 100
 TARGET_SUBNET_ID = brownie.convert.to_bytes("0x02", "bytes32")
 DUMMY_DATA = brownie.convert.to_bytes("0x00", "bytes")
 ENDPOINT = "http://127.0.0.1"
-TX_ROOT = brownie.convert.to_bytes("0xf00d", "bytes32")
+INDEX_OF_DATA_IN_TX_RAW = 33
 LOGO_URL = "http://image-url.com"
 MINIMUM_CERT_POSITION = 4
 MINT_AMOUNT = 100
@@ -39,7 +39,6 @@ TEST_KEY = brownie.convert.to_bytes("0xaabb", "bytes32")
 TOKEN_NAME = "TestToken"
 TOKEN_SYMBOL_X = "TKX"
 TOKEN_SYMBOL_Y = "TKY"
-TX_INDEX = 33
 TX_RAW_HEX = (
     "0xf901270c8083b71b0094420b1099b9ef5baba6d92029594ef45e19a04a4a80b8c"
     "4b32c8105000000000000000000000000000000000000000000000000000000000000"
@@ -73,6 +72,7 @@ TX_RAW_HEX_ZERO_ADDRESS = (
     "5f5700a9ac6f3359e883bedc7fafcc4a98fd3e6f09a32b4966941884ba02e02afdc9"
     "0fbb59a52c526c3fa6ac6d12e799ac4e090825d27521dab61c20ae2"
 )
+TX_ROOT = brownie.convert.to_bytes("0xf00d", "bytes32")
 
 # admin params
 ADMIN_PARAMS = [
