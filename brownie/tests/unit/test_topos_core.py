@@ -152,7 +152,7 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
     tx = topos_core_B.executeAssetTransfer(
         c.CERT_ID,
         c.INDEX_OF_DATA_IN_TX_RAW,
-        c.TX_RAW_HEX,
+        c.TX_RAW,
         c.DUMMY_DATA,
         {"from": admin},
     )
@@ -299,7 +299,7 @@ def test_execute_transfer_reverts_on_unknown_cert(admin, topos_core_B):
         topos_core_B.executeAssetTransfer(
             c.CERT_ID,
             c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW_HEX,
+            c.TX_RAW,
             c.DUMMY_DATA,
             {"from": admin},
         )
@@ -313,7 +313,7 @@ def test_execute_transfer_reverts_on_invalid_subnet_id(admin, topos_core_A):
         topos_core_A.executeAssetTransfer(
             c.CERT_ID,
             c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW_HEX,
+            c.TX_RAW,
             c.DUMMY_DATA,
             {"from": admin},
         )
@@ -327,7 +327,7 @@ def test_execute_transfer_reverts_on_call_already_executed(
     topos_core_B.executeAssetTransfer(
         c.CERT_ID,
         c.INDEX_OF_DATA_IN_TX_RAW,
-        c.TX_RAW_HEX,
+        c.TX_RAW,
         c.DUMMY_DATA,
         {"from": admin},
     )
@@ -336,7 +336,7 @@ def test_execute_transfer_reverts_on_call_already_executed(
         topos_core_B.executeAssetTransfer(
             c.CERT_ID,
             c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW_HEX,
+            c.TX_RAW,
             c.DUMMY_DATA,
             {"from": admin},
         )
@@ -349,7 +349,7 @@ def test_execute_transfer_reverts_on_token_does_not_exist(admin, topos_core_B):
         topos_core_B.executeAssetTransfer(
             c.CERT_ID,
             c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW_HEX,
+            c.TX_RAW,
             c.DUMMY_DATA,
             {"from": admin},
         )
@@ -365,7 +365,7 @@ def test_execute_transfer_reverts_on_exceeding_daily_mint_limit(
         topos_core_B.executeAssetTransfer(
             c.CERT_ID,
             c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW_HEX_MINT_EXCEED,
+            c.TX_RAW_MINT_EXCEED,
             c.DUMMY_DATA,
             {"from": admin},
         )
@@ -398,7 +398,7 @@ def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
         topos_core_B.executeAssetTransfer(
             c.CERT_ID,
             c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW_HEX_ZERO_ADDRESS,
+            c.TX_RAW_ZERO_ADDRESS,
             c.DUMMY_DATA,
             {"from": admin},
         )
@@ -429,7 +429,7 @@ def test_execute_transfer_external_token_transfer_emits_events(
     tx = topos_core_B.executeAssetTransfer(
         c.CERT_ID,
         c.INDEX_OF_DATA_IN_TX_RAW,
-        c.TX_RAW_HEX,
+        c.TX_RAW,
         c.DUMMY_DATA,
         {"from": admin},
     )
@@ -446,7 +446,7 @@ def test_execute_transfer_emits_event(admin, bob, topos_core_B):
     tx = topos_core_B.executeAssetTransfer(
         c.CERT_ID,
         c.INDEX_OF_DATA_IN_TX_RAW,
-        c.TX_RAW_HEX,
+        c.TX_RAW,
         c.DUMMY_DATA,
         {"from": admin},
     )

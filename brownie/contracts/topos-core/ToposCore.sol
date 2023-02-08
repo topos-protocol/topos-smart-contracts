@@ -194,15 +194,15 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     function executeAssetTransfer(
         CertificateId certId,
         uint256 indexOfDataInTxRaw,
-        bytes calldata txn,
+        bytes calldata txRaw,
         bytes calldata /*crossSubnetTxProof*/
     ) external {
         if (!certificateExists(certId)) revert CertNotPresent();
         // In order to validate the transaction pass the entire transaction bytes which is then hashed.
         // The transaction hash is used as a leaf to validate the inclusion proof.
-        bytes32 txHash = keccak256(abi.encodePacked(txn));
+        bytes32 txHash = keccak256(abi.encodePacked(txRaw));
         (SubnetId targetSubnetId, address receiver, string memory symbol, uint256 amount) = abi.decode(
-            txn[indexOfDataInTxRaw + 4:], // omit the 4 bytes function selector
+            txRaw[indexOfDataInTxRaw + 4:], // omit the 4 bytes function selector
             (SubnetId, address, string, uint256)
         );
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
