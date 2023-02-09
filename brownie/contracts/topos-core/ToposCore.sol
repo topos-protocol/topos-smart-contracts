@@ -33,7 +33,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     /// @notice Mapping of transaction root to the certificate ID
     /// @dev txRootHash(bytes32) => CertificateId(bytes32)
-    mapping(bytes32 => CertificateId) public certForTxRoot;
+    mapping(bytes32 => CertificateId) public txRootToCertId;
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
@@ -170,7 +170,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
                 (CertificateId, SubnetId, bytes32, bytes32, SubnetId[], uint32, CertificateId, bytes, bytes)
             );
         certificateSet.insert(CertificateId.unwrap(id)); // add certificate ID to the CRUD storage set
-        certForTxRoot[txRoot] = id; // add certificate ID to the transaction root mapping
+        txRootToCertId[txRoot] = id; // add certificate ID to the transaction root mapping
         Certificate storage newCert = certificates[id];
         newCert.prevId = prevId;
         newCert.sourceSubnetId = sourceSubnetId;
@@ -203,7 +203,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         bytes calldata /*crossSubnetTxProof*/
     ) external {
         if (txRaw.length < indexOfDataInTxRaw + 4) revert IllegalMemoryAccess();
-        CertificateId id = certForTxRoot[txRootHash];
+        CertificateId id = txRootToCertId[txRootHash];
         if (!certificateExists(id)) revert CertNotPresent();
         // In order to validate the transaction pass the entire transaction bytes which is then hashed.
         // The transaction hash is used as a leaf to validate the inclusion proof.

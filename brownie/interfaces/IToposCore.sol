@@ -161,7 +161,7 @@ interface IToposCore {
 
     function certificateExists(CertificateId id) external view returns (bool);
 
-    function certForTxRoot(bytes32 txRootHash) external view returns (CertificateId);
+    function txRootToCertId(bytes32 txRootHash) external view returns (CertificateId);
 
     function getCertificateCount() external view returns (uint256);
 
