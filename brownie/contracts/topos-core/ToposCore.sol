@@ -36,7 +36,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     mapping(bytes32 => Token) public tokens;
 
     /// @notice Mapping of transaction root to the certificate ID
-    /// @dev txRootHash(bytes32) => CertificateId(bytes32)
+    /// @dev txRoot(bytes32) => CertificateId(bytes32)
     mapping(bytes32 => CertificateId) public txRootToCertId;
 
     /// @notice The subnet ID of the subnet this contract is deployed on
@@ -215,13 +215,13 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     }
 
     function executeAssetTransfer(
-        bytes32 txRootHash,
+        bytes32 txRoot,
         uint256 indexOfDataInTxRaw,
         bytes calldata txRaw,
         bytes calldata /*crossSubnetTxProof*/
     ) external {
         if (txRaw.length < indexOfDataInTxRaw + 4) revert IllegalMemoryAccess();
-        CertificateId certId = txRootToCertId[txRootHash];
+        CertificateId certId = txRootToCertId[txRoot];
         if (!certificateExists(certId)) revert CertNotPresent();
         // In order to validate the transaction pass the entire transaction bytes which is then hashed.
         // The transaction hash is used as a leaf to validate the inclusion proof.

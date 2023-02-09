@@ -102,7 +102,7 @@ interface IToposCore {
     ) external;
 
     function executeAssetTransfer(
-        bytes32 txRootHash,
+        bytes32 txRoot,
         uint256 indexOfDataInTxRaw,
         bytes calldata txRaw,
         bytes calldata crossSubnetTxProof
@@ -166,7 +166,7 @@ interface IToposCore {
 
     function certificateExists(CertificateId certId) external view returns (bool);
 
-    function txRootToCertId(bytes32 txRootHash) external view returns (CertificateId);
+    function txRootToCertId(bytes32 txRoot) external view returns (CertificateId);
 
     function getCertificateCount() external view returns (uint256);
 
