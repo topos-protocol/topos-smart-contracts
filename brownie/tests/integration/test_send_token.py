@@ -159,6 +159,12 @@ def send_token():
     tx_raw = get_raw_transaction_positional_args(
         "http://127.0.0.1:8545", tx.txid
     )
+    # The tx_raw and tx.input are represented in hexadecimal
+    # format, with each two characters representing one byte.
+    # To get the index of the input in tx_raw in terms
+    # of bytes, the index of the data in tx.input must be divided
+    # by 2.This is because in Solidity, the bytes[i:] syntax
+    # returns the bytes starting from the ith byte.
     index_of_data_in_tx_raw = int(
         tx_raw.index(tx.input[2:]) / 2
     )  # [2:] removes 0x prefix
