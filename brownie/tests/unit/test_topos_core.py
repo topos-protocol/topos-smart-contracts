@@ -24,7 +24,10 @@ def test_get_certificate_count_returns_count(admin, topos_core_A):
 def test_push_certificate_emits_event(admin, topos_core_A):
     tx = push_dummy_cert(admin, topos_core_A)
     assert topos_core_A.certificateExists(c.CERT_ID, {"from": admin}) is True
-    assert tx.events["CertStored"].values() == [c.CERT_BYTES]
+    assert tx.events["CertStored"].values() == [
+        c.CERT_BYTES,
+        brownie.convert.datatypes.HexString(c.TX_ROOT, "bytes32"),
+    ]
 
 
 def test_get_cert_id_at_index_returns_cert_id(admin, topos_core_A):

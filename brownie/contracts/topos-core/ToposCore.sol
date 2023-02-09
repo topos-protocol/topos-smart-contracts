@@ -177,7 +177,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         newCert.starkProof = starkProof;
         newCert.signature = signature;
         newCert.position = position;
-        emit CertStored(id);
+        emit CertStored(id, txRoot);
     }
 
     function setup(bytes calldata params) external override {

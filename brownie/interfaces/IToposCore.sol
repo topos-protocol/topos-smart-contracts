@@ -76,7 +76,7 @@ interface IToposCore {
         uint256 amount
     );
 
-    event CertStored(CertificateId certId);
+    event CertStored(CertificateId certId, bytes32 txRoot);
 
     event TokenDeployed(string symbol, address tokenAddress);
 
