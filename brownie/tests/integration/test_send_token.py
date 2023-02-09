@@ -13,7 +13,7 @@ from brownie import (
     ToposCore,
     ToposCoreProxy,
 )
-from fetch_transaction import get_raw_transaction_positional_args
+from generate_transaction import get_raw_transaction_positional_args
 
 LOGGER = logging.getLogger(__name__)
 
