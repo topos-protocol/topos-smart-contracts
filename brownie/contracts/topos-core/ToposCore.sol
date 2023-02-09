@@ -31,6 +31,10 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     /// @dev TokenKey(bytes32) => Token
     mapping(bytes32 => Token) public tokens;
 
+    /// @notice Mapping of transaction root to the certificate ID
+    /// @dev txRootHash(bytes32) => CertificateId(bytes32)
+    mapping(bytes32 => CertificateId) public txRootToCertId;
+
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
     SubnetId internal immutable _networkSubnetId;
@@ -165,7 +169,8 @@ contract ToposCore is IToposCore, AdminMultisigBase {
                 certBytes,
                 (CertificateId, SubnetId, bytes32, bytes32, SubnetId[], uint32, CertificateId, bytes, bytes)
             );
-        certificateSet.insert(CertificateId.unwrap(id));
+        certificateSet.insert(CertificateId.unwrap(id)); // add certificate ID to the CRUD storage set
+        txRootToCertId[txRoot] = id; // add certificate ID to the transaction root mapping
         Certificate storage newCert = certificates[id];
         newCert.prevId = prevId;
         newCert.sourceSubnetId = sourceSubnetId;
@@ -192,13 +197,14 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     }
 
     function executeAssetTransfer(
-        CertificateId certId,
+        bytes32 txRootHash,
         uint256 indexOfDataInTxRaw,
         bytes calldata txRaw,
         bytes calldata /*crossSubnetTxProof*/
     ) external {
         if (txRaw.length < indexOfDataInTxRaw + 4) revert IllegalMemoryAccess();
-        if (!certificateExists(certId)) revert CertNotPresent();
+        CertificateId id = txRootToCertId[txRootHash];
+        if (!certificateExists(id)) revert CertNotPresent();
         // In order to validate the transaction pass the entire transaction bytes which is then hashed.
         // The transaction hash is used as a leaf to validate the inclusion proof.
         bytes32 txHash = keccak256(abi.encodePacked(txRaw));
@@ -286,8 +292,8 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     |* Getters *|
     \***********/
 
-    function certificateExists(CertificateId certId) public view returns (bool) {
-        return certificateSet.exists(CertificateId.unwrap(certId));
+    function certificateExists(CertificateId id) public view returns (bool) {
+        return certificateSet.exists(CertificateId.unwrap(id));
     }
 
     function getCertificateCount() public view returns (uint256) {

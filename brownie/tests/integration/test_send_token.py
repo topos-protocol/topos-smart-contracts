@@ -205,7 +205,7 @@ def push_dummy_cert(topos_core):
 
 def mint_token(topos_core, index_of_data_in_tx_raw, tx_raw):
     topos_core.executeAssetTransfer(
-        dummy_cert_id,  # certId
+        dummy_hash,
         index_of_data_in_tx_raw,
         tx_raw,
         dummy_data,  # xs_subnet_inclusion_proof
