@@ -22,6 +22,8 @@ LOGGER = logging.getLogger(__name__)
 arbitrary_call_value = "This is a test message"
 dummy_cert_position = 11
 dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes32")
+dummy_data = brownie.convert.to_bytes("0x00", "bytes")
+dummy_hash = brownie.convert.to_bytes("0x0004", "bytes32")
 dummy_xs_proof = brownie.convert.to_bytes("0x0002", "bytes")
 min_cert_position_admin = 10
 subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
@@ -32,6 +34,7 @@ selector_hash = keccak.new(
 selector_hash.update("changeValue".encode("utf-8"))
 selector = selector_hash.hexdigest()
 tx_hash = brownie.convert.to_bytes("0x01", "bytes")
+verifier = 1
 
 
 @pytest.mark.skip_coverage
@@ -151,10 +154,32 @@ def switch_network(subnet_network):
 
 
 def push_dummy_cert(topos_core):
-    cert_params = ["bytes32", "uint256"]
-    cert_values = [dummy_cert_id, dummy_cert_position]
+    cert_params = [
+        "bytes32",
+        "bytes32",
+        "bytes32",
+        "bytes32",
+        "bytes32[]",
+        "uint32",
+        "bytes32",
+        "bytes",
+        "bytes",
+    ]
+    cert_values = [
+        dummy_cert_id,
+        subnet_A_id,
+        dummy_hash,
+        dummy_hash,
+        [subnet_B_id],
+        verifier,
+        dummy_cert_id,
+        dummy_data,
+        dummy_data,
+    ]
     encoded_cert_params = eth_abi.encode(cert_params, cert_values)
-    topos_core.pushCertificate(encoded_cert_params, {"from": accounts[0]})
+    topos_core.pushCertificate(
+        encoded_cert_params, dummy_cert_position, {"from": accounts[0]}
+    )
 
 
 def set_remote_value_on_sending_subnet():

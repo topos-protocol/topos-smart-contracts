@@ -5,11 +5,23 @@ APPROVE_AMOUNT = 10
 CERT_BYTES = "0xdeaf"
 CERT_POSITION = 5
 CERT_ID = brownie.convert.to_bytes(CERT_BYTES, "bytes32")
+CERT_PARAMS = [
+    "bytes32",
+    "bytes32",
+    "bytes32",
+    "bytes32",
+    "bytes32[]",
+    "uint32",
+    "bytes32",
+    "bytes",
+    "bytes",
+]
 CHAIN_ID = 1
 DAILY_MINT_LIMIT = 100
 TARGET_SUBNET_ID = brownie.convert.to_bytes("0x02", "bytes32")
 DUMMY_DATA = brownie.convert.to_bytes("0x00", "bytes")
 ENDPOINT = "http://127.0.0.1"
+TX_ROOT = brownie.convert.to_bytes("0xf00d", "bytes32")
 LOGO_URL = "http://image-url.com"
 MINIMUM_CERT_POSITION = 4
 MINT_AMOUNT = 10
@@ -18,6 +30,7 @@ SOURCE_SUBNET_ID = brownie.convert.to_bytes("0x01", "bytes32")
 PAYLOAD = brownie.convert.to_bytes("0xdead", "bytes")
 PEER_ID = brownie.convert.to_bytes("0xdeaf", "bytes")
 SEND_AMOUNT = 10
+STATE_ROOT = brownie.convert.to_bytes("0xfeed", "bytes32")
 SUBNET_BYTES = "0xdeaf"
 SUBNET_NAME = "Test Subnet"
 SUBNET_ID = brownie.convert.to_bytes(SUBNET_BYTES, "bytes")
@@ -49,3 +62,4 @@ MINT_TOKEN_PARAMS = [
     "string",  # symbol
     "uint256",  # amount
 ]
+VERIFIER = 1

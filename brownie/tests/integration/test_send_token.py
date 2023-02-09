@@ -22,12 +22,14 @@ daily_mint_limit = 100
 dummy_cert_position = 12
 dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes32")
 dummy_data = brownie.convert.to_bytes("0x00", "bytes")
+dummy_hash = brownie.convert.to_bytes("0x0004", "bytes32")
 mint_amount = 100
 mint_cap = 1000
 send_amount = 50
 subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
 subnet_B_id = brownie.convert.to_bytes("0x02", "bytes32")
 token_symbol = "TKX"
+verifier = 1
 
 
 @pytest.mark.skip_coverage
@@ -175,10 +177,32 @@ def send_token():
 
 
 def push_dummy_cert(topos_core):
-    cert_params = ["bytes32", "uint256"]
-    cert_values = [dummy_cert_id, dummy_cert_position]
+    cert_params = [
+        "bytes32",
+        "bytes32",
+        "bytes32",
+        "bytes32",
+        "bytes32[]",
+        "uint32",
+        "bytes32",
+        "bytes",
+        "bytes",
+    ]
+    cert_values = [
+        dummy_cert_id,
+        subnet_A_id,
+        dummy_hash,
+        dummy_hash,
+        [subnet_B_id],
+        verifier,
+        dummy_cert_id,
+        dummy_data,
+        dummy_data,
+    ]
     encoded_cert_params = eth_abi.encode(cert_params, cert_values)
-    topos_core.pushCertificate(encoded_cert_params, {"from": accounts[0]})
+    topos_core.pushCertificate(
+        encoded_cert_params, dummy_cert_position, {"from": accounts[0]}
+    )
 
 
 def mint_token(

@@ -1,6 +1,6 @@
 import brownie
 from Crypto.Hash import keccak
-import eth_abi
+from eth_abi import encode
 
 import const as c
 
@@ -30,9 +30,7 @@ def test_execute_reverts_on_unknown_cert_id(
 ):
     invalid_cert_id = brownie.convert.to_bytes("0xdead", "bytes")
     dummy_address = accounts.add()
-    topos_core_B.pushCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
-    )
+    push_dummy_cert(admin, topos_core_B, c.CERT_POSITION)
     data = get_call_contract_data(dummy_address, c.TARGET_SUBNET_ID)
     # should revert since the cert is not present
     with brownie.reverts():
@@ -46,9 +44,7 @@ def test_execute_reverts_on_false_target_subnet_id(
 ):
     invalid_target_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
     dummy_address = accounts.add()
-    topos_core_B.pushCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
-    )
+    push_dummy_cert(admin, topos_core_B, c.CERT_POSITION)
     data = get_call_contract_data(dummy_address, invalid_target_subnet_id)
     # should revert since target subnet id is incorrect
     with brownie.reverts():
@@ -62,9 +58,7 @@ def test_execute_reverts_on_contract_call_already_executed(
 ):
     dummy_address = accounts.add()
     authorize_origin(dummy_address, admin, topos_executable)
-    topos_core_B.pushCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
-    )
+    push_dummy_cert(admin, topos_core_B, c.CERT_POSITION)
     data = get_call_contract_data(dummy_address, c.TARGET_SUBNET_ID)
     topos_executable.execute(c.CERT_ID, data, c.DUMMY_DATA, {"from": admin})
     # should revert when executing the same call
@@ -80,9 +74,7 @@ def test_execute_reverts_on_cert_position_lower_than_min_position(
     dummy_address = accounts.add()
     cert_position = 3
     authorize_origin(dummy_address, admin, topos_executable)
-    topos_core_B.pushCertificate(
-        get_encoded_cert_params(c.CERT_ID, cert_position), {"from": admin}
-    )
+    push_dummy_cert(admin, topos_core_B, cert_position)
     data = get_call_contract_data(dummy_address, c.TARGET_SUBNET_ID)
     # should revert since the cert position < min cert position
     with brownie.reverts():
@@ -96,9 +88,7 @@ def test_execute_with_token_reverts_on_unknown_cert_id(
 ):
     invalid_cert_id = brownie.convert.to_bytes("0xdead", "bytes")
     dummy_address = accounts.add()
-    topos_core_B.pushCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
-    )
+    push_dummy_cert(admin, topos_core_B, c.CERT_POSITION)
     data = get_call_contract_with_token_data(dummy_address, c.TARGET_SUBNET_ID)
     # should revert since the cert is not present
     with brownie.reverts():
@@ -112,9 +102,7 @@ def test_execute_with_token_reverts_on_false_target_subnet_id(
 ):
     invalid_target_subnet_id = brownie.convert.to_bytes("0x03", "bytes32")
     dummy_address = accounts.add()
-    topos_core_B.pushCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
-    )
+    push_dummy_cert(admin, topos_core_B, c.CERT_POSITION)
     data = get_call_contract_with_token_data(
         dummy_address, invalid_target_subnet_id
     )
@@ -130,9 +118,7 @@ def test_execute_with_token_reverts_on_contract_call_already_executed(
 ):
     dummy_address = accounts.add()
     authorize_origin(dummy_address, admin, topos_executable)
-    topos_core_B.pushCertificate(
-        get_encoded_cert_params(c.CERT_ID, c.CERT_POSITION), {"from": admin}
-    )
+    push_dummy_cert(admin, topos_core_B, c.CERT_POSITION)
     data = get_call_contract_with_token_data(dummy_address, c.TARGET_SUBNET_ID)
     topos_executable.executeWithToken(
         c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
@@ -150,9 +136,7 @@ def test_execute_with_token_reverts_on_cert_position_lower_than_min_position(
     dummy_address = accounts.add()
     cert_position = 3
     authorize_origin(dummy_address, admin, topos_executable)
-    topos_core_B.pushCertificate(
-        get_encoded_cert_params(c.CERT_ID, cert_position), {"from": admin}
-    )
+    push_dummy_cert(admin, topos_core_B, cert_position)
     data = get_call_contract_with_token_data(dummy_address, c.TARGET_SUBNET_ID)
     # should revert since the cert position < min cert position
     with brownie.reverts():
@@ -198,8 +182,25 @@ def get_call_contract_with_token_data(addr, subnet_id):
     ]
 
 
-def get_encoded_cert_params(cert_id, cert_position):
-    return eth_abi.encode(["bytes32", "uint256"], [cert_id, cert_position])
+def push_dummy_cert(admin, topos_core_B, cert_position):
+    return topos_core_B.pushCertificate(
+        encode(
+            c.CERT_PARAMS,
+            [
+                c.CERT_ID,
+                c.SOURCE_SUBNET_ID,
+                c.STATE_ROOT,
+                c.TX_ROOT,
+                [c.TARGET_SUBNET_ID],
+                c.VERIFIER,
+                c.CERT_ID,
+                c.DUMMY_DATA,
+                c.DUMMY_DATA,
+            ],
+        ),
+        cert_position,
+        {"from": admin},
+    )
 
 
 def get_selector_hash():

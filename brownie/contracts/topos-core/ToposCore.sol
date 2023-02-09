@@ -150,13 +150,34 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     |* External Functions *|
     \**********************/
 
-    function pushCertificate(bytes memory certBytes) external {
-        (CertificateId certId, uint256 certPosition) = abi.decode(certBytes, (CertificateId, uint256));
-        certificateSet.insert(CertificateId.unwrap(certId));
-        Certificate storage newCert = certificates[certId];
-        newCert.id = certId;
-        newCert.position = certPosition;
-        emit CertStored(certId);
+    function pushCertificate(bytes memory certBytes, uint256 position) external {
+        (
+            CertificateId prevId,
+            SubnetId sourceSubnetId,
+            bytes32 stateRoot,
+            bytes32 txRoot,
+            SubnetId[] memory targetSubnets,
+            uint32 verifier,
+            CertificateId id,
+            bytes memory starkProof,
+            bytes memory signature
+        ) = abi.decode(
+                certBytes,
+                (CertificateId, SubnetId, bytes32, bytes32, SubnetId[], uint32, CertificateId, bytes, bytes)
+            );
+        certificateSet.insert(CertificateId.unwrap(id));
+        Certificate storage newCert = certificates[id];
+        newCert.prevId = prevId;
+        newCert.sourceSubnetId = sourceSubnetId;
+        newCert.stateRoot = stateRoot;
+        newCert.txRoot = txRoot;
+        newCert.targetSubnets = targetSubnets;
+        newCert.verifier = verifier;
+        newCert.id = id;
+        newCert.starkProof = starkProof;
+        newCert.signature = signature;
+        newCert.position = position;
+        emit CertStored(id, txRoot);
     }
 
     function setup(bytes calldata params) external override {
@@ -254,9 +275,9 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     |* Public Methods *|
     \******************/
 
-    function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) public override returns (uint256) {
-        if (!certificateExists(certId)) revert CertNotPresent();
-        Certificate memory storedCert = certificates[certId];
+    function verifyContractCallData(CertificateId id, SubnetId targetSubnetId) public override returns (uint256) {
+        if (!certificateExists(id)) revert CertNotPresent();
+        Certificate memory storedCert = certificates[id];
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
         emit ContractCallDataVerified(storedCert.position);
         return storedCert.position;
@@ -305,6 +326,37 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     function getTokenKeyAtIndex(uint256 index) public view returns (bytes32) {
         return tokenSet.keyAtIndex(index);
+    }
+
+    function getCertificate(CertificateId id)
+        public
+        view
+        returns (
+            CertificateId,
+            SubnetId,
+            bytes32,
+            bytes32,
+            SubnetId[] memory,
+            uint32,
+            CertificateId,
+            bytes memory,
+            bytes memory,
+            uint256
+        )
+    {
+        Certificate memory storedCert = certificates[id];
+        (
+            storedCert.prevId,
+            storedCert.sourceSubnetId,
+            storedCert.stateRoot,
+            storedCert.txRoot,
+            storedCert.targetSubnets,
+            storedCert.verifier,
+            storedCert.id,
+            storedCert.starkProof,
+            storedCert.signature,
+            storedCert.position
+        );
     }
 
     /********************\
