@@ -293,6 +293,22 @@ def test_setup_should_revert_on_non_proxy_call(
         )
 
 
+def test_execute_transfer_reverts_on_tx_raw_index_out_of_bounds(
+    admin, topos_core_B
+):
+    topos_core_B.deployToken(get_default_internal_token_val(), {"from": admin})
+    push_dummy_cert(admin, topos_core_B)
+    # should revert since the index is out of bounds
+    with brownie.reverts():
+        topos_core_B.executeAssetTransfer(
+            c.CERT_ID,
+            c.INDEX_OF_DATA_IN_TX_RAW_OUT_OF_BOUNDS,
+            c.TX_RAW,
+            c.DUMMY_DATA,
+            {"from": admin},
+        )
+
+
 def test_execute_transfer_reverts_on_unknown_cert(admin, topos_core_B):
     # should revert since the certificate is not present
     with brownie.reverts():

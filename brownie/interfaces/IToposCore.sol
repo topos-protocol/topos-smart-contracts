@@ -12,6 +12,7 @@ interface IToposCore {
     error CertNotPresent();
     error BurnFailed(string symbol);
     error ExceedDailyMintLimit(string symbol);
+    error IllegalMemoryAccess();
     error InvalidAmount();
     error InvalidCert();
     error InvalidCodeHash();

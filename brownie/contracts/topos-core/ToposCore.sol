@@ -197,6 +197,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         bytes calldata txRaw,
         bytes calldata /*crossSubnetTxProof*/
     ) external {
+        if (txRaw.length < indexOfDataInTxRaw + 4) revert IllegalMemoryAccess();
         if (!certificateExists(certId)) revert CertNotPresent();
         // In order to validate the transaction pass the entire transaction bytes which is then hashed.
         // The transaction hash is used as a leaf to validate the inclusion proof.

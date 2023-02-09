@@ -22,6 +22,7 @@ TARGET_SUBNET_ID = brownie.convert.to_bytes("0x02", "bytes32")
 DUMMY_DATA = brownie.convert.to_bytes("0x00", "bytes")
 ENDPOINT = "http://127.0.0.1"
 INDEX_OF_DATA_IN_TX_RAW = 33
+INDEX_OF_DATA_IN_TX_RAW_OUT_OF_BOUNDS = 295  # Total len of TX_RAW = 298
 LOGO_URL = "http://image-url.com"
 MINIMUM_CERT_POSITION = 4
 MINT_AMOUNT = 100
