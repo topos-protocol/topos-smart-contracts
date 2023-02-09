@@ -13,6 +13,7 @@ from brownie import (
     ToposCore,
     ToposCoreProxy,
 )
+from generate_transaction import get_raw_transaction_positional_args
 
 LOGGER = logging.getLogger(__name__)
 
@@ -38,15 +39,7 @@ def test_send_token():
     LOGGER.info("Switching to subnet network A")
     switch_network("A")
     deploy_initial_contracts(subnet_A_id)
-    token_sent_event = send_token()
-
-    # Event logs as seen by the automation web-service
-    sender = token_sent_event["sender"]
-    sourceSubnetId = token_sent_event["sourceSubnetId"]
-    targetSubnetId = token_sent_event["targetSubnetId"]
-    receiver = token_sent_event["receiver"]
-    symbol = token_sent_event["symbol"]
-    amount = token_sent_event["amount"]
+    index_of_data_in_tx_raw, tx_raw = send_token()
 
     # Network B
     LOGGER.info("Switching to subnet network B")
@@ -54,22 +47,13 @@ def test_send_token():
     deploy_initial_contracts(subnet_B_id)
     # if you don't validate a cert then the mint function would fail
     push_dummy_cert(topos_core_B)
-    mint_token(
-        topos_core_B,
-        dummy_data,  # tx_hash
-        sender,
-        sourceSubnetId,
-        targetSubnetId,
-        receiver,
-        symbol,
-        amount,
-    )
+    mint_token(topos_core_B, index_of_data_in_tx_raw, tx_raw)
     token = topos_core_B.getTokenBySymbol(token_symbol)
     burnable_mint_erc20_B = BurnableMintableCappedERC20.at(
         token["tokenAddress"]
     )
     fast_forward_nonce(1)
-    assert burnable_mint_erc20_B.balanceOf(receiver) == send_amount
+    assert burnable_mint_erc20_B.balanceOf(accounts[1]) == send_amount
 
 
 def deploy_initial_contracts(network_subnet_id):
@@ -165,15 +149,29 @@ def deploy_initial_contracts(network_subnet_id):
 
 
 def send_token():
-    send_token_tx = topos_core_A.sendToken(
+    tx = topos_core_A.sendToken(
         subnet_B_id,
         accounts[1],
         token_symbol,
         send_amount,
         {"from": accounts[0]},
     )
-    token_sent_event = send_token_tx.events["TokenSent"]
-    return token_sent_event
+    tx_raw = get_raw_transaction_positional_args(
+        "http://127.0.0.1:8545", tx.txid
+    )
+    # The tx_raw and tx.input are represented in hexadecimal
+    # format, with each two characters representing one byte.
+    # To get the index of the input in tx_raw in terms
+    # of bytes, the index of the data in tx.input must be divided
+    # by 2.This is because in Solidity, the bytes[i:] syntax
+    # returns the bytes starting from the ith byte.
+    index_of_data_in_tx_raw = int(
+        tx_raw.index(tx.input[2:]) / 2
+    )  # [2:] removes 0x prefix
+    # LOGGER.info(f"TRANSACTION HEX: {tx_raw}")
+    # LOGGER.info(f"TRANSACTION HASH: {tx.txid}")
+    # LOGGER.info(f"TRANSACTION INDEX: {index}")
+    return (index_of_data_in_tx_raw, tx_raw)
 
 
 def push_dummy_cert(topos_core):
@@ -205,38 +203,11 @@ def push_dummy_cert(topos_core):
     )
 
 
-def mint_token(
-    topos_core,
-    tx_hash,
-    sender,
-    source_subnet_id,
-    target_subnet_id,
-    receiver,
-    symbol,
-    amount,
-):
-    mint_token_params = [
-        "bytes",
-        "address",
-        "bytes32",
-        "bytes32",
-        "address",
-        "string",
-        "uint256",
-    ]
-    mint_token_values = [
-        tx_hash,
-        sender,
-        source_subnet_id,
-        target_subnet_id,
-        receiver,
-        symbol,
-        amount,
-    ]
-    encoded_token_params = eth_abi.encode(mint_token_params, mint_token_values)
+def mint_token(topos_core, index_of_data_in_tx_raw, tx_raw):
     topos_core.executeAssetTransfer(
         dummy_cert_id,  # certId
-        encoded_token_params,
+        index_of_data_in_tx_raw,
+        tx_raw,
         dummy_data,  # xs_subnet_inclusion_proof
         {"from": accounts[0]},
     )

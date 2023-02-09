@@ -12,6 +12,7 @@ interface IToposCore {
     error CertNotPresent();
     error BurnFailed(string symbol);
     error ExceedDailyMintLimit(string symbol);
+    error IllegalMemoryAccess();
     error InvalidAmount();
     error InvalidCert();
     error InvalidCodeHash();
@@ -99,7 +100,8 @@ interface IToposCore {
 
     function executeAssetTransfer(
         CertificateId certId,
-        bytes calldata crossSubnetTx,
+        uint256 indexOfDataInTxRaw,
+        bytes calldata txRaw,
         bytes calldata crossSubnetTxProof
     ) external;
 
