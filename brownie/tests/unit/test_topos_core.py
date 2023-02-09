@@ -24,7 +24,10 @@ def test_get_certificate_count_returns_count(admin, topos_core_A):
 def test_push_certificate_emits_event(admin, topos_core_A):
     tx = push_dummy_cert(admin, topos_core_A)
     assert topos_core_A.certificateExists(c.CERT_ID, {"from": admin}) is True
-    assert tx.events["CertStored"].values() == [c.CERT_BYTES]
+    assert tx.events["CertStored"].values() == [
+        c.CERT_BYTES,
+        brownie.convert.datatypes.HexString(c.TX_ROOT, "bytes32"),
+    ]
 
 
 def test_get_cert_id_at_index_returns_cert_id(admin, topos_core_A):
@@ -799,7 +802,21 @@ def test_upgrade_emits_event(
 # internal functions #
 def push_dummy_cert(admin, topos_core_A):
     return topos_core_A.pushCertificate(
-        encode(["bytes32", "uint256"], [c.CERT_ID, c.CERT_POSITION]),
+        encode(
+            c.CERT_PARAMS,
+            [
+                c.CERT_ID,
+                c.SOURCE_SUBNET_ID,
+                c.STATE_ROOT,
+                c.TX_ROOT,
+                [c.TARGET_SUBNET_ID],
+                c.VERIFIER,
+                c.CERT_ID,
+                c.DUMMY_DATA,
+                c.DUMMY_DATA,
+            ],
+        ),
+        c.CERT_POSITION,
         {"from": admin},
     )
 

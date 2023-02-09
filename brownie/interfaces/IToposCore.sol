@@ -28,7 +28,15 @@ interface IToposCore {
     error TransferAlreadyExecuted();
 
     struct Certificate {
+        CertificateId prevId;
+        SubnetId sourceSubnetId;
+        bytes32 stateRoot;
+        bytes32 txRoot;
+        SubnetId[] targetSubnets;
+        uint32 verifier;
         CertificateId id;
+        bytes starkProof;
+        bytes signature;
         uint256 position;
     }
 
@@ -68,7 +76,7 @@ interface IToposCore {
         uint256 amount
     );
 
-    event CertStored(CertificateId certId);
+    event CertStored(CertificateId certId, bytes32 txRoot);
 
     event TokenDeployed(string symbol, address tokenAddress);
 
@@ -109,7 +117,7 @@ interface IToposCore {
         uint256 amount
     ) external;
 
-    function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) external returns (uint256);
+    function verifyContractCallData(CertificateId id, SubnetId targetSubnetId) external returns (uint256);
 
     function deployToken(bytes calldata params) external;
 
@@ -131,7 +139,21 @@ interface IToposCore {
 
     function admins(uint256 epoch) external view returns (address[] memory);
 
-    function certificates(CertificateId certId) external view returns (CertificateId, uint256);
+    function getCertificate(CertificateId id)
+        external
+        view
+        returns (
+            CertificateId,
+            SubnetId,
+            bytes32,
+            bytes32,
+            SubnetId[] memory,
+            uint32,
+            CertificateId,
+            bytes memory,
+            bytes memory,
+            uint256
+        );
 
     function tokenDeployer() external view returns (address);
 
@@ -153,7 +175,7 @@ interface IToposCore {
 
     function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
 
-    function pushCertificate(bytes calldata certBytes) external;
+    function pushCertificate(bytes calldata certBytes, uint256 position) external;
 
     function giveToken(
         string memory symbol,
