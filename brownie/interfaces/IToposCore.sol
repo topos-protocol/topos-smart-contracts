@@ -38,6 +38,10 @@ interface IToposCore {
         CertificateId id;
         bytes starkProof;
         bytes signature;
+    }
+
+    struct Checkpoint {
+        CertificateId id;
         uint256 position;
     }
 
@@ -85,8 +89,6 @@ interface IToposCore {
 
     event Upgraded(address indexed implementation);
 
-    event ContractCallDataVerified(uint256 certPosition);
-
     /********************\
     |* Public Functions *|
     \********************/
@@ -119,13 +121,13 @@ interface IToposCore {
         uint256 amount
     ) external;
 
-    function verifyContractCallData(CertificateId id, SubnetId targetSubnetId) external returns (uint256);
-
     function deployToken(bytes calldata params) external;
 
     /***********\
     |* Getters *|
     \***********/
+
+    function verifyContractCallData(CertificateId id, SubnetId targetSubnetId) external view returns (bool);
 
     function tokenDailyMintLimit(string memory symbol) external view returns (uint256);
 
@@ -156,6 +158,11 @@ interface IToposCore {
             bytes memory,
             uint256
         );
+
+    function getCheckpointListForSubnets(SubnetId[] calldata subnetIds)
+        external
+        view
+        returns (Checkpoint[] memory checkpoints);
 
     function tokenDeployer() external view returns (address);
 

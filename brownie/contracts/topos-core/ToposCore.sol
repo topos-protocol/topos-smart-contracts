@@ -27,6 +27,10 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     /// @dev CertificateId(bytes32) => certificate(bytes)
     mapping(CertificateId => Certificate) public certificates;
 
+    /// @notice Mapping to store the last seen certificate for a subnet
+    /// @dev SubnetId(bytes32) => Checkpoint
+    mapping(SubnetId => IToposCore.Checkpoint) subnetToCheckpoint;
+
     /// @notice Mapping to store Tokens
     /// @dev TokenKey(bytes32) => Token
     mapping(bytes32 => Token) public tokens;
@@ -171,6 +175,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
             );
         certificateSet.insert(CertificateId.unwrap(id)); // add certificate ID to the CRUD storage set
         txRootToCertId[txRoot] = id; // add certificate ID to the transaction root mapping
+        subnetToCheckpoint[sourceSubnetId] = IToposCore.Checkpoint(id, position); // add to checkpoints
         Certificate storage newCert = certificates[id];
         newCert.prevId = prevId;
         newCert.sourceSubnetId = sourceSubnetId;
@@ -181,7 +186,6 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         newCert.id = id;
         newCert.starkProof = starkProof;
         newCert.signature = signature;
-        newCert.position = position;
         emit CertStored(id, txRoot);
     }
 
@@ -280,12 +284,10 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     |* Public Methods *|
     \******************/
 
-    function verifyContractCallData(CertificateId id, SubnetId targetSubnetId) public override returns (uint256) {
+    function verifyContractCallData(CertificateId id, SubnetId targetSubnetId) public view returns (bool) {
         if (!certificateExists(id)) revert CertNotPresent();
-        Certificate memory storedCert = certificates[id];
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
-        emit ContractCallDataVerified(storedCert.position);
-        return storedCert.position;
+        return true;
     }
 
     /***********\
@@ -359,9 +361,19 @@ contract ToposCore is IToposCore, AdminMultisigBase {
             storedCert.verifier,
             storedCert.id,
             storedCert.starkProof,
-            storedCert.signature,
-            storedCert.position
+            storedCert.signature
         );
+    }
+
+    function getCheckpointListForSubnets(SubnetId[] calldata subnetIds)
+        public
+        view
+        returns (IToposCore.Checkpoint[] memory checkpoints)
+    {
+        checkpoints = new Checkpoint[](subnetIds.length);
+        for (uint256 i; i < subnetIds.length; i++) {
+            checkpoints[i] = subnetToCheckpoint[subnetIds[i]];
+        }
     }
 
     /********************\

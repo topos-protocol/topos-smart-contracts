@@ -63,6 +63,45 @@ def test_get_token_key_at_index_returns_token_key_hash(admin, topos_core_A):
     )
 
 
+def test_get_checkpoints_for_subnets_returns_single_checkpoint(
+    admin, topos_core_A
+):
+    push_dummy_cert(admin, topos_core_A)
+    checkpoints = topos_core_A.getCheckpointListForSubnets(
+        [c.SOURCE_SUBNET_ID], {"from": admin}
+    )
+    assert checkpoints[0] == (
+        brownie.convert.datatypes.HexString(c.CERT_ID, "bytes32"),
+        c.CERT_POSITION,
+    )
+
+
+def test_get_checkpoints_for_subnets_returns_multiple_checkpoints(
+    admin, topos_core_A
+):
+    test_certs = [
+        (c.CERT_ID, c.SOURCE_SUBNET_ID, c.CERT_POSITION),
+        (c.CERT_ID_2, c.SOURCE_SUBNET_ID_2, c.CERT_POSITION_2),
+        (c.CERT_ID_3, c.SOURCE_SUBNET_ID_3, c.CERT_POSITION_3),
+    ]
+    for test_cert in test_certs:
+        push_cert(
+            admin, topos_core_A, test_cert[0], test_cert[1], test_cert[2]
+        )
+    subnetIds = [test_cert[1] for test_cert in test_certs]
+    checkpoints = topos_core_A.getCheckpointListForSubnets(
+        subnetIds, {"from": admin}
+    )
+    test_checkpoints = [
+        (
+            brownie.convert.datatypes.HexString(test_cert[0], "bytes32"),
+            test_cert[2],
+        )
+        for test_cert in test_certs
+    ]
+    assert checkpoints == test_checkpoints
+
+
 def test_get_token_key_at_index_for_multiple_returns_token_key_hash(
     admin, topos_core_A
 ):
@@ -747,16 +786,13 @@ def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
         )
 
 
-def test_verify_contract_call_returns_cert_position(admin, topos_core_A):
+def test_verify_contract_call_returns_true(admin, topos_core_A):
     fixture_subnet_id = c.SOURCE_SUBNET_ID
     push_dummy_cert(admin, topos_core_A)
     tx = topos_core_A.verifyContractCallData(
         c.CERT_ID, fixture_subnet_id, {"from": admin}
     )
-    assert (
-        tx.events["ContractCallDataVerified"]["certPosition"]
-        == c.CERT_POSITION
-    )
+    assert tx is True
 
 
 def test_upgrade_emits_event(
@@ -799,6 +835,27 @@ def push_dummy_cert(admin, topos_core_A):
             ],
         ),
         c.CERT_POSITION,
+        {"from": admin},
+    )
+
+
+def push_cert(admin, topos_core_A, cert_id, source_subnet_id, position):
+    return topos_core_A.pushCertificate(
+        encode(
+            c.CERT_PARAMS,
+            [
+                c.CERT_ID,
+                source_subnet_id,
+                c.STATE_ROOT,
+                c.TX_ROOT,
+                [c.TARGET_SUBNET_ID],
+                c.VERIFIER,
+                cert_id,
+                c.DUMMY_DATA,
+                c.DUMMY_DATA,
+            ],
+        ),
+        position,
         {"from": admin},
     )
 
