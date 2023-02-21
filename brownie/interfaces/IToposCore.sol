@@ -40,7 +40,7 @@ interface IToposCore {
         bytes signature;
     }
 
-    struct Checkpoint {
+    struct StreamPosition {
         CertificateId id;
         uint256 position;
     }
@@ -162,7 +162,7 @@ interface IToposCore {
     function getCheckpointListForSubnets(SubnetId[] calldata subnetIds)
         external
         view
-        returns (Checkpoint[] memory checkpoints);
+        returns (StreamPosition[] memory checkpoints);
 
     function tokenDeployer() external view returns (address);
 

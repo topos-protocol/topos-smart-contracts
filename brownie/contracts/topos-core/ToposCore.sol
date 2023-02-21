@@ -28,8 +28,8 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     mapping(CertificateId => Certificate) public certificates;
 
     /// @notice Mapping to store the last seen certificate for a subnet
-    /// @dev SubnetId(bytes32) => Checkpoint
-    mapping(SubnetId => IToposCore.Checkpoint) subnetToCheckpoint;
+    /// @dev SubnetId(bytes32) => StreamPosition
+    mapping(SubnetId => IToposCore.StreamPosition) checkpoint;
 
     /// @notice Mapping to store Tokens
     /// @dev TokenKey(bytes32) => Token
@@ -175,7 +175,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
             );
         certificateSet.insert(CertificateId.unwrap(id)); // add certificate ID to the CRUD storage set
         txRootToCertId[txRoot] = id; // add certificate ID to the transaction root mapping
-        subnetToCheckpoint[sourceSubnetId] = IToposCore.Checkpoint(id, position); // add to checkpoints
+        checkpoint[sourceSubnetId] = IToposCore.StreamPosition(id, position); // add a checkpoint
         Certificate storage newCert = certificates[id];
         newCert.prevId = prevId;
         newCert.sourceSubnetId = sourceSubnetId;
@@ -368,11 +368,11 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     function getCheckpointListForSubnets(SubnetId[] calldata subnetIds)
         public
         view
-        returns (IToposCore.Checkpoint[] memory checkpoints)
+        returns (IToposCore.StreamPosition[] memory checkpoints)
     {
-        checkpoints = new Checkpoint[](subnetIds.length);
+        checkpoints = new StreamPosition[](subnetIds.length);
         for (uint256 i; i < subnetIds.length; i++) {
-            checkpoints[i] = subnetToCheckpoint[subnetIds[i]];
+            checkpoints[i] = checkpoint[subnetIds[i]];
         }
     }
 
