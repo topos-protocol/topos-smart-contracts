@@ -365,7 +365,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         );
     }
 
-    function getCheckpointListForSubnets(SubnetId[] calldata subnetIds)
+    function getCheckpoints(SubnetId[] calldata subnetIds)
         public
         view
         returns (IToposCore.StreamPosition[] memory checkpoints)

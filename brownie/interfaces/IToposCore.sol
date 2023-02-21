@@ -159,10 +159,7 @@ interface IToposCore {
             uint256
         );
 
-    function getCheckpointListForSubnets(SubnetId[] calldata subnetIds)
-        external
-        view
-        returns (StreamPosition[] memory checkpoints);
+    function getCheckpoints(SubnetId[] calldata subnetIds) external view returns (StreamPosition[] memory checkpoints);
 
     function tokenDeployer() external view returns (address);
 
