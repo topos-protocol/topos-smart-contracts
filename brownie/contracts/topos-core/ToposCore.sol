@@ -6,12 +6,16 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IBurnableMintableCappedERC20} from "./../../interfaces/IBurnableMintableCappedERC20.sol";
 import {ITokenDeployer} from "./../../interfaces/ITokenDeployer.sol";
 
-import {DepositHandler} from "./DepositHandler.sol";
 import {AdminMultisigBase} from "./AdminMultisigBase.sol";
+import {DepositHandler} from "./DepositHandler.sol";
+import {MerklePatriciaProofVerifier} from "./MerklePatriciaProofVerifier.sol";
+import {RLPReader} from "solidity-rlp/contracts/RLPReader.sol";
 import "./Bytes32Sets.sol";
 
 contract ToposCore is IToposCore, AdminMultisigBase {
     using Bytes32SetsLib for Bytes32SetsLib.Set;
+    using RLPReader for RLPReader.RLPItem;
+    using RLPReader for bytes;
 
     enum TokenType {
         InternalBurnable,
@@ -215,17 +219,21 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     }
 
     function executeAssetTransfer(
-        bytes32 txRoot,
         uint256 indexOfDataInTxRaw,
+        bytes memory proofBlob,
         bytes calldata txRaw,
-        bytes calldata /*crossSubnetTxProof*/
+        bytes32 txRoot
     ) external {
         if (txRaw.length < indexOfDataInTxRaw + 4) revert IllegalMemoryAccess();
+
         CertificateId certId = txRootToCertId[txRoot];
         if (!certificateExists(certId)) revert CertNotPresent();
+
+        bytes32 txHash = keccak256(abi.encodePacked(txRaw));
+        if (!validateMerkleProof(proofBlob, txHash, txRoot)) revert InvalidMerkleProof();
+
         // In order to validate the transaction pass the entire transaction bytes which is then hashed.
         // The transaction hash is used as a leaf to validate the inclusion proof.
-        bytes32 txHash = keccak256(abi.encodePacked(txRaw));
         (SubnetId targetSubnetId, address receiver, string memory symbol, uint256 amount) = abi.decode(
             txRaw[indexOfDataInTxRaw + 4:], // omit the 4 bytes function selector
             (SubnetId, address, string, uint256)
@@ -399,6 +407,23 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         }
     }
 
+    function validateMerkleProof(
+        bytes memory proofBlob,
+        bytes32 txHash,
+        bytes32 txRoot
+    ) public view returns (bool) {
+        Proof memory proof = _decodeProofBlob(proofBlob);
+        if (proof.kind != 1) revert UnsupportedProofKind();
+        bytes memory txRawFromProof = MerklePatriciaProofVerifier.extractProofValue(txRoot, proof.mptKey, proof.stack);
+        if (txRawFromProof.length == 0) {
+            // Empty return value for proof of exclusion
+            return false;
+        } else {
+            bytes32 txHashFromProof = keccak256(abi.encodePacked(txRawFromProof));
+            return txHash == txHashFromProof;
+        }
+    }
+
     /********************\
     |* Internal Methods *|
     \********************/
@@ -547,5 +572,39 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     function _getIsSendTokenExecutedKey(bytes32 txHash) internal pure returns (bytes32) {
         return keccak256(abi.encode(PREFIX_SEND_TOKEN_EXECUTED, txHash));
+    }
+
+    function _decodeProofBlob(bytes memory proofBlob) internal pure returns (Proof memory proof) {
+        RLPReader.RLPItem[] memory proofFields = proofBlob.toRlpItem().toList();
+        bytes memory rlpTxIndex = proofFields[1].toRlpBytes();
+        proof = Proof(
+            proofFields[0].toUint(),
+            rlpTxIndex,
+            proofFields[1].toUint(),
+            _decodeNibbles(rlpTxIndex, 0),
+            proofFields[2].toList()
+        );
+    }
+
+    function _decodeNibbles(bytes memory compact, uint256 skipNibbles) internal pure returns (bytes memory nibbles) {
+        require(compact.length > 0);
+
+        uint256 length = compact.length * 2;
+        require(skipNibbles <= length);
+        length -= skipNibbles;
+
+        nibbles = new bytes(length);
+        uint256 nibblesLength = 0;
+
+        for (uint256 i = skipNibbles; i < skipNibbles + length; i += 1) {
+            if (i % 2 == 0) {
+                nibbles[nibblesLength] = bytes1((uint8(compact[i / 2]) >> 4) & 0xF);
+            } else {
+                nibbles[nibblesLength] = bytes1((uint8(compact[i / 2]) >> 0) & 0xF);
+            }
+            nibblesLength += 1;
+        }
+
+        assert(nibblesLength == nibbles.length);
     }
 }

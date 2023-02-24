@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+import {RLPReader} from "solidity-rlp/contracts/RLPReader.sol";
+
 type CertificateId is bytes32; // user-defined type for certificate IDs
 type SubnetId is bytes32; // user-defined type for subnet IDs
 
@@ -16,6 +18,7 @@ interface IToposCore {
     error InvalidAmount();
     error InvalidCert();
     error InvalidCodeHash();
+    error InvalidMerkleProof();
     error InvalidSetDailyMintLimitsParams();
     error InvalidSubnetId();
     error InvalidTokenDeployer();
@@ -27,6 +30,7 @@ interface IToposCore {
     error TokenDeployFailed(string symbol);
     error TokenDoesNotExist(string symbol);
     error TransferAlreadyExecuted();
+    error UnsupportedProofKind();
 
     struct Certificate {
         CertificateId prevId;
@@ -44,6 +48,14 @@ interface IToposCore {
         CertificateId certId;
         uint256 position;
         SubnetId sourceSubnetId;
+    }
+
+    struct Proof {
+        uint256 kind;
+        bytes rlpTxIndex;
+        uint256 txIndex;
+        bytes mptKey;
+        RLPReader.RLPItem[] stack;
     }
 
     struct Token {
@@ -102,10 +114,10 @@ interface IToposCore {
     ) external;
 
     function executeAssetTransfer(
-        bytes32 txRoot,
         uint256 indexOfDataInTxRaw,
+        bytes memory proofBlob,
         bytes calldata txRaw,
-        bytes calldata crossSubnetTxProof
+        bytes32 txRoot
     ) external;
 
     function callContract(
@@ -161,6 +173,12 @@ interface IToposCore {
         );
 
     function getCheckpoints() external view returns (StreamPosition[] memory checkpoints);
+
+    function validateMerkleProof(
+        bytes memory proofBlob,
+        bytes32 txHash,
+        bytes32 txRoot
+    ) external view returns (bool);
 
     function tokenDeployer() external view returns (address);
 
