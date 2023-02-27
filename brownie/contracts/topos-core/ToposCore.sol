@@ -65,6 +65,9 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     /// @notice Set of Token Keys derived from token symbols
     Bytes32SetsLib.Set tokenSet;
 
+    /// @notice Set of source subnet IDs (subnets sending the certificates)
+    Bytes32SetsLib.Set sourceSubnetIdSet;
+
     constructor(address tokenDeployerImplementation, SubnetId networkSubnetId) {
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
 
@@ -175,6 +178,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
             );
         certificateSet.insert(CertificateId.unwrap(id)); // add certificate ID to the CRUD storage set
         txRootToCertId[txRoot] = id; // add certificate ID to the transaction root mapping
+        sourceSubnetIdSet.insert(SubnetId.unwrap(sourceSubnetId)); // add the source subnet ID to the CRUD storage set
         checkpoint[sourceSubnetId] = IToposCore.StreamPosition(id, position); // add a checkpoint
         Certificate storage newCert = certificates[id];
         newCert.prevId = prevId;
@@ -306,6 +310,18 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         return CertificateId.wrap(certificateSet.keyAtIndex(index));
     }
 
+    function sourceSubnetIdExists(SubnetId subnetId) public view returns (bool) {
+        return sourceSubnetIdSet.exists(SubnetId.unwrap(subnetId));
+    }
+
+    function getSourceSubnetIdCount() public view returns (uint256) {
+        return sourceSubnetIdSet.count();
+    }
+
+    function getSourceSubnetIdAtIndex(uint256 index) public view returns (SubnetId) {
+        return SubnetId.wrap(sourceSubnetIdSet.keyAtIndex(index));
+    }
+
     function tokenDailyMintLimit(string memory symbol) public view override returns (uint256) {
         return getUint(_getTokenDailyMintLimitKey(symbol));
     }
@@ -365,14 +381,11 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         );
     }
 
-    function getCheckpoints(SubnetId[] calldata subnetIds)
-        public
-        view
-        returns (IToposCore.StreamPosition[] memory checkpoints)
-    {
-        checkpoints = new StreamPosition[](subnetIds.length);
-        for (uint256 i; i < subnetIds.length; i++) {
-            checkpoints[i] = checkpoint[subnetIds[i]];
+    function getCheckpoints() public view returns (IToposCore.StreamPosition[] memory checkpoints) {
+        uint256 sourceSubnetIdCount = getSourceSubnetIdCount();
+        checkpoints = new StreamPosition[](sourceSubnetIdCount);
+        for (uint256 i; i < sourceSubnetIdCount; i++) {
+            checkpoints[i] = checkpoint[getSourceSubnetIdAtIndex(i)];
         }
     }
 

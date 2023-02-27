@@ -159,7 +159,7 @@ interface IToposCore {
             uint256
         );
 
-    function getCheckpoints(SubnetId[] calldata subnetIds) external view returns (StreamPosition[] memory checkpoints);
+    function getCheckpoints() external view returns (StreamPosition[] memory checkpoints);
 
     function tokenDeployer() external view returns (address);
 
@@ -170,6 +170,12 @@ interface IToposCore {
     function getCertificateCount() external view returns (uint256);
 
     function getCertIdAtIndex(uint256 index) external view returns (CertificateId);
+
+    function sourceSubnetIdExists(SubnetId subnetId) external view returns (bool);
+
+    function getSourceSubnetIdCount() external view returns (uint256);
+
+    function getSourceSubnetIdAtIndex(uint256 index) external view returns (SubnetId);
 
     function tokens(bytes32 tokenKey) external view returns (string memory, address);
 
