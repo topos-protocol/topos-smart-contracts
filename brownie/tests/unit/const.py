@@ -5,12 +5,15 @@ APPROVE_AMOUNT = 50
 CERT_BYTES = "0xdeaf"
 CERT_BYTES_2 = "0xdeaa"
 CERT_BYTES_3 = "0xdeab"
+CERT_BYTES_4 = "0xdeff"
 CERT_POSITION = 5
 CERT_POSITION_2 = 89
 CERT_POSITION_3 = 99
+CERT_POSITION_4 = 100
 CERT_ID = brownie.convert.to_bytes(CERT_BYTES, "bytes32")
 CERT_ID_2 = brownie.convert.to_bytes(CERT_BYTES_2, "bytes32")
 CERT_ID_3 = brownie.convert.to_bytes(CERT_BYTES_3, "bytes32")
+CERT_ID_4 = brownie.convert.to_bytes(CERT_BYTES_4, "bytes32")
 CERT_PARAMS = [
     "bytes32",
     "bytes32",

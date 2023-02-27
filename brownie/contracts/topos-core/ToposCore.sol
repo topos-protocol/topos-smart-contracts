@@ -176,10 +176,8 @@ contract ToposCore is IToposCore, AdminMultisigBase {
                 certBytes,
                 (CertificateId, SubnetId, bytes32, bytes32, SubnetId[], uint32, CertificateId, bytes, bytes)
             );
+
         certificateSet.insert(CertificateId.unwrap(certId)); // add certificate ID to the CRUD storage set
-        txRootToCertId[txRoot] = certId; // add certificate ID to the transaction root mapping
-        sourceSubnetIdSet.insert(SubnetId.unwrap(sourceSubnetId)); // add the source subnet ID to the CRUD storage set
-        checkpoint[sourceSubnetId] = IToposCore.StreamPosition(certId, position); // add a checkpoint
         Certificate storage newCert = certificates[certId];
         newCert.prevId = prevId;
         newCert.sourceSubnetId = sourceSubnetId;
@@ -190,6 +188,19 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         newCert.certId = certId;
         newCert.starkProof = starkProof;
         newCert.signature = signature;
+
+        if (!sourceSubnetIdExists(sourceSubnetId)) {
+            sourceSubnetIdSet.insert(SubnetId.unwrap(sourceSubnetId)); // add the source subnet ID to the CRUD storage set
+        } else {
+            sourceSubnetIdSet.remove(SubnetId.unwrap(sourceSubnetId)); // update if it already exists
+            sourceSubnetIdSet.insert(SubnetId.unwrap(sourceSubnetId));
+        }
+        IToposCore.StreamPosition storage newStreamPosition = checkpoint[sourceSubnetId];
+        newStreamPosition.certId = certId;
+        newStreamPosition.position = position;
+        newStreamPosition.sourceSubnetId = sourceSubnetId;
+
+        txRootToCertId[txRoot] = certId; // add certificate ID to the transaction root mapping
         emit CertStored(certId, txRoot);
     }
 

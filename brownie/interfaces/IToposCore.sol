@@ -43,6 +43,7 @@ interface IToposCore {
     struct StreamPosition {
         CertificateId certId;
         uint256 position;
+        SubnetId sourceSubnetId;
     }
 
     struct Token {
