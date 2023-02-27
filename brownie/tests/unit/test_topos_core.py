@@ -9,15 +9,15 @@ import const as c
 def test_push_certificate_reverts_on_already_stored_certificate(
     admin, topos_core_A
 ):
-    push_dummy_cert(admin, topos_core_A)
+    push_dummy_cert(admin, topos_core_A, c.DUMMY_TX_ROOT)
     with brownie.reverts():
         # retry pushing the same cert
-        push_dummy_cert(admin, topos_core_A)
+        push_dummy_cert(admin, topos_core_A, c.DUMMY_TX_ROOT)
 
 
 def test_get_certificate_count_returns_count(admin, topos_core_A):
     count = 1
-    push_dummy_cert(admin, topos_core_A)
+    push_dummy_cert(admin, topos_core_A, c.DUMMY_TX_ROOT)
     assert topos_core_A.getCertificateCount({"from": admin}) == count
 
 
@@ -56,17 +56,17 @@ def test_push_certificate_updates_source_subnet_set(admin, topos_core_A):
 
 
 def test_push_certificate_emits_event(admin, topos_core_A):
-    tx = push_dummy_cert(admin, topos_core_A)
+    tx = push_dummy_cert(admin, topos_core_A, c.DUMMY_TX_ROOT)
     assert topos_core_A.certificateExists(c.CERT_ID, {"from": admin}) is True
     assert tx.events["CertStored"].values() == [
         c.CERT_BYTES,
-        brownie.convert.datatypes.HexString(c.TX_ROOT, "bytes32"),
+        brownie.convert.datatypes.HexString(c.DUMMY_TX_ROOT, "bytes32"),
     ]
 
 
 def test_get_cert_id_at_index_returns_cert_id(admin, topos_core_A):
     index = 0  # only one imported certificate
-    push_dummy_cert(admin, topos_core_A)
+    push_dummy_cert(admin, topos_core_A, c.DUMMY_TX_ROOT)
     assert (
         topos_core_A.getCertIdAtIndex(index, {"from": admin}) == c.CERT_BYTES
     )
@@ -214,12 +214,12 @@ def test_set_token_daily_mint_limits_allow_zero_limit(
     ]
     encoded_token_params = encode(c.TOKEN_PARAMS, token_values)
     topos_core_B.deployToken(encoded_token_params, {"from": admin})
-    push_dummy_cert(admin, topos_core_B)
+    push_dummy_cert(admin, topos_core_B, c.NORMAL_TX.tx_root)
     tx = topos_core_B.executeAssetTransfer(
-        c.TX_ROOT,
-        c.INDEX_OF_DATA_IN_TX_RAW,
-        c.TX_RAW,
-        c.DUMMY_DATA,
+        c.NORMAL_TX.index,
+        bytes.fromhex(c.NORMAL_TX.proof_blob),
+        bytes.fromhex(c.NORMAL_TX.tx_raw),
+        c.NORMAL_TX.tx_root,
         {"from": admin},
     )
     # the transaction should go through even without a daily mint limit set
@@ -363,40 +363,43 @@ def test_execute_transfer_reverts_on_tx_raw_index_out_of_bounds(
     admin, topos_core_B
 ):
     topos_core_B.deployToken(get_default_internal_token_val(), {"from": admin})
-    push_dummy_cert(admin, topos_core_B)
+    push_dummy_cert(admin, topos_core_B, c.NORMAL_TX.tx_root)
     # should revert since the index is out of bounds
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
-            c.TX_ROOT,
             c.INDEX_OF_DATA_IN_TX_RAW_OUT_OF_BOUNDS,
-            c.TX_RAW,
-            c.DUMMY_DATA,
+            bytes.fromhex(c.NORMAL_TX.proof_blob),
+            bytes.fromhex(c.NORMAL_TX.tx_raw),
+            c.NORMAL_TX.tx_root,
             {"from": admin},
         )
 
 
 def test_execute_transfer_reverts_on_unknown_cert(admin, topos_core_B):
+    topos_core_B.deployToken(get_default_internal_token_val(), {"from": admin})
     # should revert since the certificate is not present
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
-            c.CERT_ID,
-            c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW,
-            c.DUMMY_DATA,
+            c.NORMAL_TX.index,
+            bytes.fromhex(c.NORMAL_TX.proof_blob),
+            bytes.fromhex(c.NORMAL_TX.tx_raw),
+            c.NORMAL_TX.tx_root,
             {"from": admin},
         )
 
 
 def test_execute_transfer_reverts_on_invalid_subnet_id(admin, topos_core_A):
-    # subnet id of topos_core_A = "0x01"
-    push_dummy_cert(admin, topos_core_A)
-    # should fail since the provided target subnet id is not "0x02"
+    topos_core_A.deployToken(get_default_internal_token_val(), {"from": admin})
+    # subnet id of topos_core_A is "0x01", we check against the receiving
+    # subnet id of topos_core_B which is "0x02" in the normal transaction
+    push_dummy_cert(admin, topos_core_A, c.NORMAL_TX.tx_root)
+    # should fail since the provided target subnet id is "0x01"
     with brownie.reverts():
         topos_core_A.executeAssetTransfer(
-            c.TX_ROOT,
-            c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW,
-            c.DUMMY_DATA,
+            c.NORMAL_TX.index,
+            bytes.fromhex(c.NORMAL_TX.proof_blob),
+            bytes.fromhex(c.NORMAL_TX.tx_raw),
+            c.NORMAL_TX.tx_root,
             {"from": admin},
         )
 
@@ -405,34 +408,34 @@ def test_execute_transfer_reverts_on_call_already_executed(
     admin, topos_core_B
 ):
     topos_core_B.deployToken(get_default_internal_token_val(), {"from": admin})
-    push_dummy_cert(admin, topos_core_B)
+    push_dummy_cert(admin, topos_core_B, c.NORMAL_TX.tx_root)
     topos_core_B.executeAssetTransfer(
-        c.TX_ROOT,
-        c.INDEX_OF_DATA_IN_TX_RAW,
-        c.TX_RAW,
-        c.DUMMY_DATA,
+        c.NORMAL_TX.index,
+        bytes.fromhex(c.NORMAL_TX.proof_blob),
+        bytes.fromhex(c.NORMAL_TX.tx_raw),
+        c.NORMAL_TX.tx_root,
         {"from": admin},
     )
-    # resending the same call should fail
     with brownie.reverts():
+        # resending the same call should fail
         topos_core_B.executeAssetTransfer(
-            c.TX_ROOT,
-            c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW,
-            c.DUMMY_DATA,
+            c.NORMAL_TX.index,
+            bytes.fromhex(c.NORMAL_TX.proof_blob),
+            bytes.fromhex(c.NORMAL_TX.tx_raw),
+            c.NORMAL_TX.tx_root,
             {"from": admin},
         )
 
 
 def test_execute_transfer_reverts_on_token_does_not_exist(admin, topos_core_B):
-    push_dummy_cert(admin, topos_core_B)
+    push_dummy_cert(admin, topos_core_B, c.NORMAL_TX.tx_root)
     # should fail since the dummy token wasn't deployed on ToposCore
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
-            c.TX_ROOT,
-            c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW,
-            c.DUMMY_DATA,
+            c.NORMAL_TX.index,
+            bytes.fromhex(c.NORMAL_TX.proof_blob),
+            bytes.fromhex(c.NORMAL_TX.tx_raw),
+            c.NORMAL_TX.tx_root,
             {"from": admin},
         )
 
@@ -441,14 +444,14 @@ def test_execute_transfer_reverts_on_exceeding_daily_mint_limit(
     admin, topos_core_B
 ):
     topos_core_B.deployToken(get_default_internal_token_val(), {"from": admin})
-    push_dummy_cert(admin, topos_core_B)
+    push_dummy_cert(admin, topos_core_B, c.MINT_EXCEED_TX.tx_root)
     # should fail since the send_amount is greater than DAILY_MINT_LIMIT
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
-            c.TX_ROOT,
-            c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW_MINT_EXCEED,
-            c.DUMMY_DATA,
+            c.MINT_EXCEED_TX.index,
+            c.MINT_EXCEED_TX.proof_blob,
+            c.MINT_EXCEED_TX.tx_raw,
+            c.MINT_EXCEED_TX.tx_root,
             {"from": admin},
         )
 
@@ -474,14 +477,14 @@ def test_execute_transfer_reverts_on_external_cannot_mint_to_zero_address(
         c.MINT_AMOUNT,
         {"from": admin},
     )
-    push_dummy_cert(admin, topos_core_B)
+    push_dummy_cert(admin, topos_core_B, c.ZERO_ADDRESS_TX.tx_root)
     # should revert since the receiver address cannot be zero address
     with brownie.reverts():
         topos_core_B.executeAssetTransfer(
-            c.TX_ROOT,
-            c.INDEX_OF_DATA_IN_TX_RAW,
-            c.TX_RAW_ZERO_ADDRESS,
-            c.DUMMY_DATA,
+            c.ZERO_ADDRESS_TX.index,
+            c.ZERO_ADDRESS_TX.proof_blob,
+            c.ZERO_ADDRESS_TX.tx_raw,
+            c.ZERO_ADDRESS_TX.tx_root,
             {"from": admin},
         )
 
@@ -507,12 +510,12 @@ def test_execute_transfer_external_token_transfer_emits_events(
         c.MINT_AMOUNT,
         {"from": admin},
     )
-    push_dummy_cert(admin, topos_core_B)
+    push_dummy_cert(admin, topos_core_B, c.NORMAL_TX.tx_root)
     tx = topos_core_B.executeAssetTransfer(
-        c.TX_ROOT,
-        c.INDEX_OF_DATA_IN_TX_RAW,
-        c.TX_RAW,
-        c.DUMMY_DATA,
+        c.NORMAL_TX.index,
+        bytes.fromhex(c.NORMAL_TX.proof_blob),
+        bytes.fromhex(c.NORMAL_TX.tx_raw),
+        c.NORMAL_TX.tx_root,
         {"from": admin},
     )
     assert tx.events["Transfer"].values() == [
@@ -524,12 +527,12 @@ def test_execute_transfer_external_token_transfer_emits_events(
 
 def test_execute_transfer_emits_event(admin, bob, topos_core_B):
     topos_core_B.deployToken(get_default_internal_token_val(), {"from": admin})
-    push_dummy_cert(admin, topos_core_B)
+    push_dummy_cert(admin, topos_core_B, c.NORMAL_TX.tx_root)
     tx = topos_core_B.executeAssetTransfer(
-        c.TX_ROOT,
-        c.INDEX_OF_DATA_IN_TX_RAW,
-        c.TX_RAW,
-        c.DUMMY_DATA,
+        c.NORMAL_TX.index,
+        bytes.fromhex(c.NORMAL_TX.proof_blob),
+        bytes.fromhex(c.NORMAL_TX.tx_raw),
+        c.NORMAL_TX.tx_root,
         {"from": admin},
     )
     assert tx.events["Transfer"].values() == [
@@ -805,7 +808,7 @@ def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
     admin, topos_core_A
 ):
     fixture_subnet_id = c.TARGET_SUBNET_ID
-    push_dummy_cert(admin, topos_core_A)
+    push_dummy_cert(admin, topos_core_A, c.DUMMY_TX_ROOT)
     # should revert since fixture is set to source_subnet_id
     with brownie.reverts():
         topos_core_A.verifyContractCallData(
@@ -815,7 +818,7 @@ def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
 
 def test_verify_contract_call_returns_true(admin, topos_core_A):
     fixture_subnet_id = c.SOURCE_SUBNET_ID
-    push_dummy_cert(admin, topos_core_A)
+    push_dummy_cert(admin, topos_core_A, c.DUMMY_TX_ROOT)
     tx = topos_core_A.verifyContractCallData(
         c.CERT_ID, fixture_subnet_id, {"from": admin}
     )
@@ -845,7 +848,7 @@ def test_upgrade_emits_event(
 
 
 # internal functions #
-def push_dummy_cert(admin, topos_core_A):
+def push_dummy_cert(admin, topos_core_A, tx_root):
     return topos_core_A.pushCertificate(
         encode(
             c.CERT_PARAMS,
@@ -853,7 +856,7 @@ def push_dummy_cert(admin, topos_core_A):
                 c.CERT_ID,
                 c.SOURCE_SUBNET_ID,
                 c.STATE_ROOT,
-                c.TX_ROOT,
+                brownie.convert.to_bytes(tx_root, "bytes32"),
                 [c.TARGET_SUBNET_ID],
                 c.VERIFIER,
                 c.CERT_ID,
