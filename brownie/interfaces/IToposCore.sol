@@ -35,13 +35,13 @@ interface IToposCore {
         bytes32 txRoot;
         SubnetId[] targetSubnets;
         uint32 verifier;
-        CertificateId id;
+        CertificateId certId;
         bytes starkProof;
         bytes signature;
     }
 
     struct StreamPosition {
-        CertificateId id;
+        CertificateId certId;
         uint256 position;
     }
 
@@ -81,7 +81,7 @@ interface IToposCore {
         uint256 amount
     );
 
-    event CertStored(CertificateId id, bytes32 txRoot);
+    event CertStored(CertificateId certId, bytes32 txRoot);
 
     event TokenDeployed(string symbol, address tokenAddress);
 
@@ -127,7 +127,7 @@ interface IToposCore {
     |* Getters *|
     \***********/
 
-    function verifyContractCallData(CertificateId id, SubnetId targetSubnetId) external view returns (bool);
+    function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) external view returns (bool);
 
     function tokenDailyMintLimit(string memory symbol) external view returns (uint256);
 
@@ -143,7 +143,7 @@ interface IToposCore {
 
     function admins(uint256 epoch) external view returns (address[] memory);
 
-    function getCertificate(CertificateId id)
+    function getCertificate(CertificateId certId)
         external
         view
         returns (
@@ -163,7 +163,7 @@ interface IToposCore {
 
     function tokenDeployer() external view returns (address);
 
-    function certificateExists(CertificateId id) external view returns (bool);
+    function certificateExists(CertificateId certId) external view returns (bool);
 
     function txRootToCertId(bytes32 txRootHash) external view returns (CertificateId);
 
