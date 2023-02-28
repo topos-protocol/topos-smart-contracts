@@ -25,7 +25,6 @@ dummy_cert_id = brownie.convert.to_bytes("0xdeaf", "bytes32")
 dummy_data = brownie.convert.to_bytes("0x00", "bytes")
 dummy_hash = brownie.convert.to_bytes("0x0004", "bytes32")
 dummy_xs_proof = brownie.convert.to_bytes("0x0002", "bytes")
-min_cert_position_admin = 10
 subnet_A_id = brownie.convert.to_bytes("0x01", "bytes32")
 subnet_B_id = brownie.convert.to_bytes("0x02", "bytes32")
 selector_hash = keccak.new(
@@ -211,7 +210,6 @@ def approve_and_execute_on_receiving_subnet(
         source_subnet_id,
         source_contract_addr,
         selector,
-        min_cert_position_admin,
         {"from": accounts[0]},
     )
 

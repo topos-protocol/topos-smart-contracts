@@ -35,10 +35,15 @@ interface IToposCore {
         bytes32 txRoot;
         SubnetId[] targetSubnets;
         uint32 verifier;
-        CertificateId id;
+        CertificateId certId;
         bytes starkProof;
         bytes signature;
+    }
+
+    struct StreamPosition {
+        CertificateId certId;
         uint256 position;
+        SubnetId sourceSubnetId;
     }
 
     struct Token {
@@ -77,15 +82,13 @@ interface IToposCore {
         uint256 amount
     );
 
-    event CertStored(CertificateId id, bytes32 txRoot);
+    event CertStored(CertificateId certId, bytes32 txRoot);
 
     event TokenDeployed(string symbol, address tokenAddress);
 
     event TokenDailyMintLimitUpdated(string symbol, uint256 limit);
 
     event Upgraded(address indexed implementation);
-
-    event ContractCallDataVerified(uint256 certPosition);
 
     /********************\
     |* Public Functions *|
@@ -119,13 +122,13 @@ interface IToposCore {
         uint256 amount
     ) external;
 
-    function verifyContractCallData(CertificateId id, SubnetId targetSubnetId) external returns (uint256);
-
     function deployToken(bytes calldata params) external;
 
     /***********\
     |* Getters *|
     \***********/
+
+    function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) external view returns (bool);
 
     function tokenDailyMintLimit(string memory symbol) external view returns (uint256);
 
@@ -141,7 +144,7 @@ interface IToposCore {
 
     function admins(uint256 epoch) external view returns (address[] memory);
 
-    function getCertificate(CertificateId id)
+    function getCertificate(CertificateId certId)
         external
         view
         returns (
@@ -157,15 +160,23 @@ interface IToposCore {
             uint256
         );
 
+    function getCheckpoints() external view returns (StreamPosition[] memory checkpoints);
+
     function tokenDeployer() external view returns (address);
 
-    function certificateExists(CertificateId id) external view returns (bool);
+    function certificateExists(CertificateId certId) external view returns (bool);
 
     function txRootToCertId(bytes32 txRootHash) external view returns (CertificateId);
 
     function getCertificateCount() external view returns (uint256);
 
     function getCertIdAtIndex(uint256 index) external view returns (CertificateId);
+
+    function sourceSubnetIdExists(SubnetId subnetId) external view returns (bool);
+
+    function getSourceSubnetIdCount() external view returns (uint256);
+
+    function getSourceSubnetIdAtIndex(uint256 index) external view returns (SubnetId);
 
     function tokens(bytes32 tokenKey) external view returns (string memory, address);
 

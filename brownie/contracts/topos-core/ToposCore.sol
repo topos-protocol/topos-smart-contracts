@@ -27,6 +27,10 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     /// @dev CertificateId(bytes32) => certificate(bytes)
     mapping(CertificateId => Certificate) public certificates;
 
+    /// @notice Mapping to store the last seen certificate for a subnet
+    /// @dev SubnetId(bytes32) => StreamPosition
+    mapping(SubnetId => IToposCore.StreamPosition) checkpoint;
+
     /// @notice Mapping to store Tokens
     /// @dev TokenKey(bytes32) => Token
     mapping(bytes32 => Token) public tokens;
@@ -60,6 +64,9 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     /// @notice Set of Token Keys derived from token symbols
     Bytes32SetsLib.Set tokenSet;
+
+    /// @notice Set of source subnet IDs (subnets sending the certificates)
+    Bytes32SetsLib.Set sourceSubnetIdSet;
 
     constructor(address tokenDeployerImplementation, SubnetId networkSubnetId) {
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
@@ -162,27 +169,36 @@ contract ToposCore is IToposCore, AdminMultisigBase {
             bytes32 txRoot,
             SubnetId[] memory targetSubnets,
             uint32 verifier,
-            CertificateId id,
+            CertificateId certId,
             bytes memory starkProof,
             bytes memory signature
         ) = abi.decode(
                 certBytes,
                 (CertificateId, SubnetId, bytes32, bytes32, SubnetId[], uint32, CertificateId, bytes, bytes)
             );
-        certificateSet.insert(CertificateId.unwrap(id)); // add certificate ID to the CRUD storage set
-        txRootToCertId[txRoot] = id; // add certificate ID to the transaction root mapping
-        Certificate storage newCert = certificates[id];
+
+        certificateSet.insert(CertificateId.unwrap(certId)); // add certificate ID to the CRUD storage set
+        Certificate storage newCert = certificates[certId];
         newCert.prevId = prevId;
         newCert.sourceSubnetId = sourceSubnetId;
         newCert.stateRoot = stateRoot;
         newCert.txRoot = txRoot;
         newCert.targetSubnets = targetSubnets;
         newCert.verifier = verifier;
-        newCert.id = id;
+        newCert.certId = certId;
         newCert.starkProof = starkProof;
         newCert.signature = signature;
-        newCert.position = position;
-        emit CertStored(id, txRoot);
+
+        if (!sourceSubnetIdExists(sourceSubnetId)) {
+            sourceSubnetIdSet.insert(SubnetId.unwrap(sourceSubnetId)); // add the source subnet ID to the CRUD storage set
+        }
+        IToposCore.StreamPosition storage newStreamPosition = checkpoint[sourceSubnetId];
+        newStreamPosition.certId = certId;
+        newStreamPosition.position = position;
+        newStreamPosition.sourceSubnetId = sourceSubnetId;
+
+        txRootToCertId[txRoot] = certId; // add certificate ID to the transaction root mapping
+        emit CertStored(certId, txRoot);
     }
 
     function setup(bytes calldata params) external override {
@@ -203,8 +219,8 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         bytes calldata /*crossSubnetTxProof*/
     ) external {
         if (txRaw.length < indexOfDataInTxRaw + 4) revert IllegalMemoryAccess();
-        CertificateId id = txRootToCertId[txRootHash];
-        if (!certificateExists(id)) revert CertNotPresent();
+        CertificateId certId = txRootToCertId[txRootHash];
+        if (!certificateExists(certId)) revert CertNotPresent();
         // In order to validate the transaction pass the entire transaction bytes which is then hashed.
         // The transaction hash is used as a leaf to validate the inclusion proof.
         bytes32 txHash = keccak256(abi.encodePacked(txRaw));
@@ -280,20 +296,18 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     |* Public Methods *|
     \******************/
 
-    function verifyContractCallData(CertificateId id, SubnetId targetSubnetId) public override returns (uint256) {
-        if (!certificateExists(id)) revert CertNotPresent();
-        Certificate memory storedCert = certificates[id];
+    function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) public view returns (bool) {
+        if (!certificateExists(certId)) revert CertNotPresent();
         if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
-        emit ContractCallDataVerified(storedCert.position);
-        return storedCert.position;
+        return true;
     }
 
     /***********\
     |* Getters *|
     \***********/
 
-    function certificateExists(CertificateId id) public view returns (bool) {
-        return certificateSet.exists(CertificateId.unwrap(id));
+    function certificateExists(CertificateId certId) public view returns (bool) {
+        return certificateSet.exists(CertificateId.unwrap(certId));
     }
 
     function getCertificateCount() public view returns (uint256) {
@@ -302,6 +316,18 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     function getCertIdAtIndex(uint256 index) public view returns (CertificateId) {
         return CertificateId.wrap(certificateSet.keyAtIndex(index));
+    }
+
+    function sourceSubnetIdExists(SubnetId subnetId) public view returns (bool) {
+        return sourceSubnetIdSet.exists(SubnetId.unwrap(subnetId));
+    }
+
+    function getSourceSubnetIdCount() public view returns (uint256) {
+        return sourceSubnetIdSet.count();
+    }
+
+    function getSourceSubnetIdAtIndex(uint256 index) public view returns (SubnetId) {
+        return SubnetId.wrap(sourceSubnetIdSet.keyAtIndex(index));
     }
 
     function tokenDailyMintLimit(string memory symbol) public view override returns (uint256) {
@@ -333,7 +359,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         return tokenSet.keyAtIndex(index);
     }
 
-    function getCertificate(CertificateId id)
+    function getCertificate(CertificateId certId)
         public
         view
         returns (
@@ -349,7 +375,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
             uint256
         )
     {
-        Certificate memory storedCert = certificates[id];
+        Certificate memory storedCert = certificates[certId];
         (
             storedCert.prevId,
             storedCert.sourceSubnetId,
@@ -357,11 +383,18 @@ contract ToposCore is IToposCore, AdminMultisigBase {
             storedCert.txRoot,
             storedCert.targetSubnets,
             storedCert.verifier,
-            storedCert.id,
+            storedCert.certId,
             storedCert.starkProof,
-            storedCert.signature,
-            storedCert.position
+            storedCert.signature
         );
+    }
+
+    function getCheckpoints() public view returns (IToposCore.StreamPosition[] memory checkpoints) {
+        uint256 sourceSubnetIdCount = getSourceSubnetIdCount();
+        checkpoints = new StreamPosition[](sourceSubnetIdCount);
+        for (uint256 i; i < sourceSubnetIdCount; i++) {
+            checkpoints[i] = checkpoint[getSourceSubnetIdAtIndex(i)];
+        }
     }
 
     /********************\

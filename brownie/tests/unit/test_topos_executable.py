@@ -21,7 +21,6 @@ def test_authorize_origin_emits_event(accounts, admin, topos_executable):
         brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
         dummy_address,
         brownie.convert.datatypes.HexString(get_selector_hash(), "bytes32"),
-        c.MINIMUM_CERT_POSITION,
     ]
 
 
@@ -68,15 +67,22 @@ def test_execute_reverts_on_contract_call_already_executed(
         )
 
 
-def test_execute_reverts_on_cert_position_lower_than_min_position(
+def test_execute_reverts_on_unauthorized_origin(
     accounts, admin, topos_core_B, topos_executable
 ):
     dummy_address = accounts.add()
-    cert_position = 3
     authorize_origin(dummy_address, admin, topos_executable)
-    push_dummy_cert(admin, topos_core_B, cert_position)
-    data = get_call_contract_data(dummy_address, c.TARGET_SUBNET_ID)
-    # should revert since the cert position < min cert position
+    push_dummy_cert(admin, topos_core_B, c.CERT_POSITION)
+    data = [
+        c.DUMMY_DATA,  # tx_hash
+        c.SOURCE_SUBNET_ID,
+        dummy_address,  # source_contract_addr
+        c.TARGET_SUBNET_ID,
+        dummy_address,  # target_contract_addr
+        c.PAYLOAD,
+        c.INCORRECT_FUNC_SELECTOR,
+    ]
+    # should revert since the function selector is not authorized
     with brownie.reverts():
         topos_executable.execute(
             c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
@@ -130,15 +136,24 @@ def test_execute_with_token_reverts_on_contract_call_already_executed(
         )
 
 
-def test_execute_with_token_reverts_on_cert_position_lower_than_min_position(
+def test_execute_with_token_reverts_on_unauthorized_origin(
     accounts, admin, topos_core_B, topos_executable
 ):
     dummy_address = accounts.add()
-    cert_position = 3
     authorize_origin(dummy_address, admin, topos_executable)
-    push_dummy_cert(admin, topos_core_B, cert_position)
-    data = get_call_contract_with_token_data(dummy_address, c.TARGET_SUBNET_ID)
-    # should revert since the cert position < min cert position
+    push_dummy_cert(admin, topos_core_B, c.CERT_POSITION)
+    data = [
+        c.DUMMY_DATA,  # tx_hash
+        c.SOURCE_SUBNET_ID,
+        dummy_address,  # source_contract_addr
+        c.TARGET_SUBNET_ID,
+        dummy_address,  # target_contract_addr
+        c.PAYLOAD,
+        c.TOKEN_SYMBOL_X,
+        c.SEND_AMOUNT,
+        c.INCORRECT_FUNC_SELECTOR,
+    ]
+    # should revert since the function selector is not authorized
     with brownie.reverts():
         topos_executable.executeWithToken(
             c.CERT_ID, data, c.DUMMY_DATA, {"from": admin}
@@ -151,7 +166,6 @@ def authorize_origin(sender, spender, topos_executable):
         c.SOURCE_SUBNET_ID,
         sender,
         get_selector_hash(),
-        c.MINIMUM_CERT_POSITION,
         {"from": spender},
     )
 

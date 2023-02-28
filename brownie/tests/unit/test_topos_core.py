@@ -21,6 +21,40 @@ def test_get_certificate_count_returns_count(admin, topos_core_A):
     assert topos_core_A.getCertificateCount({"from": admin}) == count
 
 
+def test_push_certificate_updates_source_subnet_set(admin, topos_core_A):
+    test_certs = [
+        (c.CERT_ID, c.CERT_POSITION, c.SOURCE_SUBNET_ID),
+        (c.CERT_ID_2, c.CERT_POSITION_2, c.SOURCE_SUBNET_ID_2),
+        (c.CERT_ID_3, c.CERT_POSITION_3, c.SOURCE_SUBNET_ID_3),
+    ]
+    for test_cert in test_certs:
+        push_cert(
+            admin, topos_core_A, test_cert[0], test_cert[1], test_cert[2]
+        )
+    checkpoints = topos_core_A.getCheckpoints({"from": admin})
+    test_checkpoints = [
+        (
+            brownie.convert.datatypes.HexString(test_cert[0], "bytes32"),
+            test_cert[1],
+            brownie.convert.datatypes.HexString(test_cert[2], "bytes32"),
+        )
+        for test_cert in test_certs
+    ]
+    assert checkpoints == test_checkpoints
+    # update where the source subnet Id is SOURCE_SUBNET_ID_2
+    updated_cert = (c.CERT_ID_4, c.CERT_POSITION_4, c.SOURCE_SUBNET_ID_2)
+    push_cert(
+        admin, topos_core_A, updated_cert[0], updated_cert[1], updated_cert[2]
+    )
+    updated_checkpoints = topos_core_A.getCheckpoints({"from": admin})
+    test_checkpoints[1] = (
+        brownie.convert.datatypes.HexString(updated_cert[0], "bytes32"),
+        updated_cert[1],
+        brownie.convert.datatypes.HexString(updated_cert[2], "bytes32"),
+    )
+    assert updated_checkpoints == test_checkpoints
+
+
 def test_push_certificate_emits_event(admin, topos_core_A):
     tx = push_dummy_cert(admin, topos_core_A)
     assert topos_core_A.certificateExists(c.CERT_ID, {"from": admin}) is True
@@ -61,6 +95,38 @@ def test_get_token_key_at_index_returns_token_key_hash(admin, topos_core_A):
         topos_core_A.getTokenKeyAtIndex(index, {"from": admin})
         == token_key_hash
     )
+
+
+def test_get_checkpoints_returns_single_checkpoint(admin, topos_core_A):
+    push_dummy_cert(admin, topos_core_A)
+    checkpoints = topos_core_A.getCheckpoints({"from": admin})
+    assert checkpoints[0] == (
+        brownie.convert.datatypes.HexString(c.CERT_ID, "bytes32"),
+        c.CERT_POSITION,
+        brownie.convert.datatypes.HexString(c.SOURCE_SUBNET_ID, "bytes32"),
+    )
+
+
+def test_get_checkpoints_returns_multiple_checkpoints(admin, topos_core_A):
+    test_certs = [
+        (c.CERT_ID, c.CERT_POSITION, c.SOURCE_SUBNET_ID),
+        (c.CERT_ID_2, c.CERT_POSITION_2, c.SOURCE_SUBNET_ID_2),
+        (c.CERT_ID_3, c.CERT_POSITION_3, c.SOURCE_SUBNET_ID_3),
+    ]
+    for test_cert in test_certs:
+        push_cert(
+            admin, topos_core_A, test_cert[0], test_cert[1], test_cert[2]
+        )
+    checkpoints = topos_core_A.getCheckpoints({"from": admin})
+    test_checkpoints = [
+        (
+            brownie.convert.datatypes.HexString(test_cert[0], "bytes32"),
+            test_cert[1],
+            brownie.convert.datatypes.HexString(test_cert[2], "bytes32"),
+        )
+        for test_cert in test_certs
+    ]
+    assert checkpoints == test_checkpoints
 
 
 def test_get_token_key_at_index_for_multiple_returns_token_key_hash(
@@ -747,16 +813,13 @@ def test_verify_contract_call_data_reverts_on_unidentified_subnet_id(
         )
 
 
-def test_verify_contract_call_returns_cert_position(admin, topos_core_A):
+def test_verify_contract_call_returns_true(admin, topos_core_A):
     fixture_subnet_id = c.SOURCE_SUBNET_ID
     push_dummy_cert(admin, topos_core_A)
     tx = topos_core_A.verifyContractCallData(
         c.CERT_ID, fixture_subnet_id, {"from": admin}
     )
-    assert (
-        tx.events["ContractCallDataVerified"]["certPosition"]
-        == c.CERT_POSITION
-    )
+    assert tx is True
 
 
 def test_upgrade_emits_event(
@@ -799,6 +862,27 @@ def push_dummy_cert(admin, topos_core_A):
             ],
         ),
         c.CERT_POSITION,
+        {"from": admin},
+    )
+
+
+def push_cert(admin, topos_core_A, cert_id, position, source_subnet_id):
+    return topos_core_A.pushCertificate(
+        encode(
+            c.CERT_PARAMS,
+            [
+                c.CERT_ID,
+                source_subnet_id,
+                c.STATE_ROOT,
+                c.TX_ROOT,
+                [c.TARGET_SUBNET_ID],
+                c.VERIFIER,
+                cert_id,
+                c.DUMMY_DATA,
+                c.DUMMY_DATA,
+            ],
+        ),
+        position,
         {"from": admin},
     )
 
