@@ -191,9 +191,6 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
         if (!sourceSubnetIdExists(sourceSubnetId)) {
             sourceSubnetIdSet.insert(SubnetId.unwrap(sourceSubnetId)); // add the source subnet ID to the CRUD storage set
-        } else {
-            sourceSubnetIdSet.remove(SubnetId.unwrap(sourceSubnetId)); // update if it already exists
-            sourceSubnetIdSet.insert(SubnetId.unwrap(sourceSubnetId));
         }
         IToposCore.StreamPosition storage newStreamPosition = checkpoint[sourceSubnetId];
         newStreamPosition.certId = certId;

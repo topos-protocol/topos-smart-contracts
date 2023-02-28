@@ -47,9 +47,7 @@ def test_push_certificate_updates_source_subnet_set(admin, topos_core_A):
         admin, topos_core_A, updated_cert[0], updated_cert[1], updated_cert[2]
     )
     updated_checkpoints = topos_core_A.getCheckpoints({"from": admin})
-    test_checkpoints[1] = test_checkpoints[2]
-    # updated checkpoint is appended at the end
-    test_checkpoints[2] = (
+    test_checkpoints[1] = (
         brownie.convert.datatypes.HexString(updated_cert[0], "bytes32"),
         updated_cert[1],
         brownie.convert.datatypes.HexString(updated_cert[2], "bytes32"),
