@@ -3,8 +3,17 @@ import brownie
 # const
 APPROVE_AMOUNT = 50
 CERT_BYTES = "0xdeaf"
+CERT_BYTES_2 = "0xdeaa"
+CERT_BYTES_3 = "0xdeab"
+CERT_BYTES_4 = "0xdeff"
 CERT_POSITION = 5
+CERT_POSITION_2 = 89
+CERT_POSITION_3 = 99
+CERT_POSITION_4 = 100
 CERT_ID = brownie.convert.to_bytes(CERT_BYTES, "bytes32")
+CERT_ID_2 = brownie.convert.to_bytes(CERT_BYTES_2, "bytes32")
+CERT_ID_3 = brownie.convert.to_bytes(CERT_BYTES_3, "bytes32")
+CERT_ID_4 = brownie.convert.to_bytes(CERT_BYTES_4, "bytes32")
 CERT_PARAMS = [
     "bytes32",
     "bytes32",
@@ -21,13 +30,15 @@ DAILY_MINT_LIMIT = 100
 TARGET_SUBNET_ID = brownie.convert.to_bytes("0x02", "bytes32")
 DUMMY_DATA = brownie.convert.to_bytes("0x00", "bytes")
 ENDPOINT = "http://127.0.0.1"
+INCORRECT_FUNC_SELECTOR = brownie.convert.to_bytes("0xfefe", "bytes4")
 INDEX_OF_DATA_IN_TX_RAW = 33
 INDEX_OF_DATA_IN_TX_RAW_OUT_OF_BOUNDS = 295  # Total len of TX_RAW = 298
 LOGO_URL = "http://image-url.com"
-MINIMUM_CERT_POSITION = 4
 MINT_AMOUNT = 100
 MINT_CAP = 1000
 SOURCE_SUBNET_ID = brownie.convert.to_bytes("0x01", "bytes32")
+SOURCE_SUBNET_ID_2 = brownie.convert.to_bytes("0x89", "bytes32")
+SOURCE_SUBNET_ID_3 = brownie.convert.to_bytes("0x99", "bytes32")
 PAYLOAD = brownie.convert.to_bytes("0xdead", "bytes")
 PEER_ID = brownie.convert.to_bytes("0xdeaf", "bytes")
 SEND_AMOUNT = 50

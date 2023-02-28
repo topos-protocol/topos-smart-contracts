@@ -11,12 +11,7 @@ interface IToposExecutable {
     error ContractCallAlreadyExecuted();
     error UnauthorizedOrigin();
 
-    event OriginAuthorized(
-        SubnetId sourceSubnetId,
-        address sourceContractAddr,
-        bytes32 selector,
-        uint256 minimumCertPosition
-    );
+    event OriginAuthorized(SubnetId sourceSubnetId, address sourceContractAddr, bytes32 selector);
 
     struct ContractCallData {
         bytes txHash;
@@ -45,8 +40,7 @@ interface IToposExecutable {
     function authorizeOrigin(
         SubnetId sourceSubnetId,
         address sourceContractAddr,
-        bytes32 selector,
-        uint256 minimumCertPosition
+        bytes32 selector
     ) external;
 
     function execute(
