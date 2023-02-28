@@ -98,7 +98,7 @@ def test_get_token_key_at_index_returns_token_key_hash(admin, topos_core_A):
 
 
 def test_get_checkpoints_returns_single_checkpoint(admin, topos_core_A):
-    push_dummy_cert(admin, topos_core_A)
+    push_dummy_cert(admin, topos_core_A, c.DUMMY_TX_ROOT)
     checkpoints = topos_core_A.getCheckpoints({"from": admin})
     assert checkpoints[0] == (
         brownie.convert.datatypes.HexString(c.CERT_ID, "bytes32"),
@@ -877,7 +877,7 @@ def push_cert(admin, topos_core_A, cert_id, position, source_subnet_id):
                 c.CERT_ID,
                 source_subnet_id,
                 c.STATE_ROOT,
-                c.TX_ROOT,
+                c.DUMMY_TX_ROOT,
                 [c.TARGET_SUBNET_ID],
                 c.VERIFIER,
                 cert_id,
