@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+/// @author Copied from https://github.com/LimeChain/extractoor-contracts
 pragma solidity ^0.8.9;
 
 import {RLPReader} from "solidity-rlp/contracts/RLPReader.sol";
