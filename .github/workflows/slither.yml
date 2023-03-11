@@ -10,3 +10,5 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: crytic/slither-action@v0.2.0
+        with:
+          slither-version: dev-workaround-action-48
