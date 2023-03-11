@@ -1,0 +1,12 @@
+name: Slither Analysis
+
+on:
+  pull_request:
+  
+jobs:
+  analyze:
+    name: Run the Slither static analyzer
+    runs-on: ubuntu-latest-16-cores
+    steps:
+      - uses: actions/checkout@v3
+      - uses: crytic/slither-action@v0.3.0
