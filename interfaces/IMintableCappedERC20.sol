@@ -9,7 +9,7 @@ import {IOwnable} from "./IOwnable.sol";
 interface IMintableCappedERC20 is IERC20, IERC20Permit, IOwnable {
     error CapExceeded();
 
-    function cap() external view returns (uint256);
-
     function mint(address account, uint256 amount) external;
+
+    function cap() external view returns (uint256);
 }

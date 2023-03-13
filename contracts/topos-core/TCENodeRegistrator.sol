@@ -4,9 +4,6 @@ pragma solidity ^0.8.9;
 type PeerId is bytes32;
 
 contract TCENodeRegistrator {
-    error TCENodeAlreadyRegistered(PeerId peerId);
-    error TCENodeNotRegistered(PeerId peerId);
-
     struct TCENode {
         PeerId peerId;
         bool isPresent;
@@ -21,6 +18,9 @@ contract TCENodeRegistrator {
 
     /// @notice TCE node removal event
     event TCENodeRemoved(PeerId peerId);
+
+    error TCENodeAlreadyRegistered(PeerId peerId);
+    error TCENodeNotRegistered(PeerId peerId);
 
     /// @notice Register a new TCE node
     /// @param peerId peer ID of the TCE node

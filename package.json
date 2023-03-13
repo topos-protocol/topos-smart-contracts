@@ -10,48 +10,29 @@
   "author": "Toposware",
   "main": "",
   "files": [
-    "brownie/build"
+    "build"
   ],
   "scripts": {
-    "add-network": "brownie networks import ./network-config.yaml true",
-    "build": "brownie compile",
-    "clear-deployment": "rm -rf brownie/build/deployments",
-    "coverage": "brownie test -C",
-    "deploy": "brownie run deploy.py main",
-    "deploy2": "node brownie/scripts/deploy.js",
-    "deploy2:topos-msg-protocol": "node brownie/scripts/deploy-topos-msg-protocol.js",
-    "install": "npm run install:flake8 && npm run install:black && npm run install:eth_abi && npm run install:Crypto && npm run install:rlp &&npm run install:trie && npm run install:web3",
-    "install:Crypto": "pip3 install pycryptodome",
-    "install:black": "pip3 install black",
-    "install:eth_abi": "pip3 install eth_abi",
-    "install:flake8": "pip3 install flake8",
-    "install:rlp": "pip3 install rlp",
-    "install:trie": "pip3 install trie",
-    "install:web3": "pip3 install web3",
+    "deploy2:topos-msg-protocol": "node scripts/deploy-topos-msg-protocol.js",
     "kill-ganache": "for pname in $(pgrep -f ganache); do kill $pname; done",
-    "lint": "npm run lint:sol && npm run lint:prettier && npm run lint:flake8",
-    "lint:black:fix": "black brownie/tests brownie/scripts",
-    "lint:fix": "npm run lint:prettier:fix && npm run lint:black:fix",
-    "lint:flake8": "flake8 'brownie/tests' 'brownie/scripts'",
-    "lint:prettier": "prettier -c 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
-    "lint:prettier:fix": "prettier --write 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
-    "lint:sol": "solhint 'brownie/contracts/**/*.sol' 'brownie/interfaces/**/*.sol'",
-    "precoverage": "npm run add-network && npm run run-development && npm run run-development-two",
-    "postcoverage": "npm run kill-ganache && npm run clear-deployment",
-    "pretest": "npm run add-network && npm run run-development && npm run run-development-two",
-    "posttest": "npm run kill-ganache && npm run clear-deployment",
+    "lint": "npm run lint:sol && npm run lint:prettier",
+    "lint:fix": "npm run lint:prettier:fix",
+    "lint:prettier": "prettier -c 'contracts/**/*.sol' 'interfaces/**/*.sol'",
+    "lint:prettier:fix": "prettier --write 'contracts/**/*.sol' 'interfaces/**/*.sol'",
+    "lint:sol": "solhint 'contracts/**/*.sol' 'interfaces/**/*.sol'",
     "run-development": "(ganache --chain.chainId 1337 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 8545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)",
-    "run-development-two": "(ganache --chain.chainId 1338 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 7545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)",
-    "test": "brownie test"
-  },
-  "devDependencies": {
-    "ganache": "^7.4.1",
-    "prettier": "^2.7.1",
-    "prettier-plugin-solidity": "^1.0.0-beta.24",
-    "solhint": "^3.3.7"
+    "run-development-two": "(ganache --chain.chainId 1338 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 7545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)"
   },
   "dependencies": {
     "@axelar-network/axelar-gmp-sdk-solidity": "^2.0.0",
-    "ethers": "^5.7.2"
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@openzeppelin/contracts": "^4.7.2",
+    "ethers": "^5.7.2",
+    "ganache": "^7.7.6",
+    "hardhat": "2.13.0",
+    "prettier": "^2.8.4",
+    "prettier-plugin-solidity": "^1.1.3",
+    "solidity-rlp": "2.0.7",
+    "solhint": "^3.4.1"
   }
 }

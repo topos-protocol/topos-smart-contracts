@@ -7,13 +7,13 @@ import {SubnetId} from "./../../../interfaces/IToposCore.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract CrossSubnetArbitraryCall is ToposExecutable {
-    error UnknownSelector();
-
     string public value;
     SubnetId public targetSubnetId_;
     address targetContractAddr_;
 
     bytes32 internal constant SELECTOR_CHANGE_VALUE = keccak256("changeValue");
+
+    error UnknownSelector();
 
     constructor(address toposCore_) ToposExecutable(toposCore_) {}
 

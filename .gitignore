@@ -1,15 +1,12 @@
-# Visual Studio Code
-.vscode
+#Hardhat
+artifacts
+cache
+coverage
+typechain-types
+coverage.json
 
 # Npm
 node_modules
 
-# Brownie
-/brownie/.env
-/brownie/.history
-/brownie/.hypothesis/
-/brownie/build/
-/brownie/reports/
-
-# Python
-/**/__pycache__
+# Visual Studio Code
+.vscode

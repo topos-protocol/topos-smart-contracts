@@ -8,11 +8,6 @@ import {IERC20Permit} from "./../../interfaces/IERC20Permit.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 abstract contract ERC20Permit is IERC20, IERC20Permit, ERC20 {
-    error PermitExpired();
-    error InvalidS();
-    error InvalidV();
-    error InvalidSignature();
-
     bytes32 public immutable domainSeparator;
 
     string private constant EIP191_PREFIX_FOR_EIP712_STRUCTURED_DATA = "\x19\x01";
@@ -26,6 +21,11 @@ abstract contract ERC20Permit is IERC20, IERC20Permit, ERC20 {
         bytes32(0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9);
 
     mapping(address => uint256) public nonces;
+
+    error PermitExpired();
+    error InvalidS();
+    error InvalidV();
+    error InvalidSignature();
 
     constructor(string memory name) {
         domainSeparator = keccak256(

@@ -28,11 +28,7 @@ contract ToposExecutable is IToposExecutable {
         _setAdmin(msg.sender);
     }
 
-    function authorizeOrigin(
-        SubnetId sourceSubnetId,
-        address sourceContractAddr,
-        bytes32 selector
-    ) external onlyAdmin {
+    function authorizeOrigin(SubnetId sourceSubnetId, address sourceContractAddr, bytes32 selector) external onlyAdmin {
         _setAuthorizedOrigin(sourceSubnetId, sourceContractAddr, selector, true);
         emit OriginAuthorized(sourceSubnetId, sourceContractAddr, selector);
     }
@@ -155,11 +151,9 @@ contract ToposExecutable is IToposExecutable {
         return getBool(_getIsContractCallExecutedKey(contractCallData));
     }
 
-    function _isContractCallAndMintExecuted(ContractCallWithTokenData memory contractCallWithTokenData)
-        internal
-        view
-        returns (bool)
-    {
+    function _isContractCallAndMintExecuted(
+        ContractCallWithTokenData memory contractCallWithTokenData
+    ) internal view returns (bool) {
         return getBool(_getIsContractCallExecutedWithMintKey(contractCallWithTokenData));
     }
 
@@ -192,11 +186,9 @@ contract ToposExecutable is IToposExecutable {
             );
     }
 
-    function _getIsContractCallExecutedWithMintKey(ContractCallWithTokenData memory contractCallWithTokenData)
-        internal
-        pure
-        returns (bytes32)
-    {
+    function _getIsContractCallExecutedWithMintKey(
+        ContractCallWithTokenData memory contractCallWithTokenData
+    ) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(

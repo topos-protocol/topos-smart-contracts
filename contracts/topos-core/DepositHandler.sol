@@ -3,13 +3,13 @@
 pragma solidity ^0.8.9;
 
 contract DepositHandler {
-    error IsLocked();
-    error NotContract();
-
     uint256 internal constant IS_NOT_LOCKED = uint256(1);
     uint256 internal constant IS_LOCKED = uint256(2);
 
     uint256 internal _lockedStatus = IS_NOT_LOCKED;
+
+    error IsLocked();
+    error NotContract();
 
     modifier noReenter() {
         if (_lockedStatus == IS_LOCKED) revert IsLocked();
@@ -19,11 +19,10 @@ contract DepositHandler {
         _lockedStatus = IS_NOT_LOCKED;
     }
 
-    function execute(address callee, bytes calldata data)
-        external
-        noReenter
-        returns (bool success, bytes memory returnData)
-    {
+    function execute(
+        address callee,
+        bytes calldata data
+    ) external noReenter returns (bool success, bytes memory returnData) {
         if (callee.code.length == 0) revert NotContract();
         // solhint-disable-next-line avoid-low-level-calls
         (success, returnData) = callee.call(data);

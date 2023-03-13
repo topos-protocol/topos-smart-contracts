@@ -3,11 +3,11 @@
 pragma solidity ^0.8.9;
 
 contract ConstAddressDeployer {
+    event Deployed(bytes32 indexed bytecodeHash, bytes32 indexed salt, address indexed deployedAddress);
+
     error EmptyBytecode();
     error FailedDeploy();
     error FailedInit();
-
-    event Deployed(bytes32 indexed bytecodeHash, bytes32 indexed salt, address indexed deployedAddress);
 
     constructor() {}
 

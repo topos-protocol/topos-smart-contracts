@@ -7,31 +7,6 @@ type CertificateId is bytes32; // user-defined type for certificate IDs
 type SubnetId is bytes32; // user-defined type for subnet IDs
 
 interface IToposCore {
-    /**********\
-    |* Errors *|
-    \**********/
-
-    error CertNotPresent();
-    error BurnFailed(string symbol);
-    error ExceedDailyMintLimit(string symbol);
-    error IllegalMemoryAccess();
-    error InvalidAmount();
-    error InvalidCert();
-    error InvalidCodeHash();
-    error InvalidMerkleProof();
-    error InvalidSetDailyMintLimitsParams();
-    error InvalidSubnetId();
-    error InvalidTokenDeployer();
-    error MintFailed(string symbol);
-    error NotProxy();
-    error SetupFailed();
-    error TokenAlreadyExists(string symbol);
-    error TokenContractDoesNotExist(address token);
-    error TokenDeployFailed(string symbol);
-    error TokenDoesNotExist(string symbol);
-    error TransferAlreadyExecuted();
-    error UnsupportedProofKind();
-
     struct Certificate {
         CertificateId prevId;
         SubnetId sourceSubnetId;
@@ -102,16 +77,50 @@ interface IToposCore {
 
     event Upgraded(address indexed implementation);
 
+    /**********\
+    |* Errors *|
+    \**********/
+
+    error CertNotPresent();
+    error BurnFailed(string symbol);
+    error ExceedDailyMintLimit(string symbol);
+    error IllegalMemoryAccess();
+    error InvalidAmount();
+    error InvalidCert();
+    error InvalidCodeHash();
+    error InvalidMerkleProof();
+    error InvalidSetDailyMintLimitsParams();
+    error InvalidSubnetId();
+    error InvalidTokenDeployer();
+    error MintFailed(string symbol);
+    error NotProxy();
+    error SetupFailed();
+    error TokenAlreadyExists(string symbol);
+    error TokenContractDoesNotExist(address token);
+    error TokenDeployFailed(string symbol);
+    error TokenDoesNotExist(string symbol);
+    error TransferAlreadyExecuted();
+    error UnsupportedProofKind();
+
+    /*******************\
+    |* Admin Functions *|
+    \*******************/
+
+    function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
+
+    function pushCertificate(bytes calldata certBytes, uint256 position) external;
+
+    function giveToken(string memory symbol, address account, uint256 amount) external;
+
+    function upgrade(address newImplementation, bytes32 newImplementationCodeHash, bytes calldata setupParams) external;
+
     /********************\
     |* Public Functions *|
     \********************/
 
-    function sendToken(
-        SubnetId targetSubnetId,
-        address receiver,
-        string calldata symbol,
-        uint256 amount
-    ) external;
+    function setup(bytes calldata params) external;
+
+    function sendToken(SubnetId targetSubnetId, address receiver, string calldata symbol, uint256 amount) external;
 
     function executeAssetTransfer(
         uint256 indexOfDataInTxRaw,
@@ -120,11 +129,7 @@ interface IToposCore {
         bytes32 txRoot
     ) external;
 
-    function callContract(
-        SubnetId targetSubnetId,
-        address targetContractAddr,
-        bytes calldata payload
-    ) external;
+    function callContract(SubnetId targetSubnetId, address targetContractAddr, bytes calldata payload) external;
 
     function callContractWithToken(
         SubnetId targetSubnetId,
@@ -156,7 +161,9 @@ interface IToposCore {
 
     function admins(uint256 epoch) external view returns (address[] memory);
 
-    function getCertificate(CertificateId certId)
+    function getCertificate(
+        CertificateId certId
+    )
         external
         view
         returns (
@@ -202,33 +209,5 @@ interface IToposCore {
 
     function getTokenKeyAtIndex(uint256 index) external view returns (bytes32);
 
-    function networkSubnetId() external view returns (SubnetId);
-
-    /*******************\
-    |* Admin Functions *|
-    \*******************/
-
-    function setNetworkSubnetId(SubnetId _networkSubnetId) external;
-
-    function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
-
-    function pushCertificate(bytes calldata certBytes, uint256 position) external;
-
-    function giveToken(
-        string memory symbol,
-        address account,
-        uint256 amount
-    ) external;
-
-    function upgrade(
-        address newImplementation,
-        bytes32 newImplementationCodeHash,
-        bytes calldata setupParams
-    ) external;
-
-    /**********************\
-    |* External Functions *|
-    \**********************/
-
-    function setup(bytes calldata params) external;
+    function getNetworkSubnetId() external view returns (SubnetId);
 }

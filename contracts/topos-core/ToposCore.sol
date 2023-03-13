@@ -155,11 +155,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     }
 
     /// @dev Give token to an account for testing
-    function giveToken(
-        string memory symbol,
-        address account,
-        uint256 amount
-    ) external onlyAdmin {
+    function giveToken(string memory symbol, address account, uint256 amount) external onlyAdmin {
         _mintToken(symbol, account, amount);
     }
 
@@ -245,21 +241,12 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         _mintToken(symbol, receiver, amount);
     }
 
-    function sendToken(
-        SubnetId targetSubnetId,
-        address receiver,
-        string calldata symbol,
-        uint256 amount
-    ) external {
+    function sendToken(SubnetId targetSubnetId, address receiver, string calldata symbol, uint256 amount) external {
         _burnTokenFrom(msg.sender, symbol, amount);
         emit TokenSent(msg.sender, networkSubnetId, targetSubnetId, receiver, symbol, amount);
     }
 
-    function callContract(
-        SubnetId targetSubnetId,
-        address targetContractAddr,
-        bytes calldata payload
-    ) external {
+    function callContract(SubnetId targetSubnetId, address targetContractAddr, bytes calldata payload) external {
         emit ContractCall(networkSubnetId, msg.sender, targetSubnetId, targetContractAddr, payload);
     }
 
@@ -369,7 +356,13 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         return tokenSet.keyAtIndex(index);
     }
 
-    function getCertificate(CertificateId certId)
+    function getNetworkSubnetId() public view returns (SubnetId) {
+        return networkSubnetId;
+    }
+
+    function getCertificate(
+        CertificateId certId
+    )
         public
         view
         returns (
@@ -434,11 +427,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         return success && (returnData.length == uint256(0) || abi.decode(returnData, (bool)));
     }
 
-    function _mintToken(
-        string memory symbol,
-        address account,
-        uint256 amount
-    ) internal {
+    function _mintToken(string memory symbol, address account, uint256 amount) internal {
         address tokenAddress = getTokenBySymbol(symbol).tokenAddress;
 
         if (tokenAddress == address(0)) revert TokenDoesNotExist(symbol);
@@ -457,11 +446,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         }
     }
 
-    function _burnTokenFrom(
-        address sender,
-        string memory symbol,
-        uint256 amount
-    ) internal {
+    function _burnTokenFrom(address sender, string memory symbol, uint256 amount) internal {
         address tokenAddress = getTokenBySymbol(symbol).tokenAddress;
 
         if (tokenAddress == address(0)) revert TokenDoesNotExist(symbol);
