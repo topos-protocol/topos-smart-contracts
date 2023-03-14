@@ -29,14 +29,21 @@ const main = async function (endpoint) {
 
   if (!toposCoreSalt) {
     console.error(
-      'ERROR: Please provide a salt for ToposCore! (TOKEN_DEPLOYER_SALT)',
+      'ERROR: Please provide a salt for ToposCore! (TOPOS_CORE_SALT)',
+    );
+    return;
+  }
+
+  if (!toposCoreProxySalt) {
+    console.error(
+      'ERROR: Please provide a salt for ToposCore! (TOPOS_CORE_PROXY_SALT)',
     );
     return;
   }
 
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-  console.info(`Verifying if TokenDeployer is already deployed...`);
+  console.info(`\nVerifying if TokenDeployer is already deployed...`);
 
   const existingTokenDeployerAddress = await predictContractAddress(
     wallet,
