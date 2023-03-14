@@ -22,7 +22,7 @@ This repository contains Solidity smart contracts to be used with the Topos Prot
 To install the project along with all the dependencies run:
 
 ```
-$ npm run install
+$ npm install
 ```
 
 ## Dependencies
@@ -43,6 +43,14 @@ To run the tests:
 
 ```
 $ npx hardhat test
+```
+
+## Coverage
+
+To see the test coverage run:
+
+```
+$ npx hardhat coverage
 ```
 
 ## Linting
@@ -69,7 +77,7 @@ A NodeJS script is made available to deploy contracts with `CREATE2`, i.e., with
 
 ```
 npm run deploy2 http://myChainRPCEndpoint myCompiledContract.json MySecretSalt ACustomGasLimit|null MyConstructorArg AnotherConstructorArg
-# npm run deploy2 http://127.0.0.1:8545 brownie/build/contracts/ToposCore.json $TOPOS_CORE_SALT 2000000 0xF121424e3F7d73fCD79DcBCA67E8F10BeBE67b00 0x3100000000000000000000000000000000000000000000000000000000000000
+# npm run deploy2 http://127.0.0.1:8545 artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json $TOPOS_CORE_SALT 2000000 0xF121424e3F7d73fCD79DcBCA67E8F10BeBE67b00 0x3100000000000000000000000000000000000000000000000000000000000000
 ```
 
 ### Deployment of the full Topos Messaging Protocol
