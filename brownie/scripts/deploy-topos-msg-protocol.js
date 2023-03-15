@@ -130,11 +130,13 @@ const main = async function (endpoint, _sequencerPrivateKey) {
     toposCoreJSON.abi,
     wallet,
   );
-  await toposCoreContract.setNetworkSubnetId(subnetId).catch((error) => {
-    console.error(`Error: Failed to set ${subnetId} subnetId on ToposCore!`);
-    console.error(error);
-    process.exit(1);
-  });
+  await toposCoreContract
+    .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
+    .catch((error) => {
+      console.error(`Error: Failed to set ${subnetId} subnetId on ToposCore!`);
+      console.error(error);
+      process.exit(1);
+    });
   console.info(`Successfully set ${subnetId} subnetId on ToposCore\n`);
 
   console.info(`\nVerifying if ToposCoreProxy is already deployed...`);
