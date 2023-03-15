@@ -45,7 +45,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
-    SubnetId internal _networkSubnetId;
+    SubnetId public _networkSubnetId;
 
     /// @notice Validator role
     /// 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a
