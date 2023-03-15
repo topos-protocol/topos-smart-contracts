@@ -33,7 +33,7 @@ const main = async function (endpoint, _sequencerPrivateKey) {
     isCompressed,
   );
 
-  const subnetId = sequencerPublicKey.substring(4);
+  const subnetId = sanitizeHexString(sequencerPublicKey.substring(4));
   console.log('Subnet Id:', subnetId);
 
   if (
@@ -103,10 +103,7 @@ const main = async function (endpoint, _sequencerPrivateKey) {
     wallet,
     toposCoreJSON,
     toposCoreSalt,
-    [
-      existingTokenDeployerAddress || tokenDeployerAddress,
-      '0x3100000000000000000000000000000000000000000000000000000000000000',
-    ],
+    [existingTokenDeployerAddress || tokenDeployerAddress, subnetId],
   );
 
   const toposCoreCode = await provider.getCode(existingToposCoreAddress);
@@ -120,10 +117,7 @@ const main = async function (endpoint, _sequencerPrivateKey) {
       wallet,
       toposCoreJSON,
       toposCoreSalt,
-      [
-        existingTokenDeployerAddress || tokenDeployerAddress,
-        '0x3100000000000000000000000000000000000000000000000000000000000000',
-      ],
+      [existingTokenDeployerAddress || tokenDeployerAddress, subnetId],
       4_000_000,
     );
 
