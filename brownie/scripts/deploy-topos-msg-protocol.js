@@ -10,7 +10,7 @@ const CONST_ADDRESS_DEPLOYER_ADDR =
 
 const main = async function (endpoint, _sequencerPrivateKey) {
   const provider = new ethers.providers.JsonRpcProvider(endpoint);
-  const toposDeployerPrivateKey = process.env.PRIVATE_KEY;
+  const toposDeployerPrivateKey = sanitizeHexString(process.env.PRIVATE_KEY);
   const tokenDeployerSalt = process.env.TOKEN_DEPLOYER_SALT;
   const toposCoreSalt = process.env.TOPOS_CORE_SALT;
   const toposCoreProxySalt = process.env.TOPOS_CORE_PROXY_SALT;
@@ -67,10 +67,10 @@ const main = async function (endpoint, _sequencerPrivateKey) {
     process.exit(1);
   }
 
-  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  const wallet = new ethers.Wallet(toposDeployerPrivateKey, provider);
 
   console.info(`\nVerifying if TokenDeployer is already deployed...`);
-
+  console.log(wallet);
   const existingTokenDeployerAddress = await predictContractAddress(
     wallet,
     tokenDeployerJSON,
@@ -130,13 +130,20 @@ const main = async function (endpoint, _sequencerPrivateKey) {
     toposCoreJSON.abi,
     wallet,
   );
-  await toposCoreContract
+  const pushSubnetIdTx = await toposCoreContract
     .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
     .catch((error) => {
       console.error(`Error: Failed to set ${subnetId} subnetId on ToposCore!`);
       console.error(error);
       process.exit(1);
     });
+  await pushSubnetIdTx.wait().catch((error) => {
+    console.error(
+      `Error: Failed (wait) to set ${subnetId} subnetId on ToposCore!`,
+    );
+    console.error(error);
+    process.exit(1);
+  });
   console.info(`Successfully set ${subnetId} subnetId on ToposCore\n`);
 
   console.info(`\nVerifying if ToposCoreProxy is already deployed...`);
