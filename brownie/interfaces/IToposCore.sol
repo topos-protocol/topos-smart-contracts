@@ -184,7 +184,7 @@ interface IToposCore {
 
     function getTokenKeyAtIndex(uint256 index) external view returns (bytes32);
 
-    function getNetworkSubnetId() external view returns (SubnetId);
+    function networkSubnetId() external view returns (SubnetId);
 
     /*******************\
     |* Admin Functions *|
