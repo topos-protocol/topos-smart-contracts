@@ -4,6 +4,7 @@ const ethers = require('ethers');
 const tokenDeployerJSON = require('../build/contracts/TokenDeployer.json');
 const toposCoreJSON = require('../build/contracts/ToposCore.json');
 const toposCoreProxyJSON = require('../build/contracts/ToposCoreProxy.json');
+const toposCoreInterfaceJSON = require('../build/contracts/IToposCore.json');
 
 const CONST_ADDRESS_DEPLOYER_ADDR =
   '0x0000000000000000000000000000000000001110';
@@ -161,12 +162,12 @@ const main = async function (endpoint, _sequencerPrivateKey) {
   }
 
   console.info(`\nSetting subnetId on ToposCore via proxy`);
-  const toposCoreProxyContract = new ethers.Contract(
+  const toposCoreInterface = new ethers.Contract(
     existingToposCoreProxyAddress || toposCoreProxyAddress,
-    toposCoreProxyJSON.abi,
+    toposCoreInterfaceJSON.abi,
     wallet,
   );
-  await toposCoreProxyContract
+  await toposCoreInterface
     .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
     .then(async (tx) => {
       await tx.wait().catch((error) => {
@@ -184,8 +185,9 @@ const main = async function (endpoint, _sequencerPrivateKey) {
       console.error(error);
       process.exit(1);
     });
+  const networkSubnetId = await toposCoreInterface.networkSubnetId();
   console.info(
-    `Successfully set ${subnetId} subnetId on ToposCore via proxy\n`,
+    `Successfully set ${networkSubnetId} subnetId on ToposCore via proxy\n`,
   );
 };
 
