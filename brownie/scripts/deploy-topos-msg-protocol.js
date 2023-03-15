@@ -13,6 +13,7 @@ const main = async function (endpoint) {
   const privateKey = process.env.PRIVATE_KEY;
   const tokenDeployerSalt = process.env.TOKEN_DEPLOYER_SALT;
   const toposCoreSalt = process.env.TOPOS_CORE_SALT;
+  const toposCoreProxySalt = process.env.TOPOS_CORE_PROXY_SALT;
 
   if (!privateKey || ethers.utils.isHexString(privateKey, 32)) {
     console.error('ERROR: Please provide a valid private key! (PRIVATE_KEY)');
@@ -28,63 +29,116 @@ const main = async function (endpoint) {
 
   if (!toposCoreSalt) {
     console.error(
-      'ERROR: Please provide a salt for ToposCore! (TOKEN_DEPLOYER_SALT)',
+      'ERROR: Please provide a salt for ToposCore! (TOPOS_CORE_SALT)',
+    );
+    return;
+  }
+
+  if (!toposCoreProxySalt) {
+    console.error(
+      'ERROR: Please provide a salt for ToposCore! (TOPOS_CORE_PROXY_SALT)',
     );
     return;
   }
 
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-  console.info(`Deploying TokenDeployer with constant address...`);
+  console.info(`\nVerifying if TokenDeployer is already deployed...`);
 
-  const tokenDeployerAddress = await deployConstAddress(
+  const existingTokenDeployerAddress = await predictContractAddress(
     wallet,
     tokenDeployerJSON,
     tokenDeployerSalt,
   );
 
-  console.info(
-    `Successfully deployed TokenDeployer at ${tokenDeployerAddress}!\n`,
+  const tokenDeployerCode = await provider.getCode(
+    existingTokenDeployerAddress,
   );
 
-  console.info(`Deploying ToposCore...`);
+  if (tokenDeployerCode !== '0x') {
+    console.info(`TokenDeployer is already deployed!`);
+  } else {
+    console.info(`Deploying TokenDeployer with constant address...`);
 
-  const toposCoreFactory = new ethers.ContractFactory(
-    toposCoreJSON.abi,
-    toposCoreJSON.bytecode,
+    const tokenDeployerAddress = await deployConstAddress(
+      wallet,
+      tokenDeployerJSON,
+      tokenDeployerSalt,
+    );
+
+    console.info(
+      `Successfully deployed TokenDeployer at ${tokenDeployerAddress}\n`,
+    );
+  }
+
+  console.info(`\nVerifying if ToposCore is already deployed...`);
+
+  const existingToposCoreAddress = await predictContractAddress(
     wallet,
+    toposCoreJSON,
+    toposCoreSalt,
+    [
+      existingTokenDeployerAddress || tokenDeployerAddress,
+      '0x3100000000000000000000000000000000000000000000000000000000000000',
+    ],
   );
 
-  const toposCoreAddress = await toposCoreFactory
-    .deploy(
-      tokenDeployerAddress,
-      '0x3100000000000000000000000000000000000000000000000000000000000000',
-    )
-    .then(async (contract) => {
-      await contract.deployTransaction.wait();
-      return contract.address;
-    });
+  const toposCoreCode = await provider.getCode(existingToposCoreAddress);
 
-  console.info(`Successfully deployed ToposCore at ${toposCoreAddress}!\n`);
+  if (toposCoreCode !== '0x') {
+    console.info(`ToposCore is already deployed!`);
+  } else {
+    console.info(`Deploying ToposCore...`);
 
-  console.info(`Deploying ToposCoreProxy with constant address...`);
+    const toposCoreAddress = await deployConstAddress(
+      wallet,
+      toposCoreJSON,
+      toposCoreSalt,
+      [
+        existingTokenDeployerAddress || tokenDeployerAddress,
+        '0x3100000000000000000000000000000000000000000000000000000000000000',
+      ],
+      4_000_000,
+    );
+
+    console.info(`Successfully deployed ToposCore at ${toposCoreAddress}\n`);
+  }
+
+  console.info(`\nVerifying if ToposCoreProxy is already deployed...`);
 
   const params = ethers.utils.defaultAbiCoder.encode(
     ['address[]', 'uint256'],
-    [[wallet.address], 1],
+    [[wallet.address], 1], // TODO: Use a different admin address than ToposDeployer
   );
 
-  const toposCoreProxyAddress = await deployConstAddress(
+  const existingToposCoreProxyAddress = await predictContractAddress(
     wallet,
     toposCoreProxyJSON,
-    toposCoreSalt,
-    [toposCoreAddress, params],
-    4_000_000,
+    toposCoreProxySalt,
+    [existingToposCoreAddress || toposCoreAddress, params],
   );
 
-  console.info(
-    `Successfully deployed ToposCoreProxy at ${toposCoreProxyAddress}!\n`,
+  const toposCoreProxyCode = await provider.getCode(
+    existingToposCoreProxyAddress,
   );
+
+  if (toposCoreProxyCode !== '0x') {
+    console.info(`ToposCoreProxy is already deployed!`);
+  } else {
+    console.info(`Deploying ToposCoreProxy with constant address...`);
+
+    const toposCoreProxyAddress = await deployConstAddress(
+      wallet,
+      toposCoreProxyJSON,
+      toposCoreProxySalt,
+      [existingToposCoreAddress || toposCoreAddress, params],
+      4_000_000,
+    );
+
+    console.info(
+      `Successfully deployed ToposCoreProxy at ${toposCoreProxyAddress}\n`,
+    );
+  }
 };
 
 const deployConstAddress = function (
@@ -104,6 +158,21 @@ const deployConstAddress = function (
       gasLimit === 0 ? null : gasLimit,
     )
     .then((contract) => contract.address)
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+};
+
+const predictContractAddress = function (wallet, contractJson, salt, args) {
+  return axelarUtils
+    .predictContractConstant(
+      CONST_ADDRESS_DEPLOYER_ADDR,
+      wallet,
+      contractJson,
+      salt,
+      args,
+    )
     .catch((error) => {
       console.error(error);
       process.exit(1);

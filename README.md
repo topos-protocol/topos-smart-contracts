@@ -166,7 +166,7 @@ npm run deploy2 http://myChainRPCEndpoint myCompiledContract.json MySecretSalt A
 To deploy the full Topos Messaging Protocol, another `deploy2:topos-msg-protocol` npm script is available. This scripts deploys the following contracts:
 
 - `TokenDeployer` with constant address
-- `ToposCore`
+- `ToposCore` with constant address
 - `ToposCoreProxy` with constant address
 
 ```
