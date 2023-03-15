@@ -62,7 +62,7 @@ const main = async function (endpoint, _sequencerPrivateKey) {
 
   if (!toposCoreProxySalt) {
     console.error(
-      'ERROR: Please provide a salt for ToposCore! (TOPOS_CORE_PROXY_SALT)',
+      'ERROR: Please provide a salt for ToposCoreProxy! (TOPOS_CORE_PROXY_SALT)',
     );
     process.exit(1);
   }
