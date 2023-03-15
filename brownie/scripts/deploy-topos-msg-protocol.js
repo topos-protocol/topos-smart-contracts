@@ -103,7 +103,7 @@ const main = async function (endpoint, _sequencerPrivateKey) {
     wallet,
     toposCoreJSON,
     toposCoreSalt,
-    [existingTokenDeployerAddress || tokenDeployerAddress, subnetId],
+    [existingTokenDeployerAddress || tokenDeployerAddress],
   );
 
   const toposCoreCode = await provider.getCode(existingToposCoreAddress);
@@ -117,12 +117,25 @@ const main = async function (endpoint, _sequencerPrivateKey) {
       wallet,
       toposCoreJSON,
       toposCoreSalt,
-      [existingTokenDeployerAddress || tokenDeployerAddress, subnetId],
+      [existingTokenDeployerAddress || tokenDeployerAddress],
       4_000_000,
     );
 
     console.info(`Successfully deployed ToposCore at ${toposCoreAddress}\n`);
   }
+
+  console.info(`\nSetting subnetId on ToposCore`);
+  const toposCoreContract = new ethers.Contract(
+    existingTokenDeployerAddress || tokenDeployerAddress,
+    toposCoreJSON.abi,
+    wallet,
+  );
+  await toposCoreContract.setNetworkSubnetId(subnetId).catch((error) => {
+    console.error(`Error: Failed to set ${subnetId} subnetId on ToposCore!`);
+    console.error(error);
+    process.exit(1);
+  });
+  console.info(`Successfully set ${subnetId} subnetId on ToposCore\n`);
 
   console.info(`\nVerifying if ToposCoreProxy is already deployed...`);
 
