@@ -40,8 +40,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     mapping(bytes32 => CertificateId) public txRootToCertId;
 
     /// @notice The subnet ID of the subnet this contract is deployed on
-    /// @dev Must be set in the constructor
-    SubnetId public _networkSubnetId;
+    SubnetId public networkSubnetId;
 
     /// @notice Validator role
     /// 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a
@@ -110,6 +109,10 @@ contract ToposCore is IToposCore, AdminMultisigBase {
             if (!success) revert SetupFailed();
         }
         emit Upgraded(newImplementation);
+    }
+
+    function setNetworkSubnetId(SubnetId _networkSubnetId) external onlyAdmin {
+        networkSubnetId = _networkSubnetId;
     }
 
     function deployToken(bytes calldata params) external {
@@ -241,7 +244,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         uint256 amount
     ) external {
         _burnTokenFrom(msg.sender, symbol, amount);
-        emit TokenSent(msg.sender, _networkSubnetId, targetSubnetId, receiver, symbol, amount);
+        emit TokenSent(msg.sender, networkSubnetId, targetSubnetId, receiver, symbol, amount);
     }
 
     function callContract(
@@ -249,7 +252,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         address targetContractAddr,
         bytes calldata payload
     ) external {
-        emit ContractCall(_networkSubnetId, msg.sender, targetSubnetId, targetContractAddr, payload);
+        emit ContractCall(networkSubnetId, msg.sender, targetSubnetId, targetContractAddr, payload);
     }
 
     function callContractWithToken(
@@ -261,7 +264,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     ) external {
         _burnTokenFrom(msg.sender, symbol, amount);
         emit ContractCallWithToken(
-            _networkSubnetId,
+            networkSubnetId,
             msg.sender,
             targetSubnetId,
             targetContractAddr,
@@ -294,11 +297,6 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     /******************\
     |* Public Methods *|
     \******************/
-
-    // TMP
-    function setNetworkSubnetId(SubnetId networkSubnetId) public {
-        _networkSubnetId = networkSubnetId; // can assign a value only once
-    }
 
     function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) public view returns (bool) {
         if (!certificateExists(certId)) revert CertNotPresent();
@@ -364,7 +362,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     }
 
     function getNetworkSubnetId() public view returns (SubnetId) {
-        return _networkSubnetId;
+        return networkSubnetId;
     }
 
     function getCertificate(CertificateId certId)
@@ -524,7 +522,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     }
 
     function _validateTargetSubnetId(SubnetId targetSubnetId) internal view returns (bool) {
-        return SubnetId.unwrap(targetSubnetId) == SubnetId.unwrap(_networkSubnetId);
+        return SubnetId.unwrap(targetSubnetId) == SubnetId.unwrap(networkSubnetId);
     }
 
     function _isSendTokenExecuted(bytes32 txHash) internal view returns (bool) {

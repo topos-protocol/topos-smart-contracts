@@ -932,9 +932,7 @@ def get_default_mint_val(bob):
 
 def deploy_new_tcc(admin, TokenDeployer, ToposCore):
     token_deployer = TokenDeployer.deploy({"from": admin})
-    return ToposCore.deploy(
-        token_deployer.address, c.SOURCE_SUBNET_ID, {"from": admin}
-    )
+    return ToposCore.deploy(token_deployer.address, {"from": admin})
 
 
 def get_hash(input):

@@ -94,8 +94,6 @@ interface IToposCore {
     |* Public Functions *|
     \********************/
 
-    function setNetworkSubnetId(SubnetId networkSubnetId) external;
-
     function sendToken(
         SubnetId targetSubnetId,
         address receiver,
@@ -191,6 +189,8 @@ interface IToposCore {
     /*******************\
     |* Admin Functions *|
     \*******************/
+
+    function setNetworkSubnetId(SubnetId _networkSubnetId) external;
 
     function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
 

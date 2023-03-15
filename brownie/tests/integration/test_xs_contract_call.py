@@ -81,7 +81,6 @@ def deploy_initial_contracts(network_subnet_id):
     # deploy ToposCore
     topos_core_impl = ToposCore.deploy(
         token_deployer_address,
-        network_subnet_id,
         {"from": accounts[0]},
     )
     LOGGER.info(f"ToposCore address: {topos_core_impl.address}")
@@ -101,6 +100,7 @@ def deploy_initial_contracts(network_subnet_id):
     )
     LOGGER.info(f"ToposCoreProxy address: {topos_core_proxy.address}")
     topos_core = interface.IToposCore(topos_core_proxy.address)
+    topos_core.setNetworkSubnetId(network_subnet_id, {"from": accounts[0]})
 
     # deploy the cross subnet arbitrary call creation code getter contract
     creation_code_getter = CrossSubnetArbitraryCallCreationCode.deploy(

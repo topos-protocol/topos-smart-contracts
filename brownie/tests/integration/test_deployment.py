@@ -57,7 +57,7 @@ def test_constant_address_deployment():
     assert tokenAAddress == tokenBAddress
 
 
-def deploy_token_deployer(networkSubnetId):
+def deploy_token_deployer(network_subnet_id):
     const_address_deployer = ConstAddressDeployer.deploy({"from": accounts[0]})
     LOGGER.info(
         f"ConstantAddressDeployer address: {const_address_deployer.address}"
@@ -73,7 +73,6 @@ def deploy_token_deployer(networkSubnetId):
     LOGGER.info(f"TokenDeployer address: {token_deployer_address}")
     topos_core_impl = ToposCore.deploy(
         token_deployer_address,
-        networkSubnetId,
         {"from": accounts[0]},
     )
     LOGGER.info(f"ToposCore address: {topos_core_impl.address}")
@@ -92,6 +91,7 @@ def deploy_token_deployer(networkSubnetId):
     )
     LOGGER.info(f"ToposCoreProxy address: {topos_core_proxy.address}")
     topos_core = interface.IToposCore(topos_core_proxy.address)
+    topos_core.setNetworkSubnetId(network_subnet_id, {"from": accounts[0]})
     return (
         token_deployer_address,
         topos_core,
