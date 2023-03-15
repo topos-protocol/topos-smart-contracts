@@ -39,10 +39,6 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     /// @dev txRootHash(bytes32) => CertificateId(bytes32)
     mapping(bytes32 => CertificateId) public txRootToCertId;
 
-    // TMP
-    bool public initialized; // state variable to track initialization
-    // TMP
-
     /// @notice The subnet ID of the subnet this contract is deployed on
     /// @dev Must be set in the constructor
     SubnetId public _networkSubnetId;
@@ -71,13 +67,6 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     /// @notice Set of source subnet IDs (subnets sending the certificates)
     Bytes32SetsLib.Set sourceSubnetIdSet;
-
-    // TMP
-    modifier onlyOnce() {
-        require(!initialized, "Already initialized"); // precondition: check if initialized is false
-        _; // placeholder for function body
-        initialized = true; // postcondition: set initialized to true
-    }
 
     constructor(address tokenDeployerImplementation) {
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
@@ -307,8 +296,8 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     \******************/
 
     // TMP
-    function setNetworkSubnetId(SubnetId __networkSubnetId) public onlyOnce {
-        _networkSubnetId = __networkSubnetId; // can assign a value only once
+    function setNetworkSubnetId(SubnetId networkSubnetId) public {
+        _networkSubnetId = networkSubnetId; // can assign a value only once
     }
 
     function verifyContractCallData(CertificateId certId, SubnetId targetSubnetId) public view returns (bool) {
