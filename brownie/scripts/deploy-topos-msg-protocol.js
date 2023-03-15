@@ -70,7 +70,7 @@ const main = async function (endpoint, _sequencerPrivateKey) {
   const wallet = new ethers.Wallet(toposDeployerPrivateKey, provider);
 
   console.info(`\nVerifying if TokenDeployer is already deployed...`);
-  console.log(wallet);
+
   const existingTokenDeployerAddress = await predictContractAddress(
     wallet,
     tokenDeployerJSON,
@@ -124,28 +124,6 @@ const main = async function (endpoint, _sequencerPrivateKey) {
     console.info(`Successfully deployed ToposCore at ${toposCoreAddress}\n`);
   }
 
-  console.info(`\nSetting subnetId on ToposCore`);
-  const toposCoreContract = new ethers.Contract(
-    existingTokenDeployerAddress || tokenDeployerAddress,
-    toposCoreJSON.abi,
-    wallet,
-  );
-  const pushSubnetIdTx = await toposCoreContract
-    .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
-    .catch((error) => {
-      console.error(`Error: Failed to set ${subnetId} subnetId on ToposCore!`);
-      console.error(error);
-      process.exit(1);
-    });
-  await pushSubnetIdTx.wait().catch((error) => {
-    console.error(
-      `Error: Failed (wait) to set ${subnetId} subnetId on ToposCore!`,
-    );
-    console.error(error);
-    process.exit(1);
-  });
-  console.info(`Successfully set ${subnetId} subnetId on ToposCore\n`);
-
   console.info(`\nVerifying if ToposCoreProxy is already deployed...`);
 
   const params = ethers.utils.defaultAbiCoder.encode(
@@ -181,6 +159,34 @@ const main = async function (endpoint, _sequencerPrivateKey) {
       `Successfully deployed ToposCoreProxy at ${toposCoreProxyAddress}\n`,
     );
   }
+
+  console.info(`\nSetting subnetId on ToposCore via proxy`);
+  const toposCoreProxyContract = new ethers.Contract(
+    existingToposCoreProxyAddress || toposCoreProxyAddress,
+    toposCoreProxyJSON.abi,
+    wallet,
+  );
+  await toposCoreProxyContract
+    .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
+    .then(async (tx) => {
+      await tx.wait().catch((error) => {
+        console.error(
+          `Error: Failed (wait) to set ${subnetId} subnetId on ToposCore via proxy!`,
+        );
+        console.error(error);
+        process.exit(1);
+      });
+    })
+    .catch((error) => {
+      console.error(
+        `Error: Failed to set ${subnetId} subnetId on ToposCore via proxy!`,
+      );
+      console.error(error);
+      process.exit(1);
+    });
+  console.info(
+    `Successfully set ${subnetId} subnetId on ToposCore via proxy\n`,
+  );
 };
 
 const sanitizeHexString = function (hexString) {

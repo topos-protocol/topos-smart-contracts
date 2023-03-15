@@ -94,6 +94,8 @@ interface IToposCore {
     |* Public Functions *|
     \********************/
 
+    function setNetworkSubnetId(SubnetId networkSubnetId) external;
+
     function sendToken(
         SubnetId targetSubnetId,
         address receiver,
