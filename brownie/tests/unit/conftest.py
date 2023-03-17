@@ -22,7 +22,7 @@ def deploy_topos_core(
     admin_threshold = 1
     token_deployer = TokenDeployer.deploy({"from": accounts[0]})
     topos_core_impl = ToposCore.deploy(
-        token_deployer.address, subnet_id, {"from": accounts[0]}
+        token_deployer.address, {"from": accounts[0]}
     )
     topos_core_proxy = ToposCoreProxy.deploy(
         topos_core_impl.address,
@@ -33,6 +33,7 @@ def deploy_topos_core(
         {"from": accounts[0]},
     )
     topos_core = interface.IToposCore(topos_core_proxy.address)
+    topos_core.setNetworkSubnetId(subnet_id, {"from": accounts[0]})
 
     return topos_core
 

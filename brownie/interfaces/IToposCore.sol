@@ -184,11 +184,13 @@ interface IToposCore {
 
     function getTokenKeyAtIndex(uint256 index) external view returns (bytes32);
 
-    function getNetworkSubnetId() external view returns (SubnetId);
+    function networkSubnetId() external view returns (SubnetId);
 
     /*******************\
     |* Admin Functions *|
     \*******************/
+
+    function setNetworkSubnetId(SubnetId _networkSubnetId) external;
 
     function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
 
