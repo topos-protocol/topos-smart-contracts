@@ -40,8 +40,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     mapping(bytes32 => CertificateId) public txRootToCertId;
 
     /// @notice The subnet ID of the subnet this contract is deployed on
-    /// @dev Must be set in the constructor
-    SubnetId internal immutable _networkSubnetId;
+    SubnetId public networkSubnetId;
 
     /// @notice Validator role
     /// 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a
@@ -68,11 +67,10 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     /// @notice Set of source subnet IDs (subnets sending the certificates)
     Bytes32SetsLib.Set sourceSubnetIdSet;
 
-    constructor(address tokenDeployerImplementation, SubnetId networkSubnetId) {
+    constructor(address tokenDeployerImplementation) {
         if (tokenDeployerImplementation.code.length == 0) revert InvalidTokenDeployer();
 
         _tokenDeployerImplementation = tokenDeployerImplementation;
-        _networkSubnetId = networkSubnetId;
     }
 
     /*******************\
@@ -111,6 +109,10 @@ contract ToposCore is IToposCore, AdminMultisigBase {
             if (!success) revert SetupFailed();
         }
         emit Upgraded(newImplementation);
+    }
+
+    function setNetworkSubnetId(SubnetId _networkSubnetId) external onlyAdmin {
+        networkSubnetId = _networkSubnetId;
     }
 
     function deployToken(bytes calldata params) external {
@@ -242,7 +244,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         uint256 amount
     ) external {
         _burnTokenFrom(msg.sender, symbol, amount);
-        emit TokenSent(msg.sender, _networkSubnetId, targetSubnetId, receiver, symbol, amount);
+        emit TokenSent(msg.sender, networkSubnetId, targetSubnetId, receiver, symbol, amount);
     }
 
     function callContract(
@@ -250,7 +252,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         address targetContractAddr,
         bytes calldata payload
     ) external {
-        emit ContractCall(_networkSubnetId, msg.sender, targetSubnetId, targetContractAddr, payload);
+        emit ContractCall(networkSubnetId, msg.sender, targetSubnetId, targetContractAddr, payload);
     }
 
     function callContractWithToken(
@@ -262,7 +264,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     ) external {
         _burnTokenFrom(msg.sender, symbol, amount);
         emit ContractCallWithToken(
-            _networkSubnetId,
+            networkSubnetId,
             msg.sender,
             targetSubnetId,
             targetContractAddr,
@@ -357,10 +359,6 @@ contract ToposCore is IToposCore, AdminMultisigBase {
 
     function getTokenKeyAtIndex(uint256 index) public view returns (bytes32) {
         return tokenSet.keyAtIndex(index);
-    }
-
-    function getNetworkSubnetId() public view returns (SubnetId) {
-        return _networkSubnetId;
     }
 
     function getCertificate(CertificateId certId)
@@ -520,7 +518,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     }
 
     function _validateTargetSubnetId(SubnetId targetSubnetId) internal view returns (bool) {
-        return SubnetId.unwrap(targetSubnetId) == SubnetId.unwrap(_networkSubnetId);
+        return SubnetId.unwrap(targetSubnetId) == SubnetId.unwrap(networkSubnetId);
     }
 
     function _isSendTokenExecuted(bytes32 txHash) internal view returns (bool) {

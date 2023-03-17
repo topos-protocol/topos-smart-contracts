@@ -170,8 +170,8 @@ To deploy the full Topos Messaging Protocol, another `deploy2:topos-msg-protocol
 - `ToposCoreProxy` with constant address
 
 ```
-npm run deploy2:topos-msg-protocol http://myChainRPCEndpoint
-# npm run deploy2:topos-msg-protocol http://127.0.0.1:8545
+npm run deploy2:topos-msg-protocol http://myChainRPCEndpoint pathToSequencerPrivateKey
+# npm run deploy2:topos-msg-protocol http://127.0.0.1:8545 /data/node-1/consensus/validator.key
 ```
 
 ## Docker

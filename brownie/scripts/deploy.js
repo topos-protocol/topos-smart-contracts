@@ -15,7 +15,7 @@ const main = async function (
   const provider = new ethers.providers.JsonRpcProvider(endpoint);
   const privateKey = process.env.PRIVATE_KEY;
 
-  if (!privateKey || ethers.utils.isHexString(privateKey, 32)) {
+  if (!privateKey || !ethers.utils.isHexString(privateKey, 32)) {
     console.error('ERROR: Please provide a valid private key! (PRIVATE_KEY)');
     return;
   }
