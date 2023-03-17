@@ -78,6 +78,8 @@ const main = async function (endpoint, _sequencerPrivateKey) {
     tokenDeployerSalt,
   );
 
+  console.debug('existingTokenDeployerAddress:', existingTokenDeployerAddress)
+
   const tokenDeployerCode = await provider.getCode(
     existingTokenDeployerAddress,
   );
@@ -213,23 +215,25 @@ const deployConstAddress = function (
     )
     .then((contract) => contract.address)
     .catch((error) => {
+      console.error(`Error when deploying contract with constant address!`);
       console.error(error);
       process.exit(1);
     });
-};
-
-const predictContractAddress = function (wallet, contractJson, salt, args) {
-  return axelarUtils
+  };
+  
+  const predictContractAddress = function (wallet, contractJson, salt, args) {
+    return axelarUtils
     .predictContractConstant(
       CONST_ADDRESS_DEPLOYER_ADDR,
       wallet,
       contractJson,
       salt,
       args,
-    )
-    .catch((error) => {
-      console.error(error);
-      process.exit(1);
+      )
+      .catch((error) => {
+        console.error(`Error when predicting constant address of contract!`);
+        console.error(error);
+        process.exit(1);
     });
 };
 
