@@ -72,8 +72,6 @@ const main = async function (endpoint, _sequencerPrivateKey) {
 
   console.info(`\nVerifying if TokenDeployer is already deployed...`);
 
-  console.log(await provider.getCode(CONST_ADDRESS_DEPLOYER_ADDR));
-
   const existingTokenDeployerAddress = await predictContractAddress(
     wallet,
     tokenDeployerJSON,
