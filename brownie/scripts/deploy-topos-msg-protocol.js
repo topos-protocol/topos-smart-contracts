@@ -1,6 +1,7 @@
 const axelarUtils = require('@axelar-network/axelar-gmp-sdk-solidity');
 const ethers = require('ethers');
 
+const constAddressDeployerJSON = require('../build/contracts/ConstAddressDeployer.json');
 const tokenDeployerJSON = require('../build/contracts/TokenDeployer.json');
 const toposCoreJSON = require('../build/contracts/ToposCore.json');
 const toposCoreProxyJSON = require('../build/contracts/ToposCoreProxy.json');
@@ -8,6 +9,10 @@ const toposCoreInterfaceJSON = require('../build/contracts/IToposCore.json');
 
 const CONST_ADDRESS_DEPLOYER_ADDR =
   '0x0000000000000000000000000000000000001110';
+
+const getSaltFromKey = (key) => {
+  return ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(['string'], [key.toString()]));
+};
 
 const main = async function (endpoint, _sequencerPrivateKey) {
   const provider = new ethers.providers.JsonRpcProvider(endpoint);
@@ -218,18 +223,34 @@ const deployConstAddress = function (
     });
 };
 
-const predictContractAddress = function (wallet, contractJson, salt, args) {
-  return axelarUtils
-    .predictContractConstant(
+const predictContractAddress = async function (wallet, contractJson, key, args) {
+  // return axelarUtils
+  //   .predictContractConstant(
+  //     CONST_ADDRESS_DEPLOYER_ADDR,
+  //     wallet,
+  //     contractJson,
+  //     salt,
+  //     args,
+  //   )
+  //   .catch((error) => {
+  //     console.error(error);
+  //     process.exit(1);
+  //   });
+
+    const deployer = new ethers.Contract(
       CONST_ADDRESS_DEPLOYER_ADDR,
+      constAddressDeployerJSON.abi,
       wallet,
-      contractJson,
-      salt,
-      args,
-    )
-    .catch((error) => {
-      console.error(error);
-      process.exit(1);
+    );
+    const salt = getSaltFromKey(key);
+    
+    const factory = new ethers.ContractFactory(contractJson.abi, contractJson.bytecode);
+    const bytecode = factory.getDeployTransaction(...args).data;
+    console.log('bytecode', bytecode)
+    console.log('address', wallet.address)
+    console.log('salt', salt)
+    return await deployer.deployedAddress(bytecode, wallet.address, salt).catch(error => {
+      console.error(error)
     });
 };
 

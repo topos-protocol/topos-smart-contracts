@@ -51,7 +51,7 @@
     "solhint": "^3.3.7"
   },
   "dependencies": {
-    "@axelar-network/axelar-gmp-sdk-solidity": "^2.0.0",
+    "@axelar-network/axelar-gmp-sdk-solidity": "^3.2.1",
     "ethers": "^5.7.2"
   }
 }
