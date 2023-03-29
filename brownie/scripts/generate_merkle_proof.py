@@ -162,13 +162,7 @@ def get_merkle_proof(block_txns, tx_index, tx_raw, txns_root):
 
     # Encode the proof as an RLP list with the type 1
     # (indicating a transaction proof)
-    proof_blob = rlp.encode(
-        [
-            PROOF_TYPE,
-            tx_index,
-            stack,
-        ]
-    ).hex()
+    proof_blob = rlp.encode(stack[0]).hex()
     print_json_output(proof_blob, tx_raw, txns_root)
     return proof_blob, tx_raw, txns_root
 
