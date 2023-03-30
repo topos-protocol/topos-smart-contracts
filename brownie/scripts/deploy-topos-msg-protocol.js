@@ -83,7 +83,9 @@ const main = async function (endpoint, _sequencerPrivateKey) {
   );
 
   if (tokenDeployerCode !== '0x') {
-    console.info(`TokenDeployer is already deployed!`);
+    console.info(
+      `TokenDeployer is already deployed! (${existingTokenDeployerAddress})`,
+    );
   } else {
     console.info(`Deploying TokenDeployer with constant address...`);
 
@@ -110,7 +112,9 @@ const main = async function (endpoint, _sequencerPrivateKey) {
   const toposCoreCode = await provider.getCode(existingToposCoreAddress);
 
   if (toposCoreCode !== '0x') {
-    console.info(`ToposCore is already deployed!`);
+    console.info(
+      `ToposCore is already deployed! (${existingToposCoreAddress})`,
+    );
   } else {
     console.info(`Deploying ToposCore...`);
 
@@ -144,7 +148,9 @@ const main = async function (endpoint, _sequencerPrivateKey) {
   );
 
   if (toposCoreProxyCode !== '0x') {
-    console.info(`ToposCoreProxy is already deployed!`);
+    console.info(
+      `ToposCoreProxy is already deployed! (${existingToposCoreProxyAddress})`,
+    );
   } else {
     console.info(`Deploying ToposCoreProxy with constant address...`);
 
