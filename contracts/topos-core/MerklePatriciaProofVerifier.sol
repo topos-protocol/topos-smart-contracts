@@ -187,11 +187,9 @@ library MerklePatriciaProofVerifier {
         return b == 0x80; /* empty byte string */
     }
 
-    function _merklePatriciaCompactDecode(bytes memory compact)
-        private
-        pure
-        returns (bool isLeaf, bytes memory nibbles)
-    {
+    function _merklePatriciaCompactDecode(
+        bytes memory compact
+    ) private pure returns (bool isLeaf, bytes memory nibbles) {
         require(compact.length > 0);
         uint256 firstNibble = (uint8(compact[0]) >> 4) & 0xF;
         uint256 skipNibbles;
@@ -236,11 +234,7 @@ library MerklePatriciaProofVerifier {
         assert(nibblesLength == nibbles.length);
     }
 
-    function _sharedPrefixLength(
-        uint256 xsOffset,
-        bytes memory xs,
-        bytes memory ys
-    ) private pure returns (uint256) {
+    function _sharedPrefixLength(uint256 xsOffset, bytes memory xs, bytes memory ys) private pure returns (uint256) {
         uint256 i;
         for (i = 0; i + xsOffset < xs.length && i < ys.length; i++) {
             if (xs[i + xsOffset] != ys[i]) {

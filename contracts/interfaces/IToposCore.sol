@@ -181,11 +181,7 @@ interface IToposCore {
 
     function getCheckpoints() external view returns (StreamPosition[] memory checkpoints);
 
-    function validateMerkleProof(
-        bytes memory proofBlob,
-        bytes32 txHash,
-        bytes32 txRoot
-    ) external view returns (bool);
+    function validateMerkleProof(bytes memory proofBlob, bytes32 txHash, bytes32 txRoot) external view returns (bool);
 
     function tokenDeployer() external view returns (address);
 

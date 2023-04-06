@@ -400,11 +400,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         }
     }
 
-    function validateMerkleProof(
-        bytes memory proofBlob,
-        bytes32 txHash,
-        bytes32 txRoot
-    ) public view returns (bool) {
+    function validateMerkleProof(bytes memory proofBlob, bytes32 txHash, bytes32 txRoot) public view returns (bool) {
         Proof memory proof = _decodeProofBlob(proofBlob);
         if (proof.kind != 1) revert UnsupportedProofKind();
         bytes memory txRawFromProof = MerklePatriciaProofVerifier.extractProofValue(txRoot, proof.mptKey, proof.stack);

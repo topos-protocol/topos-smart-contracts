@@ -13,6 +13,9 @@
     "build"
   ],
   "scripts": {
+    "clean": "npx hardhat clean",
+    "compile": "npx hardhat compile",
+    "coverage": "npx hardhat coverage",
     "deploy2:topos-msg-protocol": "node scripts/deploy-topos-msg-protocol.js",
     "kill-ganache": "for pname in $(pgrep -f ganache); do kill $pname; done",
     "lint": "npm run lint:sol && npm run lint:prettier && npm run lint:js",
@@ -23,9 +26,11 @@
     "lint:prettier:fix": "prettier --write 'contracts/**/*.sol'",
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "run-development": "(ganache --chain.chainId 1337 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 8545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)",
-    "run-development-two": "(ganache --chain.chainId 1338 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 7545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)"
+    "run-development-two": "(ganache --chain.chainId 1338 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 7545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)",
+    "slither": "npm run clean && slither . --detect reentrancy-eth,reentrancy-no-eth,reentrancy-unlimited-gas",
+    "test": "npx hardhat test"
   },
-  "dependencies": {
+  "devDependencies": {
     "@axelar-network/axelar-gmp-sdk-solidity": "^2.0.0",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@openzeppelin/contracts": "^4.7.2",

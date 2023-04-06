@@ -34,7 +34,7 @@ This project contains some smart contracts which inherit from [OpenZeppelin cont
 To compile run:
 
 ```
-$ npx hardhat compile
+$ npm run compile
 ```
 
 ## Tests
@@ -42,7 +42,7 @@ $ npx hardhat compile
 To run the tests:
 
 ```
-$ npx hardhat test
+$ npm run test
 ```
 
 ## Coverage
@@ -50,7 +50,7 @@ $ npx hardhat test
 To see the test coverage run:
 
 ```
-$ npx hardhat coverage
+npm run coverage
 ```
 
 ## Linting
@@ -68,6 +68,12 @@ To fix the format:
 ```
 $ npm run lint:fix
 ```
+
+To run Slither:
+  
+  ```
+  $ npm run slither
+  ```
 
 ## Deployment
 
