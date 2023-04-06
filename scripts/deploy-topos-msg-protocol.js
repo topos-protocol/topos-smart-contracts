@@ -1,10 +1,10 @@
 const axelarUtils = require('@axelar-network/axelar-gmp-sdk-solidity')
 const ethers = require('ethers')
 
-const tokenDeployerJSON = require('../build/contracts/TokenDeployer.json')
-const toposCoreJSON = require('../build/contracts/ToposCore.json')
-const toposCoreProxyJSON = require('../build/contracts/ToposCoreProxy.json')
-const toposCoreInterfaceJSON = require('../build/contracts/IToposCore.json')
+const tokenDeployerJSON = require('../artifacts/contracts/topos-core/TokenDeployer.sol/TokenDeployer.json')
+const toposCoreJSON = require('../artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json')
+const toposCoreProxyJSON = require('../artifacts/contracts/topos-core/ToposCoreProxy.sol/ToposCoreProxy.json')
+const toposCoreInterfaceJSON = require('../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json')
 
 const CONST_ADDRESS_DEPLOYER_ADDR = '0x0000000000000000000000000000000000001110'
 
