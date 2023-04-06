@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import {ToposExecutable} from "./../ToposExecutable.sol";
-import {SubnetId} from "./../../../interfaces/IToposCore.sol";
+import {SubnetId} from "./../../interfaces/IToposCore.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract CrossSubnetArbitraryCall is ToposExecutable {

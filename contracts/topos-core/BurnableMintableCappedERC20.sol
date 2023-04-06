@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import {IBurnableMintableCappedERC20} from "./../../interfaces/IBurnableMintableCappedERC20.sol";
+import {IBurnableMintableCappedERC20} from "./../interfaces/IBurnableMintableCappedERC20.sol";
 
 import {MintableCappedERC20} from "./MintableCappedERC20.sol";
 import {DepositHandler} from "./DepositHandler.sol";

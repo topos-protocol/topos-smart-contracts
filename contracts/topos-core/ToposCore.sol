@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {IToposCore, CertificateId, SubnetId} from "./../../interfaces/IToposCore.sol";
+import {IToposCore, CertificateId, SubnetId} from "./../interfaces/IToposCore.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IBurnableMintableCappedERC20} from "./../../interfaces/IBurnableMintableCappedERC20.sol";
-import {ITokenDeployer} from "./../../interfaces/ITokenDeployer.sol";
+import {IBurnableMintableCappedERC20} from "./../interfaces/IBurnableMintableCappedERC20.sol";
+import {ITokenDeployer} from "./../interfaces/ITokenDeployer.sol";
 
 import {AdminMultisigBase} from "./AdminMultisigBase.sol";
 import {DepositHandler} from "./DepositHandler.sol";

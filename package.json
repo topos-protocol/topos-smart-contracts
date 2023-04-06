@@ -19,9 +19,9 @@
     "lint:fix": "npm run lint:prettier:fix && npm run lint:js:fix",
     "lint:js": "prettier --loglevel warn --ignore-path .gitignore '**/*.{js,ts}' --check && eslint --ignore-path .gitignore .",
     "lint:js:fix": "prettier --loglevel warn --ignore-path .gitignore '**/*.{js,ts}' --write && eslint --ignore-path .gitignore . --fix",
-    "lint:prettier": "prettier -c 'contracts/**/*.sol' 'interfaces/**/*.sol'",
-    "lint:prettier:fix": "prettier --write 'contracts/**/*.sol' 'interfaces/**/*.sol'",
-    "lint:sol": "solhint 'contracts/**/*.sol' 'interfaces/**/*.sol'",
+    "lint:prettier": "prettier -c 'contracts/**/*.sol'",
+    "lint:prettier:fix": "prettier --write 'contracts/**/*.sol'",
+    "lint:sol": "solhint 'contracts/**/*.sol'",
     "run-development": "(ganache --chain.chainId 1337 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 8545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)",
     "run-development-two": "(ganache --chain.chainId 1338 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 7545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)"
   },

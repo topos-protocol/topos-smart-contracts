@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 import {EternalStorage} from "./EternalStorage.sol";
-import {IToposCore, SubnetId} from "./../../interfaces/IToposCore.sol";
+import {IToposCore, SubnetId} from "./../interfaces/IToposCore.sol";
 
 contract ToposCoreProxy is EternalStorage {
     /// @dev Storage slot with the address of the current factory. `keccak256('eip1967.proxy.implementation') - 1`.

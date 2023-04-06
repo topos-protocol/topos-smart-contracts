@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import {ITokenDeployer} from "./../../interfaces/ITokenDeployer.sol";
+import {ITokenDeployer} from "./../interfaces/ITokenDeployer.sol";
 
 import {BurnableMintableCappedERC20} from "./BurnableMintableCappedERC20.sol";
 

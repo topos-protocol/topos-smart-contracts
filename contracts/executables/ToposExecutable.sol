@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.9;
 
-import {IToposCore, CertificateId, SubnetId} from "./../../interfaces/IToposCore.sol";
-import {IToposExecutable} from "./../../interfaces/IToposExecutable.sol";
+import {IToposCore, CertificateId, SubnetId} from "./../interfaces/IToposCore.sol";
+import {IToposExecutable} from "./../interfaces/IToposExecutable.sol";
 
 contract ToposExecutable is IToposExecutable {
     IToposCore public toposCore;

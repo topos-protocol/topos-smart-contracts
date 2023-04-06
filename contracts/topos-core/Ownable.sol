@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import {IOwnable} from "./../../interfaces/IOwnable.sol";
+import {IOwnable} from "./../interfaces/IOwnable.sol";
 
 abstract contract Ownable is IOwnable {
     address public owner;
