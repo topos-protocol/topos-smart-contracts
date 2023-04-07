@@ -13,8 +13,8 @@
     "build"
   ],
   "scripts": {
+    "build": "npx hardhat compile",
     "clean": "npx hardhat clean",
-    "compile": "npx hardhat compile",
     "coverage": "npx hardhat coverage",
     "deploy": "node scripts/deploy.js",
     "deploy:topos-msg-protocol": "node scripts/deploy-topos-msg-protocol.js",
@@ -28,7 +28,6 @@
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "run-development": "(ganache --chain.chainId 1337 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 8545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)",
     "run-development-two": "(ganache --chain.chainId 1338 --chain.hardfork istanbul --wallet.totalAccounts 10 --wallet.mnemonic brownie --miner.blockGasLimit 12000000 --server.port 7545 --chain.vmErrorsOnRPCResponse true > /dev/null 2>&1 &)",
-    "slither": "npm run clean && slither . --detect reentrancy-eth,reentrancy-no-eth,reentrancy-unlimited-gas",
     "test": "npx hardhat test"
   },
   "devDependencies": {
