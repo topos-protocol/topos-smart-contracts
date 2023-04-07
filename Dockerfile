@@ -11,4 +11,4 @@ FROM base as lint
 RUN npm run lint
 
 FROM base as build
-RUN npm run compile
+RUN npm run build

@@ -29,12 +29,12 @@ $ npm install
 
 This project contains some smart contracts which inherit from [OpenZeppelin contracts](https://github.com/OpenZeppelin/openzeppelin-contracts). This should be installed automatically.
 
-## Compilation
+## Build
 
-To compile run:
+To build:
 
 ```
-$ npm run compile
+$ npm run build
 ```
 
 ## Tests
@@ -47,7 +47,7 @@ $ npm run test
 
 ## Coverage
 
-To see the test coverage run:
+To see the test coverage:
 
 ```
 npm run coverage
@@ -70,10 +70,10 @@ $ npm run lint:fix
 ```
 
 To run Slither:
-  
-  ```
-  $ npm run slither
-  ```
+
+```
+$ npm run slither
+```
 
 ## Deployment
 
