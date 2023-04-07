@@ -10,7 +10,7 @@
   "author": "Toposware",
   "main": "",
   "files": [
-    "build"
+    "artifacts"
   ],
   "scripts": {
     "build": "npx hardhat compile",
