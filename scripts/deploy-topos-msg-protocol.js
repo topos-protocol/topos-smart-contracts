@@ -201,6 +201,11 @@ const processContract = async function (
     return predictedContractAddress
   } else {
     console.info(`Deploying ${contractName} with constant address...`)
+    console.info(`wallet`, wallet)
+    console.info(`contractJson`, contractJson)
+    console.info(`salt`, salt)
+    console.info(`args`, args)
+    console.info(`gasLimit`, gasLimit)
 
     const newContractAddress = await deployConstAddress(
       wallet,
