@@ -69,12 +69,6 @@ To fix the format:
 $ npm run lint:fix
 ```
 
-To run Slither:
-
-```
-$ npm run slither
-```
-
 ## Deployment
 
 ### Deployment of a single contract with CREATE2
