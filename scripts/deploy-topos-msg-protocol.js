@@ -180,13 +180,6 @@ const processContract = async function (
 ) {
   console.info(`\nVerifying if ${contractName} is already deployed...`)
 
-  console.info(`Deploying ${contractName} with constant address...`)
-  console.info(`wallet`, wallet)
-  console.info(`contractJson`, contractJson)
-  console.info(`salt`, salt)
-  console.info(`args`, args)
-  console.info(`gasLimit`, gasLimit)
-
   const predictedContractAddress = await predictContractAddress(
     wallet,
     contractJson,
@@ -195,7 +188,7 @@ const processContract = async function (
   )
 
   const codeAtPredictedAddress = await wallet.provider.getCode(
-    predictContractAddress
+    predictedContractAddress
   )
 
   const thereIsCodeAtAddress = codeAtPredictedAddress !== '0x'
@@ -207,6 +200,8 @@ const processContract = async function (
 
     return predictedContractAddress
   } else {
+    console.info(`Deploying ${contractName} with constant address...`)
+
     const newContractAddress = await deployConstAddress(
       wallet,
       contractJson,
