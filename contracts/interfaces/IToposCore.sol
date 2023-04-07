@@ -106,6 +106,8 @@ interface IToposCore {
     |* Admin Functions *|
     \*******************/
 
+    function setNetworkSubnetId(SubnetId _networkSubnetId) external;
+
     function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
 
     function pushCertificate(bytes calldata certBytes, uint256 position) external;
