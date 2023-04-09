@@ -1,25 +1,25 @@
-const axelarUtils = require('@axelar-network/axelar-gmp-sdk-solidity')
-const ethers = require('ethers')
-const fs = require('fs')
+import { providers, utils, Wallet } from 'ethers'
+import fs from 'fs'
+
+import {
+  ContractOutputJSON,
+  deployContractConstant,
+} from './const-addr-deployer'
 
 const CONST_ADDRESS_DEPLOYER_ADDR = '0x0000000000000000000000000000000000001110'
 
-const main = async function (
-  endpoint,
-  contractJsonPath,
-  salt,
-  gasLimit = 0,
-  ...args
-) {
-  const provider = new ethers.providers.JsonRpcProvider(endpoint)
+const main = async function (..._args: any[]) {
+  const [providerEndpoint, contractJsonPath, salt, gasLimit = 0, ...args] =
+    _args
+  const provider = new providers.JsonRpcProvider(providerEndpoint)
   const privateKey = process.env.PRIVATE_KEY
 
-  if (!privateKey || !ethers.utils.isHexString(privateKey, 32)) {
+  if (!privateKey || !utils.isHexString(privateKey, 32)) {
     console.error('ERROR: Please provide a valid private key! (PRIVATE_KEY)')
     return
   }
 
-  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
+  const wallet = new Wallet(process.env.PRIVATE_KEY || '', provider)
 
   let rawdata
   try {
@@ -31,9 +31,9 @@ const main = async function (
     return
   }
 
-  let contractJson
+  let contractJson: ContractOutputJSON
   try {
-    contractJson = JSON.parse(rawdata)
+    contractJson = JSON.parse(rawdata.toString())
   } catch (error) {
     console.error(
       `ERROR: Could not parse the contract JSON file found at ${contractJsonPath}`
@@ -41,15 +41,14 @@ const main = async function (
     return
   }
 
-  axelarUtils
-    .deployContractConstant(
-      CONST_ADDRESS_DEPLOYER_ADDR,
-      wallet,
-      contractJson,
-      salt,
-      args,
-      gasLimit === 0 ? null : gasLimit
-    )
+  deployContractConstant(
+    CONST_ADDRESS_DEPLOYER_ADDR,
+    wallet,
+    contractJson,
+    salt,
+    args,
+    gasLimit === 0 ? null : gasLimit
+  )
     .then((contract) => {
       console.info(
         `Successfully deployed ${contractJsonPath.split('.json')[0]} at ${
