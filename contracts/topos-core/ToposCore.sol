@@ -356,10 +356,6 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         return tokenSet.keyAtIndex(index);
     }
 
-    function getNetworkSubnetId() public view returns (SubnetId) {
-        return networkSubnetId;
-    }
-
     function getCertificate(
         CertificateId certId
     )
