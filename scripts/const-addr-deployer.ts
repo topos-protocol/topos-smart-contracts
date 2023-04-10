@@ -5,11 +5,14 @@ import {
   Wallet,
   ContractInterface,
   BigNumber,
+  ContractTransaction,
 } from 'ethers'
 
 import ConstAddressDeployerJSON from '../artifacts/contracts/topos-core/ConstAddressDeployer.sol/ConstAddressDeployer.json'
 
 export type ContractOutputJSON = { abi: ContractInterface; bytecode: string }
+
+const CONST_ADDRESS_DEPLOYER_ADDR = '0x0000000000000000000000000000000000001110'
 
 const getSaltFromKey = (key: string) => {
   return utils.keccak256(
@@ -22,14 +25,11 @@ export const estimateGasForDeploy = async (
   contractJson: ContractOutputJSON,
   args: any[] = []
 ) => {
-  const deployerFactory = new ContractFactory(
+  const deployer = new Contract(
+    CONST_ADDRESS_DEPLOYER_ADDR,
     ConstAddressDeployerJSON.abi,
-    ConstAddressDeployerJSON.bytecode,
     wallet
   )
-
-  const deployer = await deployerFactory.deploy()
-  await deployer.deployed()
 
   const salt = getSaltFromKey('')
   const factory = new ContractFactory(contractJson.abi, contractJson.bytecode)
@@ -43,14 +43,11 @@ export const estimateGasForDeployAndInit = async (
   args: any[] = [],
   initArgs: any[] = []
 ) => {
-  const deployerFactory = new ContractFactory(
+  const deployer = new Contract(
+    CONST_ADDRESS_DEPLOYER_ADDR,
     ConstAddressDeployerJSON.abi,
-    ConstAddressDeployerJSON.bytecode,
     wallet
   )
-
-  const deployer = await deployerFactory.deploy()
-  await deployer.deployed()
 
   const salt = getSaltFromKey('')
   const factory = new ContractFactory(contractJson.abi, contractJson.bytecode)
@@ -64,7 +61,6 @@ export const estimateGasForDeployAndInit = async (
 }
 
 export const deployContractConstant = async (
-  deployerAddress: string,
   wallet: Wallet,
   contractJson: ContractOutputJSON,
   key: string,
@@ -72,34 +68,34 @@ export const deployContractConstant = async (
   gasLimit: number | null = null
 ) => {
   const deployer = new Contract(
-    deployerAddress,
+    CONST_ADDRESS_DEPLOYER_ADDR,
     ConstAddressDeployerJSON.abi,
     wallet
   )
   const salt = getSaltFromKey(key)
+
   const factory = new ContractFactory(contractJson.abi, contractJson.bytecode)
+
   const bytecode = factory.getDeployTransaction(...args).data
-  const gas =
-    gasLimit !== null
-      ? BigNumber.from(gasLimit) ||
-        (await estimateGasForDeploy(wallet, contractJson, args))
-      : null
-  const tx = await deployer.connect(wallet).deploy(
-    bytecode,
-    salt,
-    gas
-      ? {
-          gasLimit: BigInt(Math.floor(gas.toNumber() * 1.2)),
-        }
-      : {}
-  )
+
+  const gas = gasLimit
+    ? BigNumber.from(gasLimit)
+    : await estimateGasForDeploy(wallet, contractJson, args)
+
+  const tx: ContractTransaction = await deployer
+    .connect(wallet)
+    .deploy(bytecode, salt, {
+      gasLimit: BigInt(Math.floor(gas.toNumber() * 1.2)),
+    })
+
   await tx.wait()
+
   const address = await deployer.deployedAddress(bytecode, wallet.address, salt)
+
   return new Contract(address, contractJson.abi, wallet)
 }
 
 export const deployAndInitContractConstant = async (
-  deployerAddress: string,
   wallet: Wallet,
   contractJson: ContractOutputJSON,
   key: string,
@@ -108,7 +104,7 @@ export const deployAndInitContractConstant = async (
   gasLimit: number | null = null
 ) => {
   const deployer = new Contract(
-    deployerAddress,
+    CONST_ADDRESS_DEPLOYER_ADDR,
     ConstAddressDeployerJSON.abi,
     wallet
   )
@@ -128,14 +124,13 @@ export const deployAndInitContractConstant = async (
 }
 
 export const predictContractConstant = async (
-  deployerAddress: string,
   wallet: Wallet,
   contractJson: ContractOutputJSON,
   key: string,
   args: any[] = []
 ) => {
   const deployer = new Contract(
-    deployerAddress,
+    CONST_ADDRESS_DEPLOYER_ADDR,
     ConstAddressDeployerJSON.abi,
     wallet
   )

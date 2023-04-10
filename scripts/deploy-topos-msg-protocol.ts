@@ -10,8 +10,6 @@ import {
   predictContractConstant,
 } from './const-addr-deployer'
 
-const CONST_ADDRESS_DEPLOYER_ADDR = '0x0000000000000000000000000000000000001110'
-
 const main = async function (...args: string[]) {
   const [providerEndpoint, _sequencerPrivateKey] = args
   const provider = new providers.JsonRpcProvider(providerEndpoint)
@@ -41,7 +39,6 @@ const main = async function (...args: string[]) {
   )
 
   const subnetId = sanitizeHexString(sequencerPublicKey.substring(4))
-  console.log('Subnet Id:', subnetId)
 
   if (!utils.isHexString(toposDeployerPrivateKey, 32)) {
     console.error(
@@ -77,7 +74,9 @@ const main = async function (...args: string[]) {
     'TokenDeployer',
     wallet,
     tokenDeployerJSON,
-    tokenDeployerSalt
+    tokenDeployerSalt,
+    [],
+    8_000_000
   )
 
   const toposCoreAddress = await processContract(
@@ -136,36 +135,17 @@ const sanitizeHexString = function (hexString: string) {
   return hexString.startsWith('0x') ? hexString : `0x${hexString}`
 }
 
-const deployConstAddress = function (
+const processContract = async function (
+  contractName: string,
   wallet: Wallet,
   contractJson: ContractOutputJSON,
   salt: string,
-  args: any[],
-  gasLimit: number
+  args: any[] = [],
+  gasLimit: number | null = null
 ) {
-  return deployContractConstant(
-    CONST_ADDRESS_DEPLOYER_ADDR,
-    wallet,
-    contractJson,
-    salt,
-    args,
-    gasLimit === 0 ? null : gasLimit
-  )
-    .then((contract) => contract.address)
-    .catch((error) => {
-      console.error(error)
-      process.exit(1)
-    })
-}
+  console.info(`\nVerifying if ${contractName} is already deployed...`)
 
-const predictContractAddress = function (
-  wallet: Wallet,
-  contractJson: ContractOutputJSON,
-  salt: string,
-  args: any[]
-) {
-  return predictContractConstant(
-    CONST_ADDRESS_DEPLOYER_ADDR,
+  const predictedContractAddress = await predictContractConstant(
     wallet,
     contractJson,
     salt,
@@ -174,24 +154,6 @@ const predictContractAddress = function (
     console.error(error)
     process.exit(1)
   })
-}
-
-const processContract = async function (
-  contractName: string,
-  wallet: Wallet,
-  contractJson: ContractOutputJSON,
-  salt: string,
-  args: any[] = [],
-  gasLimit = 0
-) {
-  console.info(`\nVerifying if ${contractName} is already deployed...`)
-
-  const predictedContractAddress = await predictContractAddress(
-    wallet,
-    contractJson,
-    salt,
-    args
-  )
 
   const codeAtPredictedAddress = await wallet.provider.getCode(
     predictedContractAddress
@@ -208,20 +170,18 @@ const processContract = async function (
   } else {
     console.info(`Deploying ${contractName} with constant address...`)
 
-    const newContractAddress = await deployConstAddress(
+    const newContractAddress = await deployContractConstant(
       wallet,
       contractJson,
       salt,
       args,
       gasLimit
     )
-
-    if (newContractAddress !== predictedContractAddress) {
-      console.error(
-        `ERROR: New contract address doesn't match the predicted address! (New: ${newContractAddress} | Predicted: ${predictedContractAddress})`
-      )
-      process.exit(1)
-    }
+      .then((contract) => contract.address)
+      .catch((error) => {
+        console.error(error)
+        process.exit(1)
+      })
 
     console.info(
       `Successfully deployed ${contractName} at ${newContractAddress}\n`

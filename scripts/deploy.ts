@@ -6,11 +6,8 @@ import {
   deployContractConstant,
 } from './const-addr-deployer'
 
-const CONST_ADDRESS_DEPLOYER_ADDR = '0x0000000000000000000000000000000000001110'
-
 const main = async function (..._args: any[]) {
-  const [providerEndpoint, contractJsonPath, salt, gasLimit = 0, ...args] =
-    _args
+  const [providerEndpoint, contractJsonPath, salt, gasLimit, ...args] = _args
   const provider = new providers.JsonRpcProvider(providerEndpoint)
   const privateKey = process.env.PRIVATE_KEY
 
@@ -41,14 +38,7 @@ const main = async function (..._args: any[]) {
     return
   }
 
-  deployContractConstant(
-    CONST_ADDRESS_DEPLOYER_ADDR,
-    wallet,
-    contractJson,
-    salt,
-    args,
-    gasLimit === 0 ? null : gasLimit
-  )
+  await deployContractConstant(wallet, contractJson, salt, args, gasLimit)
     .then((contract) => {
       console.info(
         `Successfully deployed ${contractJsonPath.split('.json')[0]} at ${
