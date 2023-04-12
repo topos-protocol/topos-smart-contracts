@@ -57,8 +57,4 @@ function encodeTokenParam(
   )
 }
 
-export {
-  deployNewToposCore,
-  encodeCertParam,
-  encodeTokenParam,
-}
+export { deployNewToposCore, encodeCertParam, encodeTokenParam }
