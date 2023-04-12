@@ -18,8 +18,133 @@ describe('SubnetRegistrator', () => {
       'SubnetRegistrator'
     )
     subnetRegistrator = await SubnetRegistrator.deploy()
+  })
 
-    await subnetRegistrator.registerSubnet(
+  describe('registerSubnet', () => {
+    it('reverts if the subnet is already registered', async () => {
+      await registerSubnet(
+        endpoint,
+        logoURL,
+        subnetName,
+        subnetId,
+        subnetCurrencySymbol,
+        chainId
+      )
+      await expect(
+        registerSubnet(
+          endpoint,
+          logoURL,
+          subnetName,
+          subnetId,
+          subnetCurrencySymbol,
+          chainId
+        )
+      ).to.be.revertedWith('Bytes32Set: key already exists in the set.')
+    })
+
+    it('registers a subnet', async () => {
+      await registerSubnet(
+        endpoint,
+        logoURL,
+        subnetName,
+        subnetId,
+        subnetCurrencySymbol,
+        chainId
+      )
+      const subnet = await subnetRegistrator.subnets(subnetId)
+      expect(subnet.name).to.equal(subnetName)
+      expect(subnet.currencySymbol).to.equal(subnetCurrencySymbol)
+      expect(subnet.endpoint).to.equal(endpoint)
+      expect(subnet.logoURL).to.equal(logoURL)
+      expect(subnet.chainId).to.equal(chainId)
+    })
+
+    it('gets the subnet count', async () => {
+      await registerSubnet(
+        endpoint,
+        logoURL,
+        subnetName,
+        subnetId,
+        subnetCurrencySymbol,
+        chainId
+      )
+      const count = await subnetRegistrator.getSubnetCount()
+      expect(count).to.equal(1)
+    })
+
+    it('gets the subnet at a given index', async () => {
+      await registerSubnet(
+        endpoint,
+        logoURL,
+        subnetName,
+        subnetId,
+        subnetCurrencySymbol,
+        chainId
+      )
+      const id = await subnetRegistrator.getSubnetIdAtIndex(0)
+      expect(id).to.equal(subnetId)
+    })
+
+    it('checks if a subnet exists', async () => {
+      await registerSubnet(
+        endpoint,
+        logoURL,
+        subnetName,
+        subnetId,
+        subnetCurrencySymbol,
+        chainId
+      )
+      const exists = await subnetRegistrator.subnetExists(subnetId)
+      expect(exists).to.be.true
+    })
+
+    it('emits a new subnet registered event', async () => {
+      await expect(
+        registerSubnet(
+          endpoint,
+          logoURL,
+          subnetName,
+          subnetId,
+          subnetCurrencySymbol,
+          chainId
+        )
+      )
+        .to.emit(subnetRegistrator, 'NewSubnetRegistered')
+        .withArgs(subnetId)
+    })
+  })
+
+  describe('removeSubnet', () => {
+    it('reverts when removing a non-existent subnet', async () => {
+      await expect(removeSubnet(subnetId)).to.be.revertedWith(
+        'Bytes32Set: key does not exist in the set.'
+      )
+    })
+
+    it('emit a subnet removed event', async () => {
+      await registerSubnet(
+        endpoint,
+        logoURL,
+        subnetName,
+        subnetId,
+        subnetCurrencySymbol,
+        chainId
+      )
+      await expect(removeSubnet(subnetId))
+        .to.emit(subnetRegistrator, 'SubnetRemoved')
+        .withArgs(subnetId)
+    })
+  })
+
+  async function registerSubnet(
+    endpoint: string,
+    logoURL: string,
+    subnetName: string,
+    subnetId: string,
+    subnetCurrencySymbol: string,
+    chainId: number
+  ) {
+    return await subnetRegistrator.registerSubnet(
       endpoint,
       logoURL,
       subnetName,
@@ -27,43 +152,9 @@ describe('SubnetRegistrator', () => {
       subnetCurrencySymbol,
       chainId
     )
-  })
+  }
 
-  it('registers a subnet', async () => {
-    const subnet = await subnetRegistrator.subnets(subnetId)
-    expect(subnet.name).to.equal(subnetName)
-    expect(subnet.currencySymbol).to.equal(subnetCurrencySymbol)
-    expect(subnet.endpoint).to.equal(endpoint)
-    expect(subnet.logoURL).to.equal(logoURL)
-    expect(subnet.chainId).to.equal(chainId)
-  })
-
-  it('reverts when removing a non-existent subnet', async () => {
-    await subnetRegistrator.removeSubnet(subnetId)
-    await expect(subnetRegistrator.removeSubnet(subnetId)).to.be.revertedWith(
-      'Bytes32Set: key does not exist in the set.'
-    )
-  })
-
-  it('removes a subnet', async () => {
-    const tx = await subnetRegistrator.removeSubnet(subnetId)
-    await expect(tx)
-      .to.emit(subnetRegistrator, 'SubnetRemoved')
-      .withArgs(subnetId)
-  })
-
-  it('returns the number of subnets', async () => {
-    const count = await subnetRegistrator.getSubnetCount()
-    expect(count).to.equal(1)
-  })
-
-  it('returns the subnet at a given index', async () => {
-    const id = await subnetRegistrator.getSubnetIdAtIndex(0)
-    expect(id).to.equal(subnetId)
-  })
-
-  it('checks if a subnet exists', async () => {
-    const exists = await subnetRegistrator.subnetExists(subnetId)
-    expect(exists).to.be.true
-  })
+  async function removeSubnet(subnetId: string) {
+    return await subnetRegistrator.removeSubnet(subnetId)
+  }
 })
