@@ -8,8 +8,7 @@ describe('SubnetRegistrator', () => {
   const endpoint = 'http://127.0.0.1'
   const logoURL = 'http://image-url.com'
   const subnetName = 'Test Subnet'
-  const subnetId =
-    '0x0000000000000000000000000000000000000000000000000000000000000001'
+  const subnetId = ethers.utils.formatBytes32String('subnetId')
   const subnetCurrencySymbol = 'SUB'
   const chainId = 1
 

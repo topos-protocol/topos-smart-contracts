@@ -5,8 +5,7 @@ import { expect } from 'chai'
 describe('TCENodeRegistrator', () => {
   let tceNodeRegistrator: Contract
 
-  const peerId =
-    '0x0000000000000000000000000000000000000000000000000000000000000001'
+  const peerId = ethers.utils.formatBytes32String('peerId')
 
   beforeEach(async () => {
     const TCENodeRegistrator = await ethers.getContractFactory(
