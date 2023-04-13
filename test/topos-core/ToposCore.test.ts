@@ -1,5 +1,6 @@
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import * as cc from './shared/constants/certificates'
 import * as tc from './shared/constants/tokens'
 import * as txc from './shared/constants/transactions'
@@ -55,7 +56,9 @@ describe('ToposCore', () => {
 
   describe('pushCertificate', () => {
     it('reverts if the certificate is already stored', async () => {
-      const { defaultCert, toposCore } = await deployToposCoreFixture()
+      const { defaultCert, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.pushCertificate(defaultCert, cc.CERT_POS_1)
       await expect(
         toposCore.pushCertificate(defaultCert, cc.CERT_POS_1)
@@ -63,13 +66,17 @@ describe('ToposCore', () => {
     })
 
     it('gets the certificate count', async () => {
-      const { defaultCert, toposCore } = await deployToposCoreFixture()
+      const { defaultCert, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.pushCertificate(defaultCert, cc.CERT_POS_1)
       expect(await toposCore.getCertificateCount()).to.equal(1)
     })
 
     it('gets count for multiple certificates', async () => {
-      const { defaultCert, toposCore } = await deployToposCoreFixture()
+      const { defaultCert, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       var testCheckpoints = [
         [cc.CERT_ID_1, cc.CERT_POS_1, cc.SOURCE_SUBNET_ID_1],
         [cc.CERT_ID_2, cc.CERT_POS_2, cc.SOURCE_SUBNET_ID_2],
@@ -93,14 +100,16 @@ describe('ToposCore', () => {
     })
 
     it('gets the certificate at a given index', async () => {
-      const { defaultCert, toposCore } = await deployToposCoreFixture()
+      const { defaultCert, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.pushCertificate(defaultCert, cc.CERT_POS_1)
       const certificate = await toposCore.getCertIdAtIndex(0)
       expect(certificate).to.equal(cc.CERT_ID_1)
     })
 
     it('updates the source subnet set correctly', async () => {
-      const { toposCore } = await deployToposCoreFixture()
+      const { toposCore } = await loadFixture(deployToposCoreFixture)
       var testCheckpoints = [
         [cc.CERT_ID_1, cc.CERT_POS_1, cc.SOURCE_SUBNET_ID_1],
         [cc.CERT_ID_2, cc.CERT_POS_2, cc.SOURCE_SUBNET_ID_2],
@@ -162,7 +171,9 @@ describe('ToposCore', () => {
     })
 
     it('emits a certificate stored event', async () => {
-      const { defaultCert, toposCore } = await deployToposCoreFixture()
+      const { defaultCert, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       const tx = await toposCore.pushCertificate(defaultCert, cc.CERT_POS_1)
       await expect(tx)
         .to.emit(toposCore, 'CertStored')
@@ -172,13 +183,17 @@ describe('ToposCore', () => {
 
   describe('deployToken', () => {
     it('gets the token count', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.deployToken(defaultToken)
       expect(await toposCore.getTokenCount()).to.equal(1)
     })
 
     it('gets count for multiple tokens', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.deployToken(defaultToken)
       const tokenTwo = testUtils.encodeTokenParam(
         tc.TOKEN_NAME,
@@ -192,7 +207,9 @@ describe('ToposCore', () => {
     })
 
     it('gets token by token key hash', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       const tx = await toposCore.deployToken(defaultToken)
       const { logs } = await tx.wait()
       const tokenAddress = logs[0]['address']
@@ -203,7 +220,9 @@ describe('ToposCore', () => {
     })
 
     it('reverts if the token is already deployed', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.deployToken(defaultToken)
       await expect(toposCore.deployToken(defaultToken))
         .to.be.revertedWithCustomError(toposCore, 'TokenAlreadyExists')
@@ -212,7 +231,9 @@ describe('ToposCore', () => {
     })
 
     it('emits a token deployed event', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       const tx = await toposCore.deployToken(defaultToken)
       const { logs } = await tx.wait()
       const tokenAddress = logs[0]['address']
@@ -224,7 +245,7 @@ describe('ToposCore', () => {
 
   describe('setTokenDailyMintLimits', () => {
     it('reverts if the token symbol length mismatch mint limit length', async () => {
-      const { toposCore } = await deployToposCoreFixture()
+      const { toposCore } = await loadFixture(deployToposCoreFixture)
       const symbols = ['ABC', 'XYZ']
       const mintLimits = [1]
       await expect(
@@ -236,7 +257,7 @@ describe('ToposCore', () => {
     })
 
     it('revert if the token symbol does not exist', async () => {
-      const { toposCore } = await deployToposCoreFixture()
+      const { toposCore } = await loadFixture(deployToposCoreFixture)
       const symbols = ['ABC']
       const mintLimits = [1]
       await expect(toposCore.setTokenDailyMintLimits(symbols, mintLimits))
@@ -245,7 +266,9 @@ describe('ToposCore', () => {
     })
 
     it('emits a token daily mint limits set event', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.deployToken(defaultToken)
       const symbols = [tc.TOKEN_SYMBOL_X]
       const mintLimits = [1]
@@ -323,7 +346,7 @@ describe('ToposCore', () => {
 
   describe('setup', () => {
     it('reverts if not called by the ToposCoreProxy contract', async () => {
-      const { setupParams } = await deployToposCoreFixture()
+      const { setupParams } = await loadFixture(deployToposCoreFixture)
       const toposCoreImplementation = await testUtils.deployNewToposCore()
       await expect(
         toposCoreImplementation.setup(setupParams)
@@ -333,7 +356,7 @@ describe('ToposCore', () => {
 
   describe('executeAssetTransfer', () => {
     it('deploys a token with zero mint limit', async () => {
-      const { ERC20, toposCore } = await deployToposCoreFixture()
+      const { ERC20, toposCore } = await loadFixture(deployToposCoreFixture)
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       const token = testUtils.encodeTokenParam(
         tc.TOKEN_NAME,
@@ -375,7 +398,9 @@ describe('ToposCore', () => {
     })
 
     it('reverts if the index of tx data is out of range', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.deployToken(defaultToken)
       await expect(
         toposCore.executeAssetTransfer(
@@ -388,7 +413,9 @@ describe('ToposCore', () => {
     })
 
     it('reverts if the certificate is not present', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.deployToken(defaultToken)
       await expect(
         toposCore.executeAssetTransfer(
@@ -401,7 +428,9 @@ describe('ToposCore', () => {
     })
 
     it('reverts if the merkle proof is invalid', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       await toposCore.deployToken(defaultToken)
       var certificate = testUtils.encodeCertParam(
@@ -427,7 +456,9 @@ describe('ToposCore', () => {
     })
 
     it('reverts if the target subnet id is mismatched', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_1)
       await toposCore.deployToken(defaultToken)
       var certificate = testUtils.encodeCertParam(
@@ -453,7 +484,9 @@ describe('ToposCore', () => {
     })
 
     it('reverts if the transaction is already executed', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       await toposCore.deployToken(defaultToken)
       var certificate = testUtils.encodeCertParam(
@@ -485,7 +518,7 @@ describe('ToposCore', () => {
     })
 
     it('reverts if the token is not deployed yet', async () => {
-      const { toposCore } = await deployToposCoreFixture()
+      const { toposCore } = await loadFixture(deployToposCoreFixture)
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       var certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
@@ -510,7 +543,9 @@ describe('ToposCore', () => {
     })
 
     it('reverts if the daily mint limit is exceeded', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       await toposCore.deployToken(defaultToken)
       var certificate = testUtils.encodeCertParam(
@@ -536,7 +571,9 @@ describe('ToposCore', () => {
     })
 
     it('emits the Transfer success event', async () => {
-      const { ERC20, defaultToken, toposCore } = await deployToposCoreFixture()
+      const { ERC20, defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       const tx = await toposCore.deployToken(defaultToken)
       const { logs } = await tx.wait()
@@ -572,7 +609,7 @@ describe('ToposCore', () => {
   })
   describe('sendToken', () => {
     it('reverts if the token is not deployed yet', async () => {
-      const { toposCore } = await deployToposCoreFixture()
+      const { toposCore } = await loadFixture(deployToposCoreFixture)
       await expect(
         toposCore.sendToken(
           cc.TARGET_SUBNET_ID_4,
@@ -586,7 +623,9 @@ describe('ToposCore', () => {
     })
 
     it('reverts if the send amount is zero', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.deployToken(defaultToken)
       await expect(
         toposCore.sendToken(
@@ -599,7 +638,9 @@ describe('ToposCore', () => {
     })
 
     it('reverts if the send amount is not approved', async () => {
-      const { defaultToken, toposCore } = await deployToposCoreFixture()
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.deployToken(defaultToken)
       await expect(
         toposCore.sendToken(
@@ -614,8 +655,9 @@ describe('ToposCore', () => {
     })
 
     it('emits a token sent event', async () => {
-      const { admin, ERC20, defaultToken, toposCore } =
-        await deployToposCoreFixture()
+      const { admin, ERC20, defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       const tx = await toposCore.deployToken(defaultToken)
       const { logs } = await tx.wait()
@@ -655,7 +697,7 @@ describe('ToposCore', () => {
 
   describe('upgrade', () => {
     it('reverts if the code hash does not match', async () => {
-      const { admin, toposCore } = await deployToposCoreFixture()
+      const { admin, toposCore } = await loadFixture(deployToposCoreFixture)
       const toposCoreImplementation = await testUtils.deployNewToposCore()
       const setupParams = ethers.utils.defaultAbiCoder.encode(
         ['address[]', 'uint256'],
@@ -671,7 +713,7 @@ describe('ToposCore', () => {
     })
 
     it('emits an upgraded event', async () => {
-      const { admin, toposCore } = await deployToposCoreFixture()
+      const { admin, toposCore } = await loadFixture(deployToposCoreFixture)
       const toposCoreImplementation = await testUtils.deployNewToposCore()
       expect(await toposCore.implementation()).to.not.equal(
         toposCoreImplementation.address
