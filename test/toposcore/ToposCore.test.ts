@@ -16,7 +16,7 @@ describe('ToposCore', () => {
       [cc.TARGET_SUBNET_ID_4, cc.TARGET_SUBNET_ID_5],
       cc.VERIFIER,
       cc.CERT_ID_1,
-      cc.DUMMY_START_PROOF,
+      cc.DUMMY_STARK_PROOF,
       cc.DUMMY_SIGNATURE
     )
     const defaultToken = testUtils.encodeTokenParam(
@@ -84,7 +84,7 @@ describe('ToposCore', () => {
           [cc.TARGET_SUBNET_ID_4],
           cc.VERIFIER,
           checkpoint[0].toString(),
-          cc.DUMMY_START_PROOF,
+          cc.DUMMY_STARK_PROOF,
           cc.DUMMY_SIGNATURE
         )
         await toposCore.pushCertificate(certificate, checkpoint[1])
@@ -116,7 +116,7 @@ describe('ToposCore', () => {
           [cc.TARGET_SUBNET_ID_4],
           cc.VERIFIER,
           checkpoint[0].toString(),
-          cc.DUMMY_START_PROOF,
+          cc.DUMMY_STARK_PROOF,
           cc.DUMMY_SIGNATURE
         )
         await toposCore.pushCertificate(certificate, checkpoint[1])
@@ -142,7 +142,7 @@ describe('ToposCore', () => {
         [cc.TARGET_SUBNET_ID_4],
         cc.VERIFIER,
         updatedTestCheckpoint[0].toString(),
-        cc.DUMMY_START_PROOF,
+        cc.DUMMY_STARK_PROOF,
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(
@@ -354,7 +354,7 @@ describe('ToposCore', () => {
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
-        cc.DUMMY_START_PROOF,
+        cc.DUMMY_STARK_PROOF,
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
@@ -412,7 +412,7 @@ describe('ToposCore', () => {
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
-        cc.DUMMY_START_PROOF,
+        cc.DUMMY_STARK_PROOF,
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
@@ -438,7 +438,7 @@ describe('ToposCore', () => {
         [cc.SOURCE_SUBNET_ID_1], // target subnet id in the hardcoded tx = SOURCE_SUBNET_ID_2
         cc.VERIFIER,
         cc.CERT_ID_1,
-        cc.DUMMY_START_PROOF,
+        cc.DUMMY_STARK_PROOF,
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
@@ -464,7 +464,7 @@ describe('ToposCore', () => {
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
-        cc.DUMMY_START_PROOF,
+        cc.DUMMY_STARK_PROOF,
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
@@ -495,7 +495,7 @@ describe('ToposCore', () => {
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
-        cc.DUMMY_START_PROOF,
+        cc.DUMMY_STARK_PROOF,
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
@@ -521,7 +521,7 @@ describe('ToposCore', () => {
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
-        cc.DUMMY_START_PROOF,
+        cc.DUMMY_STARK_PROOF,
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
@@ -550,7 +550,7 @@ describe('ToposCore', () => {
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
-        cc.DUMMY_START_PROOF,
+        cc.DUMMY_STARK_PROOF,
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)

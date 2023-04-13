@@ -1,3 +1,5 @@
+import { ethers } from 'hardhat'
+
 export const CERT_ID_1 =
   '0x0000000000000000000000000000000000000000000000000000000000000001'
 export const CERT_ID_2 =
@@ -10,8 +12,8 @@ export const CERT_POS_1 = 1
 export const CERT_POS_2 = 2
 export const CERT_POS_3 = 3
 export const CERT_POS_4 = 4
-export const DUMMY_START_PROOF = '0x0123456789abcdef'
-export const DUMMY_SIGNATURE = '0xabcdef0123456789'
+export const DUMMY_STARK_PROOF = ethers.utils.formatBytes32String('starkProof')
+export const DUMMY_SIGNATURE = ethers.utils.formatBytes32String('signature')
 export const PREV_CERT_ID_0 =
   '0x0000000000000000000000000000000000000000000000000000000000000000'
 export const SOURCE_SUBNET_ID_1 =
