@@ -74,10 +74,8 @@ describe('ToposCore', () => {
     })
 
     it('gets count for multiple certificates', async () => {
-      const { defaultCert, toposCore } = await loadFixture(
-        deployToposCoreFixture
-      )
-      var testCheckpoints = [
+      const { toposCore } = await loadFixture(deployToposCoreFixture)
+      const testCheckpoints = [
         [cc.CERT_ID_1, cc.CERT_POS_1, cc.SOURCE_SUBNET_ID_1],
         [cc.CERT_ID_2, cc.CERT_POS_2, cc.SOURCE_SUBNET_ID_2],
       ]
@@ -110,7 +108,7 @@ describe('ToposCore', () => {
 
     it('updates the source subnet set correctly', async () => {
       const { toposCore } = await loadFixture(deployToposCoreFixture)
-      var testCheckpoints = [
+      const testCheckpoints = [
         [cc.CERT_ID_1, cc.CERT_POS_1, cc.SOURCE_SUBNET_ID_1],
         [cc.CERT_ID_2, cc.CERT_POS_2, cc.SOURCE_SUBNET_ID_2],
         [cc.CERT_ID_3, cc.CERT_POS_3, cc.SOURCE_SUBNET_ID_3],
@@ -369,11 +367,11 @@ describe('ToposCore', () => {
       const { logs } = await tx.wait()
       const tokenAddress = logs[0]['address']
       const erc20 = ERC20.attach(tokenAddress)
-      var certificate = testUtils.encodeCertParam(
+      const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NormalTransaction.TX_ROOT,
+        txc.NORMAL_TRANSACTION.txRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -384,9 +382,9 @@ describe('ToposCore', () => {
       await expect(
         toposCore.executeAssetTransfer(
           txc.INDEX_OF_TX_DATA_33,
-          txc.NormalTransaction.PROOF_BLOB,
-          txc.NormalTransaction.TX_RAW,
-          txc.NormalTransaction.TX_ROOT
+          txc.NORMAL_TRANSACTION.proofBlob,
+          txc.NORMAL_TRANSACTION.txRaw,
+          txc.NORMAL_TRANSACTION.txRoot
         )
       )
         .to.emit(erc20, 'Transfer')
@@ -405,9 +403,9 @@ describe('ToposCore', () => {
       await expect(
         toposCore.executeAssetTransfer(
           txc.OUT_OF_BOUNDS_INDEX_OF_DATA_295, // index of tx data is out of range
-          txc.NormalTransaction.PROOF_BLOB,
-          txc.NormalTransaction.TX_RAW,
-          txc.NormalTransaction.TX_ROOT
+          txc.NORMAL_TRANSACTION.proofBlob,
+          txc.NORMAL_TRANSACTION.txRaw,
+          txc.NORMAL_TRANSACTION.txRoot
         )
       ).to.be.revertedWithCustomError(toposCore, 'IllegalMemoryAccess')
     })
@@ -420,9 +418,9 @@ describe('ToposCore', () => {
       await expect(
         toposCore.executeAssetTransfer(
           txc.INDEX_OF_TX_DATA_33,
-          txc.NormalTransaction.PROOF_BLOB,
-          txc.NormalTransaction.TX_RAW,
-          txc.NormalTransaction.TX_ROOT
+          txc.NORMAL_TRANSACTION.proofBlob,
+          txc.NORMAL_TRANSACTION.txRaw,
+          txc.NORMAL_TRANSACTION.txRoot
         )
       ).to.be.revertedWithCustomError(toposCore, 'CertNotPresent')
     })
@@ -433,11 +431,11 @@ describe('ToposCore', () => {
       )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       await toposCore.deployToken(defaultToken)
-      var certificate = testUtils.encodeCertParam(
+      const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NormalTransaction.TX_ROOT,
+        txc.NORMAL_TRANSACTION.txRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -445,12 +443,13 @@ describe('ToposCore', () => {
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
+      const fakeProofBlob = txc.NORMAL_TRANSACTION.optionalData
       await expect(
         toposCore.executeAssetTransfer(
           txc.INDEX_OF_TX_DATA_33,
-          txc.NormalTransaction.FAKE_PROOF_BLOB,
-          txc.NormalTransaction.TX_RAW,
-          txc.NormalTransaction.TX_ROOT
+          fakeProofBlob ? fakeProofBlob[0] : '0x',
+          txc.NORMAL_TRANSACTION.txRaw,
+          txc.NORMAL_TRANSACTION.txRoot
         )
       ).to.be.reverted
     })
@@ -461,11 +460,11 @@ describe('ToposCore', () => {
       )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_1)
       await toposCore.deployToken(defaultToken)
-      var certificate = testUtils.encodeCertParam(
+      const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NormalTransaction.TX_ROOT,
+        txc.NORMAL_TRANSACTION.txRoot,
         [cc.SOURCE_SUBNET_ID_1], // target subnet id in the hardcoded tx = SOURCE_SUBNET_ID_2
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -476,9 +475,9 @@ describe('ToposCore', () => {
       await expect(
         toposCore.executeAssetTransfer(
           txc.INDEX_OF_TX_DATA_33,
-          txc.NormalTransaction.PROOF_BLOB,
-          txc.NormalTransaction.TX_RAW,
-          txc.NormalTransaction.TX_ROOT
+          txc.NORMAL_TRANSACTION.proofBlob,
+          txc.NORMAL_TRANSACTION.txRaw,
+          txc.NORMAL_TRANSACTION.txRoot
         )
       ).to.be.revertedWithCustomError(toposCore, 'InvalidSubnetId')
     })
@@ -489,11 +488,11 @@ describe('ToposCore', () => {
       )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       await toposCore.deployToken(defaultToken)
-      var certificate = testUtils.encodeCertParam(
+      const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NormalTransaction.TX_ROOT,
+        txc.NORMAL_TRANSACTION.txRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -503,16 +502,16 @@ describe('ToposCore', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await toposCore.executeAssetTransfer(
         txc.INDEX_OF_TX_DATA_33,
-        txc.NormalTransaction.PROOF_BLOB,
-        txc.NormalTransaction.TX_RAW,
-        txc.NormalTransaction.TX_ROOT
+        txc.NORMAL_TRANSACTION.proofBlob,
+        txc.NORMAL_TRANSACTION.txRaw,
+        txc.NORMAL_TRANSACTION.txRoot
       )
       await expect(
         toposCore.executeAssetTransfer(
           txc.INDEX_OF_TX_DATA_33,
-          txc.NormalTransaction.PROOF_BLOB,
-          txc.NormalTransaction.TX_RAW,
-          txc.NormalTransaction.TX_ROOT
+          txc.NORMAL_TRANSACTION.proofBlob,
+          txc.NORMAL_TRANSACTION.txRaw,
+          txc.NORMAL_TRANSACTION.txRoot
         )
       ).to.be.revertedWithCustomError(toposCore, 'TransferAlreadyExecuted')
     })
@@ -520,11 +519,11 @@ describe('ToposCore', () => {
     it('reverts if the token is not deployed yet', async () => {
       const { toposCore } = await loadFixture(deployToposCoreFixture)
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
-      var certificate = testUtils.encodeCertParam(
+      const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NormalTransaction.TX_ROOT,
+        txc.NORMAL_TRANSACTION.txRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -535,9 +534,9 @@ describe('ToposCore', () => {
       await expect(
         toposCore.executeAssetTransfer(
           txc.INDEX_OF_TX_DATA_33,
-          txc.NormalTransaction.PROOF_BLOB,
-          txc.NormalTransaction.TX_RAW,
-          txc.NormalTransaction.TX_ROOT
+          txc.NORMAL_TRANSACTION.proofBlob,
+          txc.NORMAL_TRANSACTION.txRaw,
+          txc.NORMAL_TRANSACTION.txRoot
         )
       ).to.be.revertedWithCustomError(toposCore, 'TokenDoesNotExist')
     })
@@ -548,11 +547,11 @@ describe('ToposCore', () => {
       )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       await toposCore.deployToken(defaultToken)
-      var certificate = testUtils.encodeCertParam(
+      const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.MintExceedTransaction.TX_ROOT,
+        txc.MINT_EXCEED_TRANSACTION.txRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -563,9 +562,9 @@ describe('ToposCore', () => {
       await expect(
         toposCore.executeAssetTransfer(
           txc.INDEX_OF_TX_DATA_33,
-          txc.MintExceedTransaction.PROOF_BLOB,
-          txc.MintExceedTransaction.TX_RAW,
-          txc.MintExceedTransaction.TX_ROOT
+          txc.MINT_EXCEED_TRANSACTION.proofBlob,
+          txc.MINT_EXCEED_TRANSACTION.txRaw,
+          txc.MINT_EXCEED_TRANSACTION.txRoot
         )
       ).to.be.revertedWithCustomError(toposCore, 'ExceedDailyMintLimit')
     })
@@ -579,11 +578,11 @@ describe('ToposCore', () => {
       const { logs } = await tx.wait()
       const tokenAddress = logs[0]['address']
       const erc20 = ERC20.attach(tokenAddress)
-      var certificate = testUtils.encodeCertParam(
+      const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NormalTransaction.TX_ROOT,
+        txc.NORMAL_TRANSACTION.txRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -594,9 +593,9 @@ describe('ToposCore', () => {
       await expect(
         toposCore.executeAssetTransfer(
           txc.INDEX_OF_TX_DATA_33,
-          txc.NormalTransaction.PROOF_BLOB,
-          txc.NormalTransaction.TX_RAW,
-          txc.NormalTransaction.TX_ROOT
+          txc.NORMAL_TRANSACTION.proofBlob,
+          txc.NORMAL_TRANSACTION.txRaw,
+          txc.NORMAL_TRANSACTION.txRoot
         )
       )
         .to.emit(erc20, 'Transfer')
@@ -607,6 +606,7 @@ describe('ToposCore', () => {
         )
     })
   })
+
   describe('sendToken', () => {
     it('reverts if the token is not deployed yet', async () => {
       const { toposCore } = await loadFixture(deployToposCoreFixture)
