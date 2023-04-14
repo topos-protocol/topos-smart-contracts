@@ -569,6 +569,34 @@ describe('ToposCore', () => {
       ).to.be.revertedWithCustomError(toposCore, 'ExceedDailyMintLimit')
     })
 
+    it('reverts if trying to mint for zero address', async () => {
+      const { defaultToken, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
+      await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
+      await toposCore.deployToken(defaultToken)
+      const certificate = testUtils.encodeCertParam(
+        cc.PREV_CERT_ID_0,
+        cc.SOURCE_SUBNET_ID_1,
+        cc.STATE_ROOT_MAX,
+        txc.ZERO_ADDRESS_TRANSACTION.txRoot,
+        [cc.SOURCE_SUBNET_ID_2],
+        cc.VERIFIER,
+        cc.CERT_ID_1,
+        cc.DUMMY_STARK_PROOF,
+        cc.DUMMY_SIGNATURE
+      )
+      await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
+      await expect(
+        toposCore.executeAssetTransfer(
+          txc.INDEX_OF_TX_DATA_33,
+          txc.ZERO_ADDRESS_TRANSACTION.proofBlob,
+          txc.ZERO_ADDRESS_TRANSACTION.txRaw,
+          txc.ZERO_ADDRESS_TRANSACTION.txRoot
+        )
+      ).to.be.revertedWith('ERC20: mint to the zero address')
+    })
+
     it('emits the Transfer success event', async () => {
       const { ERC20, defaultToken, toposCore } = await loadFixture(
         deployToposCoreFixture
