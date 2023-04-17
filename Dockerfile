@@ -7,6 +7,9 @@ COPY . .
 FROM base as test
 RUN npm run test
 
+FROM base as format
+RUN npm run format
+
 FROM base as lint
 RUN npm run lint
 
