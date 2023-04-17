@@ -2,13 +2,14 @@ import { providers, utils, Wallet } from 'ethers'
 import fs from 'fs'
 
 import {
+  Arg,
   ContractOutputJSON,
   deployContractConstant,
 } from './const-addr-deployer'
 
-const main = async function (..._args: any[]) {
+const main = async function (..._args: Arg[]) {
   const [providerEndpoint, contractJsonPath, salt, gasLimit, ...args] = _args
-  const provider = new providers.JsonRpcProvider(providerEndpoint)
+  const provider = new providers.JsonRpcProvider(<string>providerEndpoint)
   const privateKey = process.env.PRIVATE_KEY
 
   if (!privateKey || !utils.isHexString(privateKey, 32)) {
@@ -38,12 +39,18 @@ const main = async function (..._args: any[]) {
     return
   }
 
-  await deployContractConstant(wallet, contractJson, salt, args, gasLimit)
+  await deployContractConstant(
+    wallet,
+    contractJson,
+    <string>salt,
+    args,
+    <number>gasLimit
+  )
     .then((contract) => {
       console.info(
-        `Successfully deployed ${contractJsonPath.split('.json')[0]} at ${
-          contract.address
-        }`
+        `Successfully deployed ${
+          (<string>contractJsonPath).split('.json')[0]
+        } at ${contract.address}`
       )
     })
     .catch(console.error)

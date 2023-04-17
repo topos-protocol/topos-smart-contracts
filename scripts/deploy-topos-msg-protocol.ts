@@ -5,6 +5,7 @@ import toposCoreJSON from '../artifacts/contracts/topos-core/ToposCore.sol/Topos
 import toposCoreProxyJSON from '../artifacts/contracts/topos-core/ToposCoreProxy.sol/ToposCoreProxy.json'
 import toposCoreInterfaceJSON from '../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json'
 import {
+  Arg,
   ContractOutputJSON,
   deployContractConstant,
   predictContractConstant,
@@ -140,7 +141,7 @@ const processContract = async function (
   wallet: Wallet,
   contractJson: ContractOutputJSON,
   salt: string,
-  args: any[] = [],
+  args: Arg[] = [],
   gasLimit: number | null = null
 ) {
   console.info(`\nVerifying if ${contractName} is already deployed...`)

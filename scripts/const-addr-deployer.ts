@@ -10,6 +10,8 @@ import {
 
 import ConstAddressDeployerJSON from '../artifacts/contracts/topos-core/ConstAddressDeployer.sol/ConstAddressDeployer.json'
 
+export type Arg = string | number
+
 export type ContractOutputJSON = { abi: ContractInterface; bytecode: string }
 
 const CONST_ADDRESS_DEPLOYER_ADDR = '0x0000000000000000000000000000000000001110'
@@ -23,7 +25,7 @@ const getSaltFromKey = (key: string) => {
 export const estimateGasForDeploy = async (
   wallet: Wallet,
   contractJson: ContractOutputJSON,
-  args: any[] = []
+  args: Arg[] = []
 ) => {
   const deployer = new Contract(
     CONST_ADDRESS_DEPLOYER_ADDR,
@@ -40,8 +42,8 @@ export const estimateGasForDeploy = async (
 export const estimateGasForDeployAndInit = async (
   wallet: Wallet,
   contractJson: ContractOutputJSON,
-  args: any[] = [],
-  initArgs: any[] = []
+  args: Arg[] = [],
+  initArgs: Arg[] = []
 ) => {
   const deployer = new Contract(
     CONST_ADDRESS_DEPLOYER_ADDR,
@@ -64,7 +66,7 @@ export const deployContractConstant = async (
   wallet: Wallet,
   contractJson: ContractOutputJSON,
   key: string,
-  args: any[] = [],
+  args: Arg[] = [],
   gasLimit: number | null = null
 ) => {
   const deployer = new Contract(
@@ -99,8 +101,8 @@ export const deployAndInitContractConstant = async (
   wallet: Wallet,
   contractJson: ContractOutputJSON,
   key: string,
-  args: any[] = [],
-  initArgs: any[] = [],
+  args: Arg[] = [],
+  initArgs: Arg[] = [],
   gasLimit: number | null = null
 ) => {
   const deployer = new Contract(
@@ -127,7 +129,7 @@ export const predictContractConstant = async (
   wallet: Wallet,
   contractJson: ContractOutputJSON,
   key: string,
-  args: any[] = []
+  args: Arg[] = []
 ) => {
   const deployer = new Contract(
     CONST_ADDRESS_DEPLOYER_ADDR,
