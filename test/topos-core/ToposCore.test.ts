@@ -465,7 +465,7 @@ describe('ToposCore', () => {
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
         txc.NORMAL_TRANSACTION.txRoot,
-        [cc.SOURCE_SUBNET_ID_1], // target subnet id in the hardcoded tx = SOURCE_SUBNET_ID_2
+        [cc.SOURCE_SUBNET_ID_1], // invalid target subnet id (can't be the source subnet)
         cc.VERIFIER,
         cc.CERT_ID_1,
         cc.DUMMY_STARK_PROOF,
