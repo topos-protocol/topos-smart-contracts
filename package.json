@@ -13,9 +13,9 @@
     "artifacts"
   ],
   "scripts": {
-    "build": "npx hardhat compile",
-    "clean": "npx hardhat clean",
-    "coverage": "npx hardhat coverage",
+    "build": "hardhat compile",
+    "clean": "hardhat clean",
+    "coverage": "hardhat coverage",
     "deploy": "ts-node scripts/deploy.ts",
     "deploy:topos-msg-protocol": "ts-node scripts/deploy-topos-msg-protocol.ts",
     "format": "npm run format:sol && npm run format:ts",
@@ -30,7 +30,7 @@
     "lint:sol:fix": "npm run lint:sol -- --fix",
     "lint:ts": "eslint --ext .ts .",
     "lint:ts:fix": "npm run lint:ts -- --fix",
-    "test": "npx hardhat test"
+    "test": "hardhat test"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
@@ -43,7 +43,7 @@
     "chai": "^4.3.7",
     "eslint": "^8.38.0",
     "eslint-config-prettier": "^8.8.0",
-    "hardhat": "2.13.0",
+    "hardhat": "2.14.0",
     "mocha": "^10.2.0",
     "prettier": "^2.8.4",
     "prettier-plugin-solidity": "^1.1.3",
