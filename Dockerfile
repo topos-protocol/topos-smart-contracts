@@ -14,4 +14,6 @@ FROM base as lint
 RUN npm run lint
 
 FROM base as build
-RUN npm run build
+# TMP
+# RUN npm run build
+RUN while [ ! -d ./artifacts ]; do npm run build; done
