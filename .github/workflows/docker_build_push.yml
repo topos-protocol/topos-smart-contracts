@@ -53,7 +53,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: |
-            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}:build-cache-${{ env.GITHUB_REF_SLUG_URL }}-${{ github.workflow }}
-            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}:build-cache-main-${{ github.workflow }}
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}:build-cache-${{ env.GITHUB_REF_SLUG_URL }}-${{ github.workflow }},mode=max
+          # cache-from: |
+          #   type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}:build-cache-${{ env.GITHUB_REF_SLUG_URL }}-${{ github.workflow }}
+          #   type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}:build-cache-main-${{ github.workflow }}
+          # cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}:build-cache-${{ env.GITHUB_REF_SLUG_URL }}-${{ github.workflow }},mode=max
