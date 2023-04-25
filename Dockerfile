@@ -1,4 +1,4 @@
-FROM node:lts-slim as base
+FROM node:18.15.0-slim as base
 WORKDIR /usr/src/app
 COPY package*.json .
 RUN npm install
