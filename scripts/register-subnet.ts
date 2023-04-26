@@ -63,7 +63,7 @@ const main = async function (...args: string[]) {
 
   const subnetId = sanitizeHexString(sequencerPublicKey.substring(4))
 
-  if (!utils.isHexString(subnetRegistratorAddress, 32)) {
+  if (!utils.isHexString(subnetRegistratorAddress, 20)) {
     console.error(
       'ERROR: Please provide a valid SubnetRegistrator contract address!'
     )
