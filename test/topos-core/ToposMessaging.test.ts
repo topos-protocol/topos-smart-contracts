@@ -1,14 +1,27 @@
-import { ethers } from 'hardhat'
+import { Contract } from 'ethers'
+import { deployConstAddress } from './shared/utils/deploy_const'
+import { ethers, network } from 'hardhat'
 import { expect } from 'chai'
+import { getMptProof } from './shared/utils/mpt_proof'
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
+import { JsonRpcProvider } from '@ethersproject/providers'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+
 import * as cc from './shared/constants/certificates'
 import * as tc from './shared/constants/tokens'
 import * as txc from './shared/constants/transactions'
 import * as testUtils from './shared/utils/common'
 
+import * as tokenDeployerJSON from '../../artifacts/contracts/topos-core/TokenDeployer.sol/TokenDeployer.json'
+import { ERC20__factory, ToposMessaging } from '../../typechain-types'
+
 describe('ToposMessaging', () => {
   async function deployToposMessagingFixture() {
-    const [admin] = await ethers.getSigners()
+    await network.provider.send('hardhat_reset')
+    const tokenDeployerSalt = ethers.utils.keccak256(
+      Buffer.from('TokenDeployer')
+    )
+    const [admin, receiver] = await ethers.getSigners()
     const defaultCert = testUtils.encodeCertParam(
       cc.PREV_CERT_ID_0,
       cc.SOURCE_SUBNET_ID_1,
@@ -23,40 +36,62 @@ describe('ToposMessaging', () => {
     const defaultToken = testUtils.encodeTokenParam(
       tc.TOKEN_NAME,
       tc.TOKEN_SYMBOL_X,
-      tc.MINT_CAP_1_000_000,
+      tc.MINT_CAP_100_000_000,
       ethers.constants.AddressZero,
-      tc.DAILY_MINT_LIMIT_100
+      tc.DAILY_MINT_LIMIT_100,
+      tc.INITIAL_SUPPLY_10_000_000
     )
     const setupParams = ethers.utils.defaultAbiCoder.encode(
       ['address[]', 'uint256'],
       [[admin.address], 1]
     )
 
+    const ConstAddressDeployer = await ethers.getContractFactory(
+      'ConstAddressDeployer'
+    )
+    const ERC20 = await ethers.getContractFactory('ERC20')
     const TokenDeployer = await ethers.getContractFactory('TokenDeployer')
     const ToposCore = await ethers.getContractFactory('ToposCore')
     const ToposCoreProxy = await ethers.getContractFactory('ToposCoreProxy')
-    const ERC20 = await ethers.getContractFactory('ERC20')
     const ToposMessaging = await ethers.getContractFactory('ToposMessaging')
 
-    const tokenDeployer = await TokenDeployer.deploy()
+    const constAddressDeployer = await ConstAddressDeployer.deploy()
+
+    const tokenDeployerAddress = await deployConstAddress(
+      constAddressDeployer.address,
+      await ethers.getSigner(admin.address),
+      tokenDeployerJSON,
+      tokenDeployerSalt,
+      []
+    )
+    const tokenDeployer = TokenDeployer.attach(tokenDeployerAddress)
+
     const toposCoreImplementation = await ToposCore.deploy()
     const toposCoreProxy = await ToposCoreProxy.deploy(
       toposCoreImplementation.address,
       setupParams
     )
     const toposCore = ToposCore.attach(toposCoreProxy.address)
+
     const toposMessaging = await ToposMessaging.deploy(
       tokenDeployer.address,
       toposCore.address
     )
+    const toposMessagingContract = new ethers.Contract(
+      toposMessaging.address,
+      ToposMessaging.interface,
+      admin
+    )
 
     return {
       admin,
+      receiver,
       defaultCert,
       defaultToken,
       ERC20,
       toposCore,
       toposMessaging,
+      toposMessagingContract,
     }
   }
 
@@ -77,9 +112,10 @@ describe('ToposMessaging', () => {
       const tokenTwo = testUtils.encodeTokenParam(
         tc.TOKEN_NAME,
         tc.TOKEN_SYMBOL_Y,
-        tc.MINT_CAP_1_000_000,
+        tc.MINT_CAP_100_000_000,
         ethers.constants.AddressZero,
-        tc.DAILY_MINT_LIMIT_100
+        tc.DAILY_MINT_LIMIT_100,
+        tc.INITIAL_SUPPLY_10_000_000
       )
       await toposMessaging.deployToken(tokenTwo)
       expect(await toposMessaging.getTokenCount()).to.equal(2)
@@ -90,23 +126,85 @@ describe('ToposMessaging', () => {
         deployToposMessagingFixture
       )
       const tx = await toposMessaging.deployToken(defaultToken)
-      const { logs } = await tx.wait()
-      const tokenAddress = logs[0]['address']
+      const txReceipt = await tx.wait()
+      const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
+      const tokenAddress = logs?.args?.tokenAddress
       const tokenKeyHash = await toposMessaging.getTokenKeyAtIndex(0)
       const token = await toposMessaging.tokens(tokenKeyHash)
       expect(token[0]).to.equal(tc.TOKEN_SYMBOL_X)
       expect(token[1]).to.equal(tokenAddress)
     })
 
-    it('reverts if the token is already deployed', async () => {
+    it('reverts if a deployer deploys a token with the same symbol twice', async () => {
       const { defaultToken, toposMessaging } = await loadFixture(
         deployToposMessagingFixture
       )
       await toposMessaging.deployToken(defaultToken)
-      await expect(toposMessaging.deployToken(defaultToken))
-        .to.be.revertedWithCustomError(toposMessaging, 'TokenAlreadyExists')
-        .withArgs(tc.TOKEN_SYMBOL_X)
+      await expect(
+        toposMessaging.deployToken(defaultToken)
+      ).to.be.revertedWithCustomError(toposMessaging, 'TokenDeployFailed')
       expect(await toposMessaging.getTokenCount()).to.equal(1)
+    })
+
+    it('reverts if the token is already deployed', async () => {
+      const { defaultToken, toposMessaging } = await loadFixture(
+        deployToposMessagingFixture
+      )
+      const tx = await toposMessaging.deployToken(defaultToken)
+      const txReceipt = await tx.wait()
+      const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
+      const tokenAddress = logs?.args?.tokenAddress
+      const token = testUtils.encodeTokenParam(
+        tc.TOKEN_NAME,
+        tc.TOKEN_SYMBOL_X,
+        tc.MINT_CAP_100_000_000,
+        tokenAddress,
+        tc.DAILY_MINT_LIMIT_100,
+        tc.INITIAL_SUPPLY_10_000_000
+      )
+      await expect(
+        toposMessaging.deployToken(token)
+      ).to.be.revertedWithCustomError(toposMessaging, 'TokenAlreadyExists')
+    })
+
+    it('reverts if the token is an external token', async () => {
+      const [extToken] = await ethers.getSigners()
+      const { toposMessaging } = await loadFixture(deployToposMessagingFixture)
+      const token = testUtils.encodeTokenParam(
+        tc.TOKEN_NAME,
+        tc.TOKEN_SYMBOL_X,
+        tc.MINT_CAP_100_000_000,
+        extToken.address,
+        tc.DAILY_MINT_LIMIT_100,
+        tc.INITIAL_SUPPLY_10_000_000
+      )
+      await expect(
+        toposMessaging.deployToken(token)
+      ).to.be.revertedWithCustomError(toposMessaging, 'UnsupportedTokenType')
+      expect(await toposMessaging.getTokenCount()).to.equal(0)
+    })
+
+    it('allows two separate deployers to deploy tokens with same symbol', async () => {
+      const [deployerOne, deployerTwo] = await ethers.getSigners()
+      const { defaultToken, toposMessaging } = await loadFixture(
+        deployToposMessagingFixture
+      )
+      const toposMessagingOne = toposMessaging.connect(deployerOne)
+      const txOne = await toposMessagingOne.deployToken(defaultToken)
+      const { logs: logsOne } = await txOne.wait()
+      const tokenAddressOne = logsOne[0]['address']
+      await expect(txOne)
+        .to.emit(toposMessaging, 'TokenDeployed')
+        .withArgs(tc.TOKEN_SYMBOL_X, tokenAddressOne)
+
+      const toposMessagingTwo = toposMessaging.connect(deployerTwo)
+      const txTwo = await toposMessagingTwo.deployToken(defaultToken)
+      const { logs: logsTwo } = await txTwo.wait()
+      const tokenAddressTwo = logsTwo[0]['address']
+      await expect(txTwo)
+        .to.emit(toposMessaging, 'TokenDeployed')
+        .withArgs(tc.TOKEN_SYMBOL_X, tokenAddressTwo)
+      expect(tokenAddressOne).to.not.equal(tokenAddressTwo)
     })
 
     it('emits a token deployed event', async () => {
@@ -114,8 +212,9 @@ describe('ToposMessaging', () => {
         deployToposMessagingFixture
       )
       const tx = await toposMessaging.deployToken(defaultToken)
-      const { logs } = await tx.wait()
-      const tokenAddress = logs[0]['address']
+      const txReceipt = await tx.wait()
+      const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
+      const tokenAddress = logs?.args?.tokenAddress
       await expect(tx)
         .to.emit(toposMessaging, 'TokenDeployed')
         .withArgs(tc.TOKEN_SYMBOL_X, tokenAddress)
@@ -160,26 +259,47 @@ describe('ToposMessaging', () => {
 
   describe('executeAssetTransfer', () => {
     it('deploys a token with zero mint limit', async () => {
-      const { ERC20, toposCore, toposMessaging } = await loadFixture(
-        deployToposMessagingFixture
-      )
+      const {
+        admin,
+        receiver,
+        ERC20,
+        toposCore,
+        toposMessaging,
+        toposMessagingContract,
+      } = await loadFixture(deployToposMessagingFixture)
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       const token = testUtils.encodeTokenParam(
         tc.TOKEN_NAME,
         tc.TOKEN_SYMBOL_X,
-        tc.MINT_CAP_1_000_000,
+        tc.MINT_CAP_100_000_000,
         ethers.constants.AddressZero,
-        0
+        0,
+        tc.INITIAL_SUPPLY_10_000_000
       )
       const tx = await toposMessaging.deployToken(token)
-      const { logs } = await tx.wait()
-      const tokenAddress = logs[0]['address']
+      const txReceipt = await tx.wait()
+      const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
+      const tokenAddress = logs?.args?.tokenAddress
       const erc20 = ERC20.attach(tokenAddress)
+      await erc20.approve(toposMessaging.address, tc.SEND_AMOUNT_50)
+
+      const sendToken = await sendTokenTx(
+        toposMessagingContract,
+        ethers.provider,
+        receiver.address,
+        admin,
+        cc.SOURCE_SUBNET_ID_2,
+        tokenAddress
+      )
+
+      const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
+        await getMptProof(sendToken, ethers.provider)
+
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NORMAL_TRANSACTION.txRoot,
+        transactionsRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -189,61 +309,105 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         toposMessaging.executeAssetTransfer(
-          txc.INDEX_OF_TX_DATA_33,
-          txc.NORMAL_TRANSACTION.proofBlob,
-          txc.NORMAL_TRANSACTION.txRaw,
-          txc.NORMAL_TRANSACTION.txRoot
+          indexOfTxData,
+          proofBlob,
+          txRaw,
+          transactionsRoot
         )
       )
         .to.emit(erc20, 'Transfer')
         .withArgs(
           ethers.constants.AddressZero,
-          tc.RECIPIENT_ADDRESS, // default address in the hardcoded tx
-          tc.SEND_AMOUNT_50 // default amount sent in the hardcoded tx
+          receiver.address,
+          tc.SEND_AMOUNT_50
         )
     })
 
     it('reverts if the index of tx data is out of range', async () => {
-      const { defaultToken, toposMessaging } = await loadFixture(
-        deployToposMessagingFixture
-      )
-      await toposMessaging.deployToken(defaultToken)
+      const {
+        admin,
+        receiver,
+        defaultToken,
+        ERC20,
+        toposMessaging,
+        toposMessagingContract,
+      } = await loadFixture(deployToposMessagingFixture)
+      const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
+        await deployDefaultToken(
+          admin,
+          receiver,
+          ERC20,
+          defaultToken,
+          toposMessaging,
+          toposMessagingContract
+        )
+
+      const outOfBoundsMax = 300
       await expect(
         toposMessaging.executeAssetTransfer(
-          txc.OUT_OF_BOUNDS_INDEX_OF_DATA_295, // index of tx data is out of range
-          txc.NORMAL_TRANSACTION.proofBlob,
-          txc.NORMAL_TRANSACTION.txRaw,
-          txc.NORMAL_TRANSACTION.txRoot
+          indexOfTxData + outOfBoundsMax,
+          proofBlob,
+          txRaw,
+          transactionsRoot
         )
       ).to.be.revertedWithCustomError(toposMessaging, 'IllegalMemoryAccess')
     })
 
     it('reverts if the certificate is not present', async () => {
-      const { defaultToken, toposMessaging } = await loadFixture(
-        deployToposMessagingFixture
-      )
-      await toposMessaging.deployToken(defaultToken)
+      const {
+        admin,
+        receiver,
+        defaultToken,
+        ERC20,
+        toposMessaging,
+        toposMessagingContract,
+      } = await loadFixture(deployToposMessagingFixture)
+      const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
+        await deployDefaultToken(
+          admin,
+          receiver,
+          ERC20,
+          defaultToken,
+          toposMessaging,
+          toposMessagingContract
+        )
+
       await expect(
         toposMessaging.executeAssetTransfer(
-          txc.INDEX_OF_TX_DATA_33,
-          txc.NORMAL_TRANSACTION.proofBlob,
-          txc.NORMAL_TRANSACTION.txRaw,
-          txc.NORMAL_TRANSACTION.txRoot
+          indexOfTxData,
+          proofBlob,
+          txRaw,
+          transactionsRoot
         )
       ).to.be.revertedWithCustomError(toposMessaging, 'CertNotPresent')
     })
 
     it('reverts if the merkle proof is invalid', async () => {
-      const { defaultToken, toposCore, toposMessaging } = await loadFixture(
-        deployToposMessagingFixture
-      )
+      const {
+        admin,
+        receiver,
+        defaultToken,
+        ERC20,
+        toposCore,
+        toposMessaging,
+        toposMessagingContract,
+      } = await loadFixture(deployToposMessagingFixture)
+      const { indexOfTxData, transactionsRoot, txRaw } =
+        await deployDefaultToken(
+          admin,
+          receiver,
+          ERC20,
+          defaultToken,
+          toposMessaging,
+          toposMessagingContract
+        )
+
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
-      await toposMessaging.deployToken(defaultToken)
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NORMAL_TRANSACTION.txRoot,
+        transactionsRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -251,29 +415,44 @@ describe('ToposMessaging', () => {
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
-      const fakeProofBlob = txc.NORMAL_TRANSACTION.optionalData
+      const fakeProofBlob = '0x01'
       await expect(
         toposMessaging.executeAssetTransfer(
-          txc.INDEX_OF_TX_DATA_33,
-          fakeProofBlob ? fakeProofBlob[0] : '0x',
-          txc.NORMAL_TRANSACTION.txRaw,
-          txc.NORMAL_TRANSACTION.txRoot
+          indexOfTxData,
+          fakeProofBlob,
+          txRaw,
+          transactionsRoot
         )
       ).to.be.reverted
     })
 
     it('reverts if the target subnet id is mismatched', async () => {
-      const { defaultToken, toposCore, toposMessaging } = await loadFixture(
-        deployToposMessagingFixture
-      )
-      await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_1)
-      await toposMessaging.deployToken(defaultToken)
+      const {
+        admin,
+        receiver,
+        defaultToken,
+        ERC20,
+        toposCore,
+        toposMessaging,
+        toposMessagingContract,
+      } = await loadFixture(deployToposMessagingFixture)
+      const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
+        await deployDefaultToken(
+          admin,
+          receiver,
+          ERC20,
+          defaultToken,
+          toposMessaging,
+          toposMessagingContract
+        )
+
+      await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_1) // target subnet id = SOURCE_SUBNET_ID_2
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NORMAL_TRANSACTION.txRoot,
-        [cc.SOURCE_SUBNET_ID_1], // target subnet id in the hardcoded tx = SOURCE_SUBNET_ID_2
+        transactionsRoot,
+        [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
         cc.DUMMY_STARK_PROOF,
@@ -282,25 +461,40 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         toposMessaging.executeAssetTransfer(
-          txc.INDEX_OF_TX_DATA_33,
-          txc.NORMAL_TRANSACTION.proofBlob,
-          txc.NORMAL_TRANSACTION.txRaw,
-          txc.NORMAL_TRANSACTION.txRoot
+          indexOfTxData,
+          proofBlob,
+          txRaw,
+          transactionsRoot
         )
       ).to.be.revertedWithCustomError(toposMessaging, 'InvalidSubnetId')
     })
 
     it('reverts if the transaction is already executed', async () => {
-      const { defaultToken, toposCore, toposMessaging } = await loadFixture(
-        deployToposMessagingFixture
-      )
+      const {
+        admin,
+        receiver,
+        defaultToken,
+        ERC20,
+        toposCore,
+        toposMessaging,
+        toposMessagingContract,
+      } = await loadFixture(deployToposMessagingFixture)
+      const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
+        await deployDefaultToken(
+          admin,
+          receiver,
+          ERC20,
+          defaultToken,
+          toposMessaging,
+          toposMessagingContract
+        )
+
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
-      await toposMessaging.deployToken(defaultToken)
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NORMAL_TRANSACTION.txRoot,
+        transactionsRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -309,17 +503,17 @@ describe('ToposMessaging', () => {
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await toposMessaging.executeAssetTransfer(
-        txc.INDEX_OF_TX_DATA_33,
-        txc.NORMAL_TRANSACTION.proofBlob,
-        txc.NORMAL_TRANSACTION.txRaw,
-        txc.NORMAL_TRANSACTION.txRoot
+        indexOfTxData,
+        proofBlob,
+        txRaw,
+        transactionsRoot
       )
       await expect(
         toposMessaging.executeAssetTransfer(
-          txc.INDEX_OF_TX_DATA_33,
-          txc.NORMAL_TRANSACTION.proofBlob,
-          txc.NORMAL_TRANSACTION.txRaw,
-          txc.NORMAL_TRANSACTION.txRoot
+          indexOfTxData,
+          proofBlob,
+          txRaw,
+          transactionsRoot
         )
       ).to.be.revertedWithCustomError(toposMessaging, 'TransferAlreadyExecuted')
     })
@@ -333,7 +527,7 @@ describe('ToposMessaging', () => {
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NORMAL_TRANSACTION.txRoot,
+        txc.UNKNOWN_TOKEN_TRANSACTION.txRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -343,10 +537,10 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         toposMessaging.executeAssetTransfer(
-          txc.INDEX_OF_TX_DATA_33,
-          txc.NORMAL_TRANSACTION.proofBlob,
-          txc.NORMAL_TRANSACTION.txRaw,
-          txc.NORMAL_TRANSACTION.txRoot
+          txc.INDEX_OF_TX_DATA_36,
+          txc.UNKNOWN_TOKEN_TRANSACTION.proofBlob,
+          txc.UNKNOWN_TOKEN_TRANSACTION.txRaw,
+          txc.UNKNOWN_TOKEN_TRANSACTION.txRoot
         )
       ).to.be.revertedWithCustomError(toposMessaging, 'TokenDoesNotExist')
     })
@@ -371,7 +565,7 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         toposMessaging.executeAssetTransfer(
-          txc.INDEX_OF_TX_DATA_33,
+          txc.INDEX_OF_TX_DATA_36,
           txc.MINT_EXCEED_TRANSACTION.proofBlob,
           txc.MINT_EXCEED_TRANSACTION.txRaw,
           txc.MINT_EXCEED_TRANSACTION.txRoot
@@ -399,7 +593,7 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         toposMessaging.executeAssetTransfer(
-          txc.INDEX_OF_TX_DATA_33,
+          txc.INDEX_OF_TX_DATA_36,
           txc.ZERO_ADDRESS_TRANSACTION.proofBlob,
           txc.ZERO_ADDRESS_TRANSACTION.txRaw,
           txc.ZERO_ADDRESS_TRANSACTION.txRoot
@@ -408,18 +602,30 @@ describe('ToposMessaging', () => {
     })
 
     it('emits the Transfer success event', async () => {
-      const { ERC20, defaultToken, toposCore, toposMessaging } =
-        await loadFixture(deployToposMessagingFixture)
+      const {
+        admin,
+        receiver,
+        defaultToken,
+        ERC20,
+        toposCore,
+        toposMessaging,
+        toposMessagingContract,
+      } = await loadFixture(deployToposMessagingFixture)
+      const { erc20, indexOfTxData, proofBlob, transactionsRoot, txRaw } =
+        await deployDefaultToken(
+          admin,
+          receiver,
+          ERC20,
+          defaultToken,
+          toposMessaging,
+          toposMessagingContract
+        )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
-      const tx = await toposMessaging.deployToken(defaultToken)
-      const { logs } = await tx.wait()
-      const tokenAddress = logs[0]['address']
-      const erc20 = ERC20.attach(tokenAddress)
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.NORMAL_TRANSACTION.txRoot,
+        transactionsRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -429,46 +635,53 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         toposMessaging.executeAssetTransfer(
-          txc.INDEX_OF_TX_DATA_33,
-          txc.NORMAL_TRANSACTION.proofBlob,
-          txc.NORMAL_TRANSACTION.txRaw,
-          txc.NORMAL_TRANSACTION.txRoot
+          indexOfTxData,
+          proofBlob,
+          txRaw,
+          transactionsRoot
         )
       )
         .to.emit(erc20, 'Transfer')
         .withArgs(
           ethers.constants.AddressZero,
-          tc.RECIPIENT_ADDRESS, // default address in the hardcoded tx
-          tc.SEND_AMOUNT_50 // default amount sent in the hardcoded tx
+          receiver.address,
+          tc.SEND_AMOUNT_50
         )
+      await expect(erc20.balanceOf(receiver.address)).to.eventually.equal(
+        tc.SEND_AMOUNT_50
+      )
     })
   })
 
   describe('sendToken', () => {
     it('reverts if the token is not deployed yet', async () => {
+      const [token] = await ethers.getSigners()
       const { toposMessaging } = await loadFixture(deployToposMessagingFixture)
       await expect(
         toposMessaging.sendToken(
           cc.TARGET_SUBNET_ID_4,
           tc.RECIPIENT_ADDRESS,
-          tc.TOKEN_SYMBOL_X,
+          token.address,
           tc.SEND_AMOUNT_50
         )
       )
         .to.be.revertedWithCustomError(toposMessaging, 'TokenDoesNotExist')
-        .withArgs(tc.TOKEN_SYMBOL_X)
+        .withArgs(token.address)
     })
 
     it('reverts if the send amount is zero', async () => {
       const { defaultToken, toposMessaging } = await loadFixture(
         deployToposMessagingFixture
       )
-      await toposMessaging.deployToken(defaultToken)
+      const tx = await toposMessaging.deployToken(defaultToken)
+      const txReceipt = await tx.wait()
+      const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
+      const tokenAddress = logs?.args?.tokenAddress
       await expect(
         toposMessaging.sendToken(
           cc.TARGET_SUBNET_ID_4,
           tc.RECIPIENT_ADDRESS,
-          tc.TOKEN_SYMBOL_X,
+          tokenAddress,
           0
         )
       ).to.be.revertedWithCustomError(toposMessaging, 'InvalidAmount')
@@ -478,17 +691,21 @@ describe('ToposMessaging', () => {
       const { defaultToken, toposMessaging } = await loadFixture(
         deployToposMessagingFixture
       )
-      await toposMessaging.deployToken(defaultToken)
+
+      const tx = await toposMessaging.deployToken(defaultToken)
+      const txReceipt = await tx.wait()
+      const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
+      const tokenAddress = logs?.args?.tokenAddress
       await expect(
         toposMessaging.sendToken(
           cc.TARGET_SUBNET_ID_4,
           tc.RECIPIENT_ADDRESS,
-          tc.TOKEN_SYMBOL_X,
+          tokenAddress,
           tc.SEND_AMOUNT_50
         )
       )
         .to.be.revertedWithCustomError(toposMessaging, 'BurnFailed')
-        .withArgs(tc.TOKEN_SYMBOL_X)
+        .withArgs(tokenAddress)
     })
 
     it('emits a token sent event', async () => {
@@ -496,20 +713,16 @@ describe('ToposMessaging', () => {
         await loadFixture(deployToposMessagingFixture)
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       const tx = await toposMessaging.deployToken(defaultToken)
-      const { logs } = await tx.wait()
-      const tokenAddress = logs[0]['address']
+      const txReceipt = await tx.wait()
+      const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
+      const tokenAddress = logs?.args?.tokenAddress
       const erc20 = ERC20.attach(tokenAddress)
-      await toposMessaging.giveToken(
-        tc.TOKEN_SYMBOL_X,
-        admin.address,
-        tc.SEND_AMOUNT_50
-      )
       await erc20.approve(toposMessaging.address, tc.SEND_AMOUNT_50)
       await expect(
         toposMessaging.sendToken(
           cc.TARGET_SUBNET_ID_4,
           tc.RECIPIENT_ADDRESS,
-          tc.TOKEN_SYMBOL_X,
+          tokenAddress,
           tc.SEND_AMOUNT_50
         )
       )
@@ -525,9 +738,77 @@ describe('ToposMessaging', () => {
           cc.SOURCE_SUBNET_ID_2,
           cc.TARGET_SUBNET_ID_4,
           tc.RECIPIENT_ADDRESS,
-          tc.TOKEN_SYMBOL_X,
+          tokenAddress,
           tc.SEND_AMOUNT_50
         )
     })
   })
+
+  async function deployDefaultToken(
+    admin: SignerWithAddress,
+    receiver: SignerWithAddress,
+    ERC20: ERC20__factory,
+    defaultToken: string,
+    toposMessaging: ToposMessaging,
+    toposMessagingContract: Contract
+  ) {
+    const tx = await toposMessaging.deployToken(defaultToken)
+    const txReceipt = await tx.wait()
+    const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
+    const tokenAddress = logs?.args?.tokenAddress
+    const erc20 = ERC20.attach(tokenAddress)
+    await erc20.approve(toposMessaging.address, tc.SEND_AMOUNT_50)
+
+    const sendToken = await sendTokenTx(
+      toposMessagingContract,
+      ethers.provider,
+      receiver.address,
+      admin,
+      cc.SOURCE_SUBNET_ID_2,
+      tokenAddress
+    )
+
+    const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
+      await getMptProof(sendToken, ethers.provider)
+    return { erc20, indexOfTxData, proofBlob, transactionsRoot, txRaw }
+  }
+
+  async function sendTokenTx(
+    contractInstance: Contract,
+    provider: JsonRpcProvider,
+    receiver: string,
+    signer: SignerWithAddress,
+    targetSubnetId: string,
+    tokenAddress: string
+  ) {
+    const estimatedGasLimit = await contractInstance.estimateGas.sendToken(
+      targetSubnetId,
+      receiver,
+      tokenAddress,
+      tc.SEND_AMOUNT_50,
+      { gasLimit: 4_000_000 }
+    )
+    const TxUnsigned = await contractInstance.populateTransaction.sendToken(
+      targetSubnetId,
+      receiver,
+      tokenAddress,
+      tc.SEND_AMOUNT_50,
+      { gasLimit: 4_000_000 }
+    )
+    TxUnsigned.chainId = 31337 // Hardcoded chainId for Hardhat local testing
+    TxUnsigned.gasLimit = estimatedGasLimit
+    const address = signer.address
+    const nonce = await provider.getTransactionCount(address)
+    TxUnsigned.nonce = nonce
+    TxUnsigned.gasPrice = await provider.getGasPrice()
+
+    const submittedTx = await signer.sendTransaction(TxUnsigned)
+    const receipt = await submittedTx.wait()
+    if (receipt.status === 0) {
+      throw new Error(
+        `Send Token Tx is reverted with Tx hash : ${submittedTx.hash}`
+      )
+    }
+    return submittedTx
+  }
 })

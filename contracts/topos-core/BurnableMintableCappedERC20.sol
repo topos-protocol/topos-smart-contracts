@@ -11,8 +11,10 @@ contract BurnableMintableCappedERC20 is IBurnableMintableCappedERC20, MintableCa
     constructor(
         string memory name,
         string memory symbol,
-        uint256 capacity
-    ) MintableCappedERC20(name, symbol, capacity) {}
+        uint256 capacity,
+        uint256 initialSupply,
+        address deployer
+    ) MintableCappedERC20(name, symbol, capacity, initialSupply, deployer) {}
 
     function burn(bytes32 salt) external onlyOwner {
         address account = depositAddress(salt);

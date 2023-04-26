@@ -14,9 +14,13 @@ contract MintableCappedERC20 is IMintableCappedERC20, ERC20, ERC20Permit, Ownabl
     constructor(
         string memory name,
         string memory symbol,
-        uint256 capacity
+        uint256 capacity,
+        uint256 initialSupply,
+        address deployer
     ) ERC20(name, symbol) ERC20Permit(name) Ownable() {
+        if (capacity != 0 && initialSupply > capacity) revert CapExceeded();
         cap = capacity;
+        _mint(deployer, initialSupply);
     }
 
     function mint(address account, uint256 amount) external onlyOwner {

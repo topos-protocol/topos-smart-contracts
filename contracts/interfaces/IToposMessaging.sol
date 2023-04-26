@@ -23,7 +23,7 @@ interface IToposMessaging {
         External // Not supported yet
     }
 
-    event TokenDailyMintLimitUpdated(string symbol, uint256 limit);
+    event TokenDailyMintLimitUpdated(address tokenAddress, uint256 limit);
 
     event TokenDeployed(string symbol, address tokenAddress);
 
@@ -32,13 +32,13 @@ interface IToposMessaging {
         SubnetId sourceSubnetId,
         SubnetId targetSubnetId,
         address receiver,
-        string symbol,
+        address tokenAddress,
         uint256 amount
     );
 
-    error BurnFailed(string symbol);
+    error BurnFailed(address tokenAddress);
     error CertNotPresent();
-    error ExceedDailyMintLimit(string symbol);
+    error ExceedDailyMintLimit(address tokenAddress);
     error IllegalMemoryAccess();
     error InvalidAmount();
     error InvalidMerkleProof();
@@ -46,9 +46,9 @@ interface IToposMessaging {
     error InvalidSubnetId();
     error InvalidTokenDeployer();
     error InvalidToposCore();
-    error TokenAlreadyExists(string symbol);
-    error TokenDeployFailed(string symbol);
-    error TokenDoesNotExist(string symbol);
+    error TokenAlreadyExists(address tokenAddress);
+    error TokenDeployFailed();
+    error TokenDoesNotExist(address tokenAddress);
     error TransferAlreadyExecuted();
     error UnsupportedProofKind();
     error UnsupportedTokenType();
@@ -62,17 +62,14 @@ interface IToposMessaging {
         bytes32 txRoot
     ) external;
 
-    //TODO: decide what to do with this function
-    function giveToken(string memory symbol, address account, uint256 amount) external;
-
-    function sendToken(SubnetId targetSubnetId, address receiver, string calldata symbol, uint256 amount) external;
+    function sendToken(SubnetId targetSubnetId, address receiver, address tokenAddress, uint256 amount) external;
 
     // TODO: decide what to do with this function
     // function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
 
     function validateMerkleProof(bytes memory proofBlob, bytes32 txHash, bytes32 txRoot) external returns (bool);
 
-    function getTokenBySymbol(string memory symbol) external view returns (Token memory);
+    function getTokenSymbol(address tokenAddress) external view returns (string memory);
 
     function getTokenCount() external view returns (uint256);
 
@@ -82,9 +79,9 @@ interface IToposMessaging {
 
     function tokens(bytes32 tokenKey) external view returns (string memory, address);
 
-    function tokenDailyMintAmount(string memory symbol) external view returns (uint256);
+    function tokenDailyMintAmount(address tokenAddress) external view returns (uint256);
 
-    function tokenDailyMintLimit(string memory symbol) external view returns (uint256);
+    function tokenDailyMintLimit(address tokenAddress) external view returns (uint256);
 
     function tokenDeployer() external view returns (address);
 }
