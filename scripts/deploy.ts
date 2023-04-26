@@ -52,6 +52,8 @@ const main = async function (..._args: Arg[]) {
           (<string>contractJsonPath).split('.json')[0]
         } at ${contract.address}`
       )
+
+      process.stdout.write(contract.address)
     })
     .catch(console.error)
 }
