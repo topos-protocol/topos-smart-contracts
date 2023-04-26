@@ -1,4 +1,4 @@
-import { Contract, providers, utils, Wallet } from 'ethers'
+import { Contract, ContractTransaction, providers, utils, Wallet } from 'ethers'
 
 import subnetRegistratorJSON from '../artifacts/contracts/topos-core/SubnetRegistrator.sol/SubnetRegistrator.json'
 
@@ -78,16 +78,20 @@ const main = async function (...args: string[]) {
     wallet
   )
 
-  await contract
-    .registerSubnet(
-      subnetRPCEndpoint,
-      subnetLogoUrl,
-      subnetName,
-      subnetId,
-      subnetCurrencySymbol,
-      subnetChainId
-    )
+  const tx: ContractTransaction = await contract.registerSubnet(
+    subnetRPCEndpoint,
+    subnetLogoUrl,
+    subnetName,
+    subnetId,
+    subnetCurrencySymbol,
+    subnetChainId
+  )
+
+  await tx
     .wait()
+    .then(() => {
+      console.log(`Successfully registered the ${subnetName} subnet!`)
+    })
     .catch((error: any) => {
       console.error(error)
     })
