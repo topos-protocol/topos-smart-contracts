@@ -4,6 +4,7 @@ import tokenDeployerJSON from '../artifacts/contracts/topos-core/TokenDeployer.s
 import toposCoreJSON from '../artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json'
 import toposCoreProxyJSON from '../artifacts/contracts/topos-core/ToposCoreProxy.sol/ToposCoreProxy.json'
 import toposCoreInterfaceJSON from '../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json'
+import toposMessagingJSON from '../artifacts/contracts/topos-core/ToposMessaging.sol/ToposMessaging.json'
 import {
   Arg,
   ContractOutputJSON,
@@ -20,6 +21,7 @@ const main = async function (...args: string[]) {
   const tokenDeployerSalt = process.env.TOKEN_DEPLOYER_SALT
   const toposCoreSalt = process.env.TOPOS_CORE_SALT
   const toposCoreProxySalt = process.env.TOPOS_CORE_PROXY_SALT
+  const toposMessagingSalt = process.env.TOPOS_MESSAGING_SALT
 
   if (!_sequencerPrivateKey) {
     console.error('ERROR: Please provide the sequencer private key!')
@@ -48,26 +50,10 @@ const main = async function (...args: string[]) {
     process.exit(1)
   }
 
-  if (!tokenDeployerSalt) {
-    console.error(
-      'ERROR: Please provide a salt for TokenDeployer! (TOKEN_DEPLOYER_SALT)'
-    )
-    process.exit(1)
-  }
-
-  if (!toposCoreSalt) {
-    console.error(
-      'ERROR: Please provide a salt for ToposCore! (TOPOS_CORE_SALT)'
-    )
-    return
-  }
-
-  if (!toposCoreProxySalt) {
-    console.error(
-      'ERROR: Please provide a salt for ToposCoreProxy! (TOPOS_CORE_PROXY_SALT)'
-    )
-    process.exit(1)
-  }
+  verifySalt('TokenDeployer', 'TOKEN_DEPLOYER_SALT', tokenDeployerSalt)
+  verifySalt('ToposCore', 'TOPOS_CORE_SALT', toposCoreSalt)
+  verifySalt('ToposCoreProxy', 'TOPOS_CORE_PROXY_SALT', toposCoreProxySalt)
+  verifySalt('TokenMessaging', 'TOPOS_MESSAGING_SALT', toposMessagingSalt)
 
   const wallet = new Wallet(toposDeployerPrivateKey, provider)
 
@@ -75,7 +61,7 @@ const main = async function (...args: string[]) {
     'TokenDeployer',
     wallet,
     tokenDeployerJSON,
-    tokenDeployerSalt,
+    tokenDeployerSalt!,
     [],
     8_000_000
   )
@@ -84,8 +70,8 @@ const main = async function (...args: string[]) {
     'ToposCore',
     wallet,
     toposCoreJSON,
-    toposCoreSalt,
-    [tokenDeployerAddress],
+    toposCoreSalt!,
+    [],
     4_000_000
   )
 
@@ -97,43 +83,38 @@ const main = async function (...args: string[]) {
     'ToposCoreProxy',
     wallet,
     toposCoreProxyJSON,
-    toposCoreProxySalt,
+    toposCoreProxySalt!,
     [toposCoreAddress, toposCoreProxyParams],
     4_000_000
   )
 
-  console.info(`\nSetting subnetId on ToposCore via proxy`)
-  const toposCoreInterface = new Contract(
-    toposCoreProxyAddress,
-    toposCoreInterfaceJSON.abi,
-    wallet
+  await processContract(
+    'ToposMessaging',
+    wallet,
+    toposMessagingJSON,
+    toposMessagingSalt!,
+    [tokenDeployerAddress, toposCoreProxyAddress],
+    4_000_000
   )
-  await toposCoreInterface
-    .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
-    .then(async (tx: ContractTransaction) => {
-      await tx.wait().catch((error) => {
-        console.error(
-          `Error: Failed (wait) to set ${subnetId} subnetId on ToposCore via proxy!`
-        )
-        console.error(error)
-        process.exit(1)
-      })
-    })
-    .catch((error: Error) => {
-      console.error(
-        `Error: Failed to set ${subnetId} subnetId on ToposCore via proxy!`
-      )
-      console.error(error)
-      process.exit(1)
-    })
-  const networkSubnetId = await toposCoreInterface.networkSubnetId()
-  console.info(
-    `Successfully set ${networkSubnetId} subnetId on ToposCore via proxy\n`
-  )
+
+  setSubnetId(toposCoreProxyAddress, wallet, subnetId)
 }
 
 const sanitizeHexString = function (hexString: string) {
   return hexString.startsWith('0x') ? hexString : `0x${hexString}`
+}
+
+const verifySalt = function (
+  contractName: string,
+  envVarName: string,
+  localVar: string | undefined
+) {
+  if (!localVar) {
+    console.error(
+      `ERROR: Please provide a salt for ${contractName}! (${envVarName})`
+    )
+    process.exit(1)
+  }
 }
 
 const processContract = async function (
@@ -190,6 +171,43 @@ const processContract = async function (
 
     return newContractAddress
   }
+}
+
+const setSubnetId = async function (
+  toposCoreProxyAddress: string,
+  wallet: Wallet,
+  subnetId: string
+) {
+  console.info(`\nSetting subnetId on ToposCore via proxy`)
+
+  const toposCoreInterface = new Contract(
+    toposCoreProxyAddress,
+    toposCoreInterfaceJSON.abi,
+    wallet
+  )
+
+  await toposCoreInterface
+    .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
+    .then(async (tx: ContractTransaction) => {
+      await tx.wait().catch((error) => {
+        console.error(
+          `Error: Failed (wait) to set ${subnetId} subnetId on ToposCore via proxy!`
+        )
+        console.error(error)
+        process.exit(1)
+      })
+    })
+    .catch((error: Error) => {
+      console.error(
+        `Error: Failed to set ${subnetId} subnetId on ToposCore via proxy!`
+      )
+      console.error(error)
+      process.exit(1)
+    })
+  const networkSubnetId = await toposCoreInterface.networkSubnetId()
+  console.info(
+    `Successfully set ${networkSubnetId} subnetId on ToposCore via proxy\n`
+  )
 }
 
 const args = process.argv.slice(2)
