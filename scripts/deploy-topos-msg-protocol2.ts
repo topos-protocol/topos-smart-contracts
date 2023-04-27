@@ -1,5 +1,11 @@
-
-import { Contract, ContractFactory, ContractTransaction, providers, utils, Wallet } from 'ethers'
+import {
+  Contract,
+  ContractFactory,
+  ContractTransaction,
+  providers,
+  utils,
+  Wallet,
+} from 'ethers'
 
 import tokenDeployerJSON from '../artifacts/contracts/topos-core/TokenDeployer.sol/TokenDeployer.json'
 import toposCoreJSON from '../artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json'
@@ -43,32 +49,46 @@ const main = async function (...args: string[]) {
   const wallet = new Wallet(toposDeployerPrivateKey, provider)
 
   // Deploy ConstAddressDeployer
-  const TokenDeployerFactory = new ContractFactory(tokenDeployerJSON.abi, tokenDeployerJSON.bytecode, wallet);
-  const TokenDeployer = await TokenDeployerFactory.deploy({ gasLimit: 8_000_000 });
-  await TokenDeployer.deployed();
-  console.log(
-    `Token Deployer deployed to ${TokenDeployer.address}`
-  );
+  const TokenDeployerFactory = new ContractFactory(
+    tokenDeployerJSON.abi,
+    tokenDeployerJSON.bytecode,
+    wallet
+  )
+  const TokenDeployer = await TokenDeployerFactory.deploy({
+    gasLimit: 8_000_000,
+  })
+  await TokenDeployer.deployed()
+  console.log(`Token Deployer deployed to ${TokenDeployer.address}`)
 
   // Deploy ToposCore
-  const ToposCoreFactory = new ContractFactory(toposCoreJSON.abi, toposCoreJSON.bytecode, wallet);
-  const ToposCore = await ToposCoreFactory.deploy(TokenDeployer.address, { gasLimit: 8_000_000 });
-  await ToposCore.deployed();
-  console.log(
-    `Topos Core contract deployed to ${ToposCore.address}`
-  );
+  const ToposCoreFactory = new ContractFactory(
+    toposCoreJSON.abi,
+    toposCoreJSON.bytecode,
+    wallet
+  )
+  const ToposCore = await ToposCoreFactory.deploy(TokenDeployer.address, {
+    gasLimit: 8_000_000,
+  })
+  await ToposCore.deployed()
+  console.log(`Topos Core contract deployed to ${ToposCore.address}`)
 
   // Deploy ToposCoreProxy
   const toposCoreProxyParams = utils.defaultAbiCoder.encode(
     ['address[]', 'uint256'],
     [[wallet.address], 1] // TODO: Use a different admin address than ToposDeployer
   )
-  const ToposCoreProxyFactory = new ContractFactory(toposCoreProxyJSON.abi, toposCoreProxyJSON.bytecode, wallet);
-  const ToposCoreProxy = await ToposCoreProxyFactory.deploy(ToposCore.address, toposCoreProxyParams, { gasLimit: 8_000_000 });
-  await ToposCoreProxy.deployed();
-  console.log(
-    `Topos Core Proxy contract deployed to ${ToposCoreProxy.address}`
-  );
+  const ToposCoreProxyFactory = new ContractFactory(
+    toposCoreProxyJSON.abi,
+    toposCoreProxyJSON.bytecode,
+    wallet
+  )
+  const ToposCoreProxy = await ToposCoreProxyFactory.deploy(
+    ToposCore.address,
+    toposCoreProxyParams,
+    { gasLimit: 8_000_000 }
+  )
+  await ToposCoreProxy.deployed()
+  console.log(`Topos Core Proxy contract deployed to ${ToposCoreProxy.address}`)
 
   console.info(`\nSetting subnetId on ToposCore via proxy`)
   const toposCoreInterface = new Contract(
@@ -96,11 +116,11 @@ const main = async function (...args: string[]) {
     })
 
   console.info(`\nReading subnet id`)
-  const networkSubnetId = await toposCoreInterface.networkSubnetId();
+  const networkSubnetId = await toposCoreInterface.networkSubnetId()
 
   console.info(
-    `Successfully set ${networkSubnetId} subnetId on ToposCore via proxy\n`)
-  
+    `Successfully set ${networkSubnetId} subnetId on ToposCore via proxy\n`
+  )
 }
 
 const sanitizeHexString = function (hexString: string) {
