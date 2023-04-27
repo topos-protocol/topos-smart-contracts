@@ -19,9 +19,8 @@ interface IToposMessaging {
     }
 
     enum TokenType {
-        InternalBurnable,
         InternalBurnableFrom,
-        External
+        External // Not supported yet
     }
 
     event TokenDailyMintLimitUpdated(string symbol, uint256 limit);
@@ -47,13 +46,12 @@ interface IToposMessaging {
     error InvalidSubnetId();
     error InvalidTokenDeployer();
     error InvalidToposCore();
-    error MintFailed(string symbol);
     error TokenAlreadyExists(string symbol);
-    error TokenContractDoesNotExist(address token);
     error TokenDeployFailed(string symbol);
     error TokenDoesNotExist(string symbol);
     error TransferAlreadyExecuted();
     error UnsupportedProofKind();
+    error UnsupportedTokenType();
 
     function deployToken(bytes calldata params) external;
 
