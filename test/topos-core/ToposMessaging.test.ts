@@ -1,5 +1,5 @@
 import { Contract } from 'ethers'
-import { deployConstAddress } from './shared/utils/deploy_const'
+import { deployContractConstant } from '../../scripts/const-addr-deployer'
 import { ethers, network } from 'hardhat'
 import { expect } from 'chai'
 import { getMptProof } from './shared/utils/mpt_proof'
@@ -18,10 +18,14 @@ import { ERC20__factory, ToposMessaging } from '../../typechain-types'
 describe('ToposMessaging', () => {
   async function deployToposMessagingFixture() {
     await network.provider.send('hardhat_reset')
+    const defaultAddressMnemonic =
+      'test test test test test test test test test test test junk'
     const tokenDeployerSalt = ethers.utils.keccak256(
       Buffer.from('TokenDeployer')
     )
     const [admin, receiver] = await ethers.getSigners()
+    let wallet = ethers.Wallet.fromMnemonic(defaultAddressMnemonic)
+    wallet = wallet.connect(ethers.provider)
     const defaultCert = testUtils.encodeCertParam(
       cc.PREV_CERT_ID_0,
       cc.SOURCE_SUBNET_ID_1,
@@ -57,14 +61,15 @@ describe('ToposMessaging', () => {
 
     const constAddressDeployer = await ConstAddressDeployer.deploy()
 
-    const tokenDeployerAddress = await deployConstAddress(
-      constAddressDeployer.address,
-      await ethers.getSigner(admin.address),
+    const tokenDeployerAddress = await deployContractConstant(
+      wallet,
       tokenDeployerJSON,
       tokenDeployerSalt,
-      []
+      [],
+      4_000_000,
+      constAddressDeployer.address
     )
-    const tokenDeployer = TokenDeployer.attach(tokenDeployerAddress)
+    const tokenDeployer = TokenDeployer.attach(tokenDeployerAddress.address)
 
     const toposCoreImplementation = await ToposCore.deploy()
     const toposCoreProxy = await ToposCoreProxy.deploy(

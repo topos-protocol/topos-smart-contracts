@@ -34,7 +34,6 @@
     "test": "hardhat test"
   },
   "devDependencies": {
-    "@axelar-network/axelar-gmp-sdk-solidity": "^3.3.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@ethereumjs/rlp": "^4.0.1",
