@@ -18,6 +18,7 @@
     "coverage": "hardhat coverage",
     "deploy": "ts-node scripts/deploy.ts",
     "deploy:topos-msg-protocol": "ts-node scripts/deploy-topos-msg-protocol.ts",
+    "deploy:topos-msg-protocol2": "ts-node scripts/deploy-topos-msg-protocol2.ts",
     "format": "npm run format:sol && npm run format:ts",
     "format:fix": "npm run format:sol:fix && npm run format:ts:fix",
     "format:sol": "prettier -c 'contracts/**/*.sol'",
