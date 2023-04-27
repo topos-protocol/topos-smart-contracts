@@ -1,12 +1,5 @@
 import { ethers } from 'hardhat'
 
-async function deployNewToposCore() {
-  const TokenDeployer = await ethers.getContractFactory('TokenDeployer')
-  const ToposCore = await ethers.getContractFactory('ToposCore')
-  const tokenDeployer = await TokenDeployer.deploy()
-  return await ToposCore.deploy(tokenDeployer.address)
-}
-
 function encodeCertParam(
   prevId: string,
   sourceSubnetId: string,
@@ -57,4 +50,4 @@ function encodeTokenParam(
   )
 }
 
-export { deployNewToposCore, encodeCertParam, encodeTokenParam }
+export { encodeCertParam, encodeTokenParam }
