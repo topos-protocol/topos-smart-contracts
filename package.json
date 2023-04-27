@@ -30,6 +30,7 @@
     "lint:sol:fix": "npm run lint:sol -- --fix",
     "lint:ts": "eslint --ext .ts .",
     "lint:ts:fix": "npm run lint:ts -- --fix",
+    "register-subnet": "ts-node scripts/register-subnet.ts",
     "test": "hardhat test"
   },
   "devDependencies": {
