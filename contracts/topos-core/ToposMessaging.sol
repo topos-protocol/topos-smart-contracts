@@ -73,11 +73,8 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
 
             _setTokenType(symbol, TokenType.InternalBurnableFrom);
         } else {
-            // If token address is specified, ensure that there is a contact at the specified address.
-            if (tokenAddress.code.length == uint256(0)) revert TokenContractDoesNotExist(tokenAddress);
-
-            // Mark that this symbol is an external token, which is needed to differentiate between operations on mint and burn.
-            _setTokenType(symbol, TokenType.External);
+            revert UnsupportedTokenType();
+            // _setTokenType(symbol, TokenType.External);
         }
 
         _setTokenAddress(symbol, tokenAddress);
@@ -243,11 +240,7 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
         bool burnSuccess;
 
         if (tokenType == TokenType.External) {
-            burnSuccess = _callERC20Token(
-                tokenAddress,
-                abi.encodeWithSelector(IERC20.transferFrom.selector, sender, address(this), amount)
-            );
-            if (!burnSuccess) revert BurnFailed(symbol);
+            revert UnsupportedTokenType();
         } else if (tokenType == TokenType.InternalBurnableFrom) {
             burnSuccess = _callERC20Token(
                 tokenAddress,
@@ -291,12 +284,7 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
         _setTokenDailyMintAmount(symbol, tokenDailyMintAmount(symbol) + amount);
 
         if (_getTokenType(symbol) == TokenType.External) {
-            bool success = _callERC20Token(
-                tokenAddress,
-                abi.encodeWithSelector(IERC20.transfer.selector, account, amount)
-            );
-
-            if (!success) revert MintFailed(symbol);
+            revert UnsupportedTokenType();
         } else {
             IBurnableMintableCappedERC20(tokenAddress).mint(account, amount);
         }
