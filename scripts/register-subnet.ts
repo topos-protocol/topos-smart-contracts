@@ -18,6 +18,13 @@ const main = async function (...args: string[]) {
     process.env.PRIVATE_KEY || ''
   )
 
+  if (!utils.isHexString(toposDeployerPrivateKey, 32)) {
+    console.error(
+      'ERROR: Please provide a valid toposDeployer private key! (PRIVATE_KEY)'
+    )
+    process.exit(1)
+  }
+
   if (!_sequencerPrivateKey) {
     console.error('ERROR: Please provide the sequencer private key!')
     process.exit(1)
