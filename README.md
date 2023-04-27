@@ -76,22 +76,35 @@ $ npm run lint:fix
 A NodeJS script is made available to deploy contracts with `CREATE2`, i.e., with constant addresses. The script is to be used with a deployed instance of `ConstAddressDeployer`. See an example below:
 
 ```
-npm run deploy2 http://myChainRPCEndpoint myCompiledContract.json MySecretSalt ACustomGasLimit|null MyConstructorArg AnotherConstructorArg
-# npm run deploy2 http://127.0.0.1:8545 artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json $TOPOS_CORE_SALT 2000000 0xF121424e3F7d73fCD79DcBCA67E8F10BeBE67b00 0x3100000000000000000000000000000000000000000000000000000000000000
+$ npm run deploy http://myChainRPCEndpoint myCompiledContract.json MySecretSalt ACustomGasLimit|null MyConstructorArg AnotherConstructorArg
+
+E.g.
+$ npm run deploy http://127.0.0.1:8545 artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json $TOPOS_CORE_SALT 2000000 0xF121424e3F7d73fCD79DcBCA67E8F10BeBE67b00 0x3100000000000000000000000000000000000000000000000000000000000000
 ```
 
 ### Deployment of the full Topos Messaging Protocol
 
-To deploy the full Topos Messaging Protocol, another `deploy2:topos-msg-protocol` npm script is available. This scripts deploys the following contracts:
+To deploy the full Topos Messaging Protocol, another `deploy:topos-msg-protocol` npm script is available. This scripts deploys the following contracts:
 
 - `TokenDeployer` with constant address
 - `ToposCore` with constant address
 - `ToposCoreProxy` with constant address
+- `ToposMessaging` with constant address
 
 ```
-npm run deploy2:topos-msg-protocol http://myChainRPCEndpoint pathToSequencerPrivateKey
-# npm run deploy2:topos-msg-protocol http://127.0.0.1:8545 /data/node-1/consensus/validator.key
+$ npm run deploy:topos-msg-protocol http://myChainRPCEndpoint pathToSequencerPrivateKey
+
+E.g.
+$ npm run deploy:topos-msg-protocol http://127.0.0.1:8545 /data/node-1/consensus/validator.key
 ```
+
+This script requires a few environment variables to be set:
+
+- TOKEN_DEPLOYER_SALT: salt for the `TokenDeployer` contract
+- TOPOS_CORE_SALT: salt for the `ToposCore` contract
+- TOPOS_CORE_PROXY_SALT: salt for the `ToposCoreProxy` contract
+- TOPOS_MESSAGING_SALT: salt for the `ToposMessaging` contract
+- PRIVATE_KEY: the private key of the account to be used to deploy contracts
 
 ## Docker
 
