@@ -69,7 +69,7 @@ interface IToposMessaging {
 
     function validateMerkleProof(bytes memory proofBlob, bytes32 txHash, bytes32 txRoot) external returns (bool);
 
-    function getTokenSymbol(address tokenAddress) external view returns (string memory);
+    function getTokenByAddress(address tokenAddress) external view returns (Token memory token);
 
     function getTokenCount() external view returns (uint256);
 

@@ -172,12 +172,11 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     //     }
     // }
 
-    /// @notice Get the token symbol
+    /// @notice Gets the token by address
     /// @param tokenAddress Address of token contract
-    function getTokenSymbol(address tokenAddress) public view returns (string memory) {
+    function getTokenByAddress(address tokenAddress) public view returns (Token memory token) {
         bytes32 tokenKey = _getTokenKey(tokenAddress);
-        Token storage token = tokens[tokenKey];
-        return token.symbol;
+        token = tokens[tokenKey];
     }
 
     /// @notice Get the number of tokens deployed/registered
