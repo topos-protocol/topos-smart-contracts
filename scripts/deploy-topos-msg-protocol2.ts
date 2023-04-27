@@ -12,9 +12,6 @@ const main = async function (...args: string[]) {
   const toposDeployerPrivateKey = sanitizeHexString(
     process.env.PRIVATE_KEY || ''
   )
-  const tokenDeployerSalt = process.env.TOKEN_DEPLOYER_SALT
-  const toposCoreSalt = process.env.TOPOS_CORE_SALT
-  const toposCoreProxySalt = process.env.TOPOS_CORE_PROXY_SALT
 
   if (!_sequencerPrivateKey) {
     console.error('ERROR: Please provide the sequencer private key!')
@@ -46,7 +43,7 @@ const main = async function (...args: string[]) {
   const wallet = new Wallet(toposDeployerPrivateKey, provider)
 
   // Deploy ConstAddressDeployer
-  let TokenDeployerFactory = new ContractFactory(tokenDeployerJSON.abi, tokenDeployerJSON.bytecode, wallet);
+  const TokenDeployerFactory = new ContractFactory(tokenDeployerJSON.abi, tokenDeployerJSON.bytecode, wallet);
   const TokenDeployer = await TokenDeployerFactory.deploy({ gasLimit: 8_000_000 });
   await TokenDeployer.deployed();
   console.log(
@@ -99,7 +96,7 @@ const main = async function (...args: string[]) {
     })
 
   console.info(`\nReading subnet id`)
-  let networkSubnetId = await toposCoreInterface.networkSubnetId();
+  const networkSubnetId = await toposCoreInterface.networkSubnetId();
 
   console.info(
     `Successfully set ${networkSubnetId} subnetId on ToposCore via proxy\n`)
