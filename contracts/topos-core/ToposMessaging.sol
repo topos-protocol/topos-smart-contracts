@@ -311,7 +311,7 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
         tokenSet.insert(tokenKey);
         Token storage token = tokens[tokenKey];
         token.symbol = symbol;
-        token.tokenAddress = tokenAddress;
+        token.addr = tokenAddress;
     }
 
     /// @notice Set the token daily mint limit for a token address

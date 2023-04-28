@@ -15,7 +15,7 @@ interface IToposMessaging {
 
     struct Token {
         string symbol;
-        address tokenAddress;
+        address addr;
     }
 
     enum TokenType {
