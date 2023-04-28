@@ -7,6 +7,8 @@ interface ITokenDeployer {
         string calldata name,
         string calldata symbol,
         uint256 cap,
+        uint256 initialSupply,
+        address deployer,
         bytes32 salt
     ) external returns (address tokenAddress);
 }

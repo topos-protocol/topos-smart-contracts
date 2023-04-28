@@ -36,6 +36,9 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@ethereumjs/rlp": "^4.0.1",
+    "@ethereumjs/trie": "^5.0.4",
+    "@ethereumjs/util": "^8.0.5",
     "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.15.11",

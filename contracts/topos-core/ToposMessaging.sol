@@ -50,35 +50,50 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     /// @notice Deploy/register a token
     /// @param params Encoded token params for deploying/registering a token
     function deployToken(bytes calldata params) external {
-        (string memory name, string memory symbol, uint256 cap, address tokenAddress, uint256 dailyMintLimit) = abi
-            .decode(params, (string, string, uint256, address, uint256));
+        (
+            string memory name,
+            string memory symbol,
+            uint256 cap,
+            address tokenAddress,
+            uint256 dailyMintLimit,
+            uint256 initialSupply
+        ) = abi.decode(params, (string, string, uint256, address, uint256, uint256));
 
-        // Ensure that this symbol has not been taken.
-        if (getTokenBySymbol(symbol).tokenAddress != address(0)) revert TokenAlreadyExists(symbol);
+        // Ensure that this token does not exist already.
+        bytes32 tokenKey = _getTokenKey(tokenAddress);
+        if (tokenSet.exists(tokenKey)) revert TokenAlreadyExists(tokenAddress);
 
         if (tokenAddress == address(0)) {
             // If token address is no specified, it indicates a request to deploy one.
-            bytes32 salt = keccak256(abi.encodePacked(symbol));
+            bytes32 salt = keccak256(abi.encodePacked(msg.sender, symbol));
 
             // slither-disable-start reentrancy-no-eth
             // solhint-disable-next-line avoid-low-level-calls
             (bool success, bytes memory data) = _tokenDeployerAddr.delegatecall(
-                abi.encodeWithSelector(ITokenDeployer.deployToken.selector, name, symbol, cap, salt)
+                abi.encodeWithSelector(
+                    ITokenDeployer.deployToken.selector,
+                    name,
+                    symbol,
+                    cap,
+                    initialSupply,
+                    msg.sender,
+                    salt
+                )
             );
             // slither-disable-end reentrancy-no-eth
 
-            if (!success) revert TokenDeployFailed(symbol);
+            if (!success) revert TokenDeployFailed();
 
             tokenAddress = abi.decode(data, (address));
 
-            _setTokenType(symbol, TokenType.InternalBurnableFrom);
+            _setTokenType(tokenAddress, TokenType.InternalBurnableFrom);
         } else {
             revert UnsupportedTokenType();
-            // _setTokenType(symbol, TokenType.External);
+            // _setTokenType(tokenAddress, TokenType.External);
         }
 
         _setTokenAddress(symbol, tokenAddress);
-        _setTokenDailyMintLimit(symbol, dailyMintLimit);
+        _setTokenDailyMintLimit(dailyMintLimit, tokenAddress);
 
         emit TokenDeployed(symbol, tokenAddress);
     }
@@ -105,9 +120,9 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
         // The transaction hash is used as a leaf to validate the inclusion proof.
         bytes32 txHash = keccak256(abi.encodePacked(txRaw));
         if (!validateMerkleProof(proofBlob, txHash, txRoot)) revert InvalidMerkleProof();
-        (SubnetId targetSubnetId, address receiver, string memory symbol, uint256 amount) = abi.decode(
+        (SubnetId targetSubnetId, address receiver, address tokenAddress, uint256 amount) = abi.decode(
             txRaw[indexOfDataInTxRaw + 4:], // omit the 4 bytes function selector
-            (SubnetId, address, string, uint256)
+            (SubnetId, address, address, uint256)
         );
         SubnetId toposCoreSubnetId = IToposCore(_toposCoreAddr).networkSubnetId();
         if (SubnetId.unwrap(targetSubnetId) != SubnetId.unwrap(toposCoreSubnetId)) revert InvalidSubnetId();
@@ -116,29 +131,23 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
 
         // prevent re-entrancy
         _setSendTokenExecuted(txHash);
-        _mintToken(symbol, receiver, amount);
-    }
-
-    // TODO: decide what to do with this function
-    /// @dev Give token to an account for testing
-    function giveToken(string memory symbol, address account, uint256 amount) external {
-        _mintToken(symbol, account, amount);
+        _mintToken(tokenAddress, receiver, amount);
     }
 
     /// @notice Entry point for sending a cross-subnet asset transfer
     /// @param targetSubnetId Target subnet ID
     /// @param receiver Receiver's address
-    /// @param symbol Token symbol
+    /// @param tokenAddress Address of target token contract
     /// @param amount Amount of token to send
-    function sendToken(SubnetId targetSubnetId, address receiver, string calldata symbol, uint256 amount) external {
+    function sendToken(SubnetId targetSubnetId, address receiver, address tokenAddress, uint256 amount) external {
         if (_toposCoreAddr.code.length == uint256(0)) revert InvalidToposCore();
-        _burnTokenFrom(msg.sender, symbol, amount);
+        _burnTokenFrom(msg.sender, tokenAddress, amount);
         emit TokenSent(
             msg.sender,
             IToposCore(_toposCoreAddr).networkSubnetId(),
             targetSubnetId,
             receiver,
-            symbol,
+            tokenAddress,
             amount
         );
     }
@@ -163,11 +172,11 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     //     }
     // }
 
-    /// @notice Get the token by symbol
-    /// @param symbol Symbol of token
-    function getTokenBySymbol(string memory symbol) public view returns (Token memory) {
-        bytes32 tokenKey = _getTokenKey(symbol);
-        return tokens[tokenKey];
+    /// @notice Gets the token by address
+    /// @param tokenAddress Address of token contract
+    function getTokenByAddress(address tokenAddress) public view returns (Token memory token) {
+        bytes32 tokenKey = _getTokenKey(tokenAddress);
+        token = tokens[tokenKey];
     }
 
     /// @notice Get the number of tokens deployed/registered
@@ -182,15 +191,15 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     }
 
     /// @notice Get the token daily mint amount
-    /// @param symbol Symbol of token
-    function tokenDailyMintAmount(string memory symbol) public view returns (uint256) {
-        return getUint(_getTokenDailyMintAmountKey(symbol, block.timestamp / 1 days));
+    /// @param tokenAddress Address of token contract
+    function tokenDailyMintAmount(address tokenAddress) public view returns (uint256) {
+        return getUint(_getTokenDailyMintAmountKey(tokenAddress, block.timestamp / 1 days));
     }
 
     /// @notice Get the token daily mint limit
-    /// @param symbol Symbol of token
-    function tokenDailyMintLimit(string memory symbol) public view returns (uint256) {
-        return getUint(_getTokenDailyMintLimitKey(symbol));
+    /// @param tokenAddress Address of token contract
+    function tokenDailyMintLimit(address tokenAddress) public view returns (uint256) {
+        return getUint(_getTokenDailyMintLimitKey(tokenAddress));
     }
 
     /// @notice Get the address of token deployer contract
@@ -228,15 +237,14 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
 
     /// @notice Burn token internally
     /// @param sender Account to burn token from
-    /// @param symbol Symbol of token
+    /// @param tokenAddress Address of target token contract
     /// @param amount Amount of token to burn
-    function _burnTokenFrom(address sender, string memory symbol, uint256 amount) internal {
-        address tokenAddress = getTokenBySymbol(symbol).tokenAddress;
-
-        if (tokenAddress == address(0)) revert TokenDoesNotExist(symbol);
+    function _burnTokenFrom(address sender, address tokenAddress, uint256 amount) internal {
+        bytes32 tokenKey = _getTokenKey(tokenAddress);
+        if (!tokenSet.exists(tokenKey)) revert TokenDoesNotExist(tokenAddress);
         if (amount == 0) revert InvalidAmount();
 
-        TokenType tokenType = _getTokenType(symbol);
+        TokenType tokenType = _getTokenType(tokenAddress);
         bool burnSuccess;
 
         if (tokenType == TokenType.External) {
@@ -246,7 +254,7 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
                 tokenAddress,
                 abi.encodeWithSelector(IBurnableMintableCappedERC20.burnFrom.selector, sender, amount)
             );
-            if (!burnSuccess) revert BurnFailed(symbol);
+            if (!burnSuccess) revert BurnFailed(tokenAddress);
         } else {
             burnSuccess = _callERC20Token(
                 tokenAddress,
@@ -257,7 +265,7 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
                     amount
                 )
             );
-            if (!burnSuccess) revert BurnFailed(symbol);
+            if (!burnSuccess) revert BurnFailed(tokenAddress);
             IBurnableMintableCappedERC20(tokenAddress).burn(bytes32(0));
         }
     }
@@ -273,17 +281,16 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     }
 
     /// @notice Mint token internally
-    /// @param symbol Symbol of token
+    /// @param tokenAddress Address of token contract
     /// @param account Account to mint token to
     /// @param amount Amount of token to mint
-    function _mintToken(string memory symbol, address account, uint256 amount) internal {
-        address tokenAddress = getTokenBySymbol(symbol).tokenAddress;
+    function _mintToken(address tokenAddress, address account, uint256 amount) internal {
+        bytes32 tokenKey = _getTokenKey(tokenAddress);
+        if (!tokenSet.exists(tokenKey)) revert TokenDoesNotExist(tokenAddress);
 
-        if (tokenAddress == address(0)) revert TokenDoesNotExist(symbol);
+        _setTokenDailyMintAmount(tokenAddress, tokenDailyMintAmount(tokenAddress) + amount);
 
-        _setTokenDailyMintAmount(symbol, tokenDailyMintAmount(symbol) + amount);
-
-        if (_getTokenType(symbol) == TokenType.External) {
+        if (_getTokenType(tokenAddress) == TokenType.External) {
             revert UnsupportedTokenType();
         } else {
             IBurnableMintableCappedERC20(tokenAddress).mint(account, amount);
@@ -296,47 +303,47 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
         _setBool(_getIsSendTokenExecutedKey(txHash), true);
     }
 
-    /// @notice Set the token address for the specified symbol
+    /// @notice Store the token address for the specified symbol
     /// @param symbol Symbol of token
     /// @param tokenAddress Address of token contract
     function _setTokenAddress(string memory symbol, address tokenAddress) internal {
-        bytes32 tokenKey = _getTokenKey(symbol);
+        bytes32 tokenKey = _getTokenKey(tokenAddress);
         tokenSet.insert(tokenKey);
         Token storage token = tokens[tokenKey];
         token.symbol = symbol;
-        token.tokenAddress = tokenAddress;
+        token.addr = tokenAddress;
     }
 
-    /// @notice Set the token daily mint limit for the specified symbol
-    /// @param symbol Symbol of token
+    /// @notice Set the token daily mint limit for a token address
     /// @param limit Daily mint limit of token
-    function _setTokenDailyMintLimit(string memory symbol, uint256 limit) internal {
-        _setUint(_getTokenDailyMintLimitKey(symbol), limit);
+    /// @param tokenAddress Address of token contract
+    function _setTokenDailyMintLimit(uint256 limit, address tokenAddress) internal {
+        _setUint(_getTokenDailyMintLimitKey(tokenAddress), limit);
 
-        emit TokenDailyMintLimitUpdated(symbol, limit);
+        emit TokenDailyMintLimitUpdated(tokenAddress, limit);
     }
 
-    /// @notice Set the token daily mint amount for the specified symbol
-    /// @param symbol Symbol of token
+    /// @notice Set the token daily mint amount for a token address
+    /// @param tokenAddress Address of token contract
     /// @param amount Daily mint amount of token
-    function _setTokenDailyMintAmount(string memory symbol, uint256 amount) internal {
-        uint256 limit = tokenDailyMintLimit(symbol);
-        if (limit > 0 && amount > limit) revert ExceedDailyMintLimit(symbol);
+    function _setTokenDailyMintAmount(address tokenAddress, uint256 amount) internal {
+        uint256 limit = tokenDailyMintLimit(tokenAddress);
+        if (limit > 0 && amount > limit) revert ExceedDailyMintLimit(tokenAddress);
 
-        _setUint(_getTokenDailyMintAmountKey(symbol, block.timestamp / 1 days), amount);
+        _setUint(_getTokenDailyMintAmountKey(tokenAddress, block.timestamp / 1 days), amount);
     }
 
-    /// @notice Set the token type for the specified symbol
-    /// @param symbol Symbol of token
+    /// @notice Set the token type for a token address
+    /// @param tokenAddress Address of token contract
     /// @param tokenType Type of token (external/internal)
-    function _setTokenType(string memory symbol, TokenType tokenType) internal {
-        _setUint(_getTokenTypeKey(symbol), uint256(tokenType));
+    function _setTokenType(address tokenAddress, TokenType tokenType) internal {
+        _setUint(_getTokenTypeKey(tokenAddress), uint256(tokenType));
     }
 
-    /// @notice Get the token type for the specified symbol
-    /// @param symbol Symbol of token
-    function _getTokenType(string memory symbol) internal view returns (TokenType) {
-        return TokenType(getUint(_getTokenTypeKey(symbol)));
+    /// @notice Get the token type for a token address
+    /// @param tokenAddress Address of token contract
+    function _getTokenType(address tokenAddress) internal view returns (TokenType) {
+        return TokenType(getUint(_getTokenTypeKey(tokenAddress)));
     }
 
     /// @notice Get the flag to indicate that the asset transfer transaction has been executed
@@ -346,28 +353,28 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     }
 
     /// @notice Get the key for the token daily mint limit
-    /// @param symbol Symbol of token
-    function _getTokenDailyMintLimitKey(string memory symbol) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(PREFIX_TOKEN_DAILY_MINT_LIMIT, symbol));
+    /// @param tokenAddress Address of token contract
+    function _getTokenDailyMintLimitKey(address tokenAddress) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(PREFIX_TOKEN_DAILY_MINT_LIMIT, tokenAddress));
     }
 
     /// @notice Get the key for the token daily mint amount
-    /// @param symbol Symbol of token
+    /// @param tokenAddress Address of token contract
     /// @param day Day of token daily mint amount
-    function _getTokenDailyMintAmountKey(string memory symbol, uint256 day) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(PREFIX_TOKEN_DAILY_MINT_AMOUNT, symbol, day));
+    function _getTokenDailyMintAmountKey(address tokenAddress, uint256 day) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(PREFIX_TOKEN_DAILY_MINT_AMOUNT, tokenAddress, day));
     }
 
     /// @notice Get the key for the token type
-    /// @param symbol Symbol of token
-    function _getTokenTypeKey(string memory symbol) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(PREFIX_TOKEN_TYPE, symbol));
+    /// @param tokenAddress Address of token contract
+    function _getTokenTypeKey(address tokenAddress) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(PREFIX_TOKEN_TYPE, tokenAddress));
     }
 
     /// @notice Get the key for the token
-    /// @param symbol Symbol of token
-    function _getTokenKey(string memory symbol) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(PREFIX_TOKEN_KEY, symbol));
+    /// @param tokenAddress Address of token contract
+    function _getTokenKey(address tokenAddress) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(PREFIX_TOKEN_KEY, tokenAddress));
     }
 
     /// @notice Get the key for the flag to indicate that the asset transfer transaction has been executed
@@ -392,6 +399,7 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
 
     /// @notice Decode the nibbles from the compact bytes
     /// @param compact compact bytes to decode
+    /// @param skipNibbles number of nibbles to skip
     function _decodeNibbles(bytes memory compact, uint256 skipNibbles) internal pure returns (bytes memory nibbles) {
         require(compact.length > 0);
 
