@@ -99,7 +99,7 @@ const main = async function (...args: string[]) {
     .then(() => {
       console.log(`Successfully registered the ${subnetName} subnet!`)
     })
-    .catch((error: any) => {
+    .catch((error) => {
       console.error(error)
     })
 }

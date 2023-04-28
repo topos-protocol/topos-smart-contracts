@@ -6,13 +6,14 @@
   },
   "plugins": ["@typescript-eslint"],
   "root": true,
-  "extends" : [
+  "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
     "prettier"
   ],
   "rules": {
-    "@typescript-eslint/no-unused-vars": "error"
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-non-null-assertion": "off"
   },
   "env": {
     "es2022": true,
@@ -20,7 +21,7 @@
     "node": true,
     "mocha": true
   },
-  "globals" : {
+  "globals": {
     "artifacts": "readonly",
     "contract": "readonly",
     "web3": "readonly",
