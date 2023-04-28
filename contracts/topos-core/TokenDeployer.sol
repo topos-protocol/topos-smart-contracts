@@ -11,8 +11,10 @@ contract TokenDeployer is ITokenDeployer {
         string calldata name,
         string calldata symbol,
         uint256 cap,
+        uint256 initialSupply,
+        address deployer,
         bytes32 salt
     ) external returns (address tokenAddress) {
-        tokenAddress = address(new BurnableMintableCappedERC20{salt: salt}(name, symbol, cap));
+        tokenAddress = address(new BurnableMintableCappedERC20{salt: salt}(name, symbol, cap, initialSupply, deployer));
     }
 }

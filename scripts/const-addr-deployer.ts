@@ -67,10 +67,13 @@ export const deployContractConstant = async (
   contractJson: ContractOutputJSON,
   key: string,
   args: Arg[] = [],
-  gasLimit: number | null = null
+  gasLimit: number | null = null,
+  constAddrDeployerAddress?: string
 ) => {
   const deployer = new Contract(
-    CONST_ADDRESS_DEPLOYER_ADDR,
+    constAddrDeployerAddress
+      ? constAddrDeployerAddress
+      : CONST_ADDRESS_DEPLOYER_ADDR,
     ConstAddressDeployerJSON.abi,
     wallet
   )
