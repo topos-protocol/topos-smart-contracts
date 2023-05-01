@@ -64,9 +64,6 @@ interface IToposMessaging {
 
     function sendToken(SubnetId targetSubnetId, address receiver, address tokenAddress, uint256 amount) external;
 
-    // TODO: decide what to do with this function
-    // function setTokenDailyMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
-
     function validateMerkleProof(bytes memory proofBlob, bytes32 txHash, bytes32 txRoot) external returns (bool);
 
     function getTokenByAddress(address tokenAddress) external view returns (Token memory token);

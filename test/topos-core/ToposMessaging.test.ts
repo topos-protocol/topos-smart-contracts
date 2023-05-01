@@ -226,42 +226,6 @@ describe('ToposMessaging', () => {
     })
   })
 
-  //   describe('setTokenDailyMintLimits', () => {
-  //     it('reverts if the token symbol length mismatch mint limit length', async () => {
-  //       const { toposMessaging } = await loadFixture(deployToposMessagingFixture)
-  //       const symbols = ['ABC', 'XYZ']
-  //       const mintLimits = [1]
-  //       await expect(
-  //         toposMessaging.setTokenDailyMintLimits(symbols, mintLimits)
-  //       ).to.be.revertedWithCustomError(
-  //         toposMessaging,
-  //         'InvalidSetDailyMintLimitsParams'
-  //       )
-  //     })
-
-  //     it('revert if the token symbol does not exist', async () => {
-  //       const { toposMessaging } = await loadFixture(deployToposMessagingFixture)
-  //       const symbols = ['ABC']
-  //       const mintLimits = [1]
-  //       await expect(toposMessaging.setTokenDailyMintLimits(symbols, mintLimits))
-  //         .to.be.revertedWithCustomError(toposMessaging, 'TokenDoesNotExist')
-  //         .withArgs('ABC')
-  //     })
-
-  //     it('emits a token daily mint limits set event', async () => {
-  //       const { defaultToken, toposMessaging } = await loadFixture(
-  //         deployToposMessagingFixture
-  //       )
-  //       await toposMessaging.deployToken(defaultToken)
-  //       const symbols = [tc.TOKEN_SYMBOL_X]
-  //       const mintLimits = [1]
-  //       const tx = await toposMessaging.setTokenDailyMintLimits(symbols, mintLimits)
-  //       await expect(tx)
-  //         .to.emit(toposMessaging, 'TokenDailyMintLimitUpdated')
-  //         .withArgs(tc.TOKEN_SYMBOL_X, 1)
-  //     })
-  //   })
-
   describe('executeAssetTransfer', () => {
     it('deploys a token with zero mint limit', async () => {
       const {
