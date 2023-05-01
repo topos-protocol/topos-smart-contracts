@@ -24,11 +24,15 @@ interface IToposCore {
 
     event CertStored(CertificateId certId, bytes32 txRoot);
 
+    event CrossSubnetMessageSent(SubnetId targetSubnetId);
+
     event Upgraded(address indexed implementation);
 
     error InvalidCodeHash();
     error NotProxy();
     error SetupFailed();
+
+    function emitCrossSubnetMessage(SubnetId targetSubnetId) external;
 
     function pushCertificate(bytes calldata certBytes, uint256 position) external;
 

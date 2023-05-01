@@ -701,15 +701,8 @@ describe('ToposMessaging', () => {
           ethers.constants.AddressZero,
           tc.SEND_AMOUNT_50
         )
-        .to.emit(toposMessaging, 'TokenSent')
-        .withArgs(
-          admin.address,
-          cc.SOURCE_SUBNET_ID_2,
-          cc.TARGET_SUBNET_ID_4,
-          tc.RECIPIENT_ADDRESS,
-          tokenAddress,
-          tc.SEND_AMOUNT_50
-        )
+        .to.emit(toposCore, 'CrossSubnetMessageSent')
+        .withArgs(cc.TARGET_SUBNET_ID_4)
     })
   })
 
