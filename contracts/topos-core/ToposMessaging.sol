@@ -152,26 +152,6 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
         );
     }
 
-    // TODO: decide what to do with this function
-    /// @notice Set token daily mint limit
-    /// @param symbols Symbols of tokens
-    /// @param limits Daily mint limits of tokens
-    // function setTokenDailyMintLimits(
-    //     string[] calldata symbols,
-    //     uint256[] calldata limits
-    // ) external override {
-    //     if (symbols.length != limits.length) revert InvalidSetDailyMintLimitsParams();
-
-    //     for (uint256 i = 0; i < symbols.length; i++) {
-    //         string memory symbol = symbols[i];
-    //         uint256 limit = limits[i];
-
-    //         if (getTokenBySymbol(symbol).tokenAddress == address(0)) revert TokenDoesNotExist(symbol);
-
-    //         _setTokenDailyMintLimit(symbol, limit);
-    //     }
-    // }
-
     /// @notice Gets the token by address
     /// @param tokenAddress Address of token contract
     function getTokenByAddress(address tokenAddress) public view returns (Token memory token) {
