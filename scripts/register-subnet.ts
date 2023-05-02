@@ -85,6 +85,17 @@ const main = async function (...args: string[]) {
     wallet
   )
 
+  const alreadyRegisteredSubnet = await verifyIfSubnetAlreadyRegistered(
+    contract,
+    subnetId
+  )
+  if (alreadyRegisteredSubnet.name) {
+    console.log(
+      `${alreadyRegisteredSubnet.name} is already registered with ${subnetId} subnet id!`
+    )
+    process.exit(0)
+  }
+
   const tx: ContractTransaction = await contract.registerSubnet(
     subnetRPCEndpoint,
     subnetLogoUrl,
@@ -106,6 +117,13 @@ const main = async function (...args: string[]) {
 
 const sanitizeHexString = function (hexString: string) {
   return hexString.startsWith('0x') ? hexString : `0x${hexString}`
+}
+
+const verifyIfSubnetAlreadyRegistered = function (
+  contract: Contract,
+  subnetId: string
+) {
+  return contract.subnets(subnetId) as Promise<{ name: string }>
 }
 
 const args = process.argv.slice(2)
