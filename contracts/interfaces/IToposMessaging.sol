@@ -27,15 +27,6 @@ interface IToposMessaging {
 
     event TokenDeployed(string symbol, address tokenAddress);
 
-    event TokenSent(
-        address indexed sender,
-        SubnetId sourceSubnetId,
-        SubnetId targetSubnetId,
-        address receiver,
-        address tokenAddress,
-        uint256 amount
-    );
-
     error BurnFailed(address tokenAddress);
     error CertNotPresent();
     error ExceedDailyMintLimit(address tokenAddress);

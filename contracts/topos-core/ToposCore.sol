@@ -121,6 +121,12 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         _setAdmins(newAdminEpoch, adminAddresses, newAdminThreshold);
     }
 
+    /// @notice Emits an event to signal a cross subnet message has been sent
+    /// @param targetSubnetId The subnet ID of the target subnet
+    function emitCrossSubnetMessage(SubnetId targetSubnetId) external {
+        emit CrossSubnetMessageSent(targetSubnetId);
+    }
+
     /// @notice Returns the admin epoch
     function adminEpoch() external view override returns (uint256) {
         return _adminEpoch();
