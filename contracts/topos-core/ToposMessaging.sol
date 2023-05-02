@@ -135,21 +135,15 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     }
 
     /// @notice Entry point for sending a cross-subnet asset transfer
+    /// @dev The input data is sent to the target subnet externally
     /// @param targetSubnetId Target subnet ID
-    /// @param receiver Receiver's address
+    /// @param /*receiver*/ Receiver's address (avoiding unused local variable warning)
     /// @param tokenAddress Address of target token contract
     /// @param amount Amount of token to send
-    function sendToken(SubnetId targetSubnetId, address receiver, address tokenAddress, uint256 amount) external {
+    function sendToken(SubnetId targetSubnetId, address /*receiver*/, address tokenAddress, uint256 amount) external {
         if (_toposCoreAddr.code.length == uint256(0)) revert InvalidToposCore();
         _burnTokenFrom(msg.sender, tokenAddress, amount);
-        emit TokenSent(
-            msg.sender,
-            IToposCore(_toposCoreAddr).networkSubnetId(),
-            targetSubnetId,
-            receiver,
-            tokenAddress,
-            amount
-        );
+        IToposCore(_toposCoreAddr).emitCrossSubnetMessage(targetSubnetId);
     }
 
     /// @notice Gets the token by address
