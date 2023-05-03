@@ -108,9 +108,9 @@ This script requires a few environment variables to be set:
 
 ### Deployment of the contracts on dynamic addresses
 
-To deploy the full Topos Messaging Protocol on dynamic contract addresses (could be any Ethereum compatible network, not just Polygon Edge network with predeployed const address deloyer contract), `deploy:topos-msg-protocol-dynamic` npm script is available. This script is intented for usage primarily during development. It deploys the following contracts:
+To deploy the full Topos Messaging Protocol on dynamic contract addresses (could be any Ethereum compatible network, not just Polygon Edge network with predeployed const address deployer contract), `deploy:topos-msg-protocol-dynamic` npm script is available. This script is intended for usage primarily during development. It deploys the following contracts:
 
-- `TokenDeployer` 
+- `TokenDeployer`
 - `ToposCore`
 - `ToposCoreProxy`
 - `ToposMessaging`
