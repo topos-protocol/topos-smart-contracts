@@ -124,14 +124,7 @@ $ npm run deploy:topos-msg-protocol-dynamic http://127.0.0.1:8545 0xac0974bec39a
 
 This script requires a few environment variables to be set:
 
-- TOKEN_DEPLOYER_SALT: salt for the `TokenDeployer` contract
-- TOPOS_CORE_SALT: salt for the `ToposCore` contract
-- TOPOS_CORE_PROXY_SALT: salt for the `ToposCoreProxy` contract
-- TOPOS_MESSAGING_SALT: salt for the `ToposMessaging` contract
 - PRIVATE_KEY: the private key of the account to be used to deploy contracts
-
-
-
 
 ## Docker
 
