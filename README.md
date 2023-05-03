@@ -106,6 +106,26 @@ This script requires a few environment variables to be set:
 - TOPOS_MESSAGING_SALT: salt for the `ToposMessaging` contract
 - PRIVATE_KEY: the private key of the account to be used to deploy contracts
 
+### Deployment of the contracts on dynamic addresses
+
+To deploy the full Topos Messaging Protocol on dynamic contract addresses (could be any Ethereum compatible network, not just Polygon Edge network with predeployed const address deployer contract), `deploy:topos-msg-protocol-dynamic` npm script is available. This script is intended for usage primarily during development. It deploys the following contracts:
+
+- `TokenDeployer`
+- `ToposCore`
+- `ToposCoreProxy`
+- `ToposMessaging`
+
+```
+$ npm run deploy:topos-msg-protocol-dynamic http://myChainRPCEndpoint sequencerPrivateKey
+
+E.g.
+$ npm run deploy:topos-msg-protocol-dynamic http://127.0.0.1:8545 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+```
+
+This script requires a few environment variables to be set:
+
+- PRIVATE_KEY: the private key of the account to be used to deploy contracts
+
 ## Docker
 
 Some of the above commands can be run in docker.
