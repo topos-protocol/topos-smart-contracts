@@ -77,6 +77,7 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
                     cap,
                     initialSupply,
                     msg.sender,
+                    address(this),
                     salt
                 )
             );
