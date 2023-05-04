@@ -7,7 +7,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "./IERC20Permit.sol";
 
 interface IMintableCappedERC20 is IERC20, IERC20Permit, IAccessControl {
-    error InvalidAccessRole();
     error CapExceeded();
 
     function mint(address account, uint256 amount) external;
