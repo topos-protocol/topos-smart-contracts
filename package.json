@@ -10,7 +10,8 @@
   "author": "Jawad Tariq <sjcool420@hotmail.co.uk>",
   "main": "",
   "files": [
-    "artifacts"
+    "artifacts",
+    "typechain-types"
   ],
   "scripts": {
     "build": "hardhat compile",
