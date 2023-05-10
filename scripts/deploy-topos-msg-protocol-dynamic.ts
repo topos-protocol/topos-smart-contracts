@@ -56,7 +56,7 @@ const main = async function (...args: string[]) {
     wallet
   )
   const TokenDeployer = await TokenDeployerFactory.deploy({
-    gasLimit: 8_000_000,
+    gasLimit: 5_000_000,
   })
   await TokenDeployer.deployed()
   console.log(`Token Deployer deployed to ${TokenDeployer.address}`)
@@ -68,7 +68,7 @@ const main = async function (...args: string[]) {
     wallet
   )
   const ToposCore = await ToposCoreFactory.deploy({
-    gasLimit: 8_000_000,
+    gasLimit: 5_000_000,
   })
   await ToposCore.deployed()
   console.log(`Topos Core contract deployed to ${ToposCore.address}`)
@@ -86,7 +86,7 @@ const main = async function (...args: string[]) {
   const ToposCoreProxy = await ToposCoreProxyFactory.deploy(
     ToposCore.address,
     toposCoreProxyParams,
-    { gasLimit: 8_000_000 }
+    { gasLimit: 5_000_000 }
   )
   await ToposCoreProxy.deployed()
   console.log(`Topos Core Proxy contract deployed to ${ToposCoreProxy.address}`)
@@ -100,7 +100,7 @@ const main = async function (...args: string[]) {
   const ToposMessaging = await ToposMessagingFactory.deploy(
     TokenDeployer.address,
     ToposCoreProxy.address,
-    { gasLimit: 8_000_000 }
+    { gasLimit: 5_000_000 }
   )
   await ToposMessaging.deployed()
   console.log(`Topos Messaging contract deployed to ${ToposMessaging.address}`)
