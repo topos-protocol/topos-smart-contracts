@@ -224,24 +224,12 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
 
         if (tokenType == TokenType.External) {
             revert UnsupportedTokenType();
-        } else if (tokenType == TokenType.InternalBurnableFrom) {
+        } else {
             burnSuccess = _callERC20Token(
                 tokenAddress,
                 abi.encodeWithSelector(IBurnableMintableCappedERC20.burnFrom.selector, sender, amount)
             );
             if (!burnSuccess) revert BurnFailed(tokenAddress);
-        } else {
-            burnSuccess = _callERC20Token(
-                tokenAddress,
-                abi.encodeWithSelector(
-                    IERC20.transferFrom.selector,
-                    sender,
-                    IBurnableMintableCappedERC20(tokenAddress).depositAddress(bytes32(0)),
-                    amount
-                )
-            );
-            if (!burnSuccess) revert BurnFailed(tokenAddress);
-            IBurnableMintableCappedERC20(tokenAddress).burn(bytes32(0));
         }
     }
 
