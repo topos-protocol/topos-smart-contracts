@@ -11,7 +11,7 @@ import tokenDeployerJSON from '../artifacts/contracts/topos-core/TokenDeployer.s
 import toposCoreJSON from '../artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json'
 import toposCoreProxyJSON from '../artifacts/contracts/topos-core/ToposCoreProxy.sol/ToposCoreProxy.json'
 import toposCoreInterfaceJSON from '../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json'
-import toposMessagingJSON from '../artifacts/contracts/topos-core/ToposMessaging.sol/ToposMessaging.json'
+import erc20MessagingJSON from '../artifacts/contracts/topos-core/ERC20Messaging.sol/ERC20Messaging.json'
 
 const main = async function (...args: string[]) {
   const [providerEndpoint, _sequencerPrivateKey] = args
@@ -91,19 +91,19 @@ const main = async function (...args: string[]) {
   await ToposCoreProxy.deployed()
   console.log(`Topos Core Proxy contract deployed to ${ToposCoreProxy.address}`)
 
-  // Deploy ToposMessaging
-  const ToposMessagingFactory = new ContractFactory(
-    toposMessagingJSON.abi,
-    toposMessagingJSON.bytecode,
+  // Deploy ERC20Messaging
+  const ERC20MessagingFactory = new ContractFactory(
+    erc20MessagingJSON.abi,
+    erc20MessagingJSON.bytecode,
     wallet
   )
-  const ToposMessaging = await ToposMessagingFactory.deploy(
+  const ERC20Messaging = await ERC20MessagingFactory.deploy(
     TokenDeployer.address,
     ToposCoreProxy.address,
     { gasLimit: 5_000_000 }
   )
-  await ToposMessaging.deployed()
-  console.log(`Topos Messaging contract deployed to ${ToposMessaging.address}`)
+  await ERC20Messaging.deployed()
+  console.log(`ERC20 Messaging contract deployed to ${ERC20Messaging.address}`)
 
   console.info(`\nSetting subnetId on ToposCore via proxy`)
   const toposCoreInterface = new Contract(

@@ -4,7 +4,7 @@ import tokenDeployerJSON from '../artifacts/contracts/topos-core/TokenDeployer.s
 import toposCoreJSON from '../artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json'
 import toposCoreProxyJSON from '../artifacts/contracts/topos-core/ToposCoreProxy.sol/ToposCoreProxy.json'
 import toposCoreInterfaceJSON from '../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json'
-import toposMessagingJSON from '../artifacts/contracts/topos-core/ToposMessaging.sol/ToposMessaging.json'
+import erc20MessagingJSON from '../artifacts/contracts/topos-core/ERC20Messaging.sol/ERC20Messaging.json'
 import {
   Arg,
   ContractOutputJSON,
@@ -21,7 +21,7 @@ const main = async function (...args: string[]) {
   const tokenDeployerSalt = process.env.TOKEN_DEPLOYER_SALT
   const toposCoreSalt = process.env.TOPOS_CORE_SALT
   const toposCoreProxySalt = process.env.TOPOS_CORE_PROXY_SALT
-  const toposMessagingSalt = process.env.TOPOS_MESSAGING_SALT
+  const erc20MessagingSalt = process.env.ERC20_MESSAGING_SALT
 
   if (!_sequencerPrivateKey) {
     console.error('ERROR: Please provide the sequencer private key!')
@@ -53,7 +53,7 @@ const main = async function (...args: string[]) {
   verifySalt('TokenDeployer', 'TOKEN_DEPLOYER_SALT', tokenDeployerSalt)
   verifySalt('ToposCore', 'TOPOS_CORE_SALT', toposCoreSalt)
   verifySalt('ToposCoreProxy', 'TOPOS_CORE_PROXY_SALT', toposCoreProxySalt)
-  verifySalt('TokenMessaging', 'TOPOS_MESSAGING_SALT', toposMessagingSalt)
+  verifySalt('ERC20Messaging', 'ERC20_MESSAGING_SALT', erc20MessagingSalt)
 
   const wallet = new Wallet(toposDeployerPrivateKey, provider)
 
@@ -89,10 +89,10 @@ const main = async function (...args: string[]) {
   )
 
   await processContract(
-    'ToposMessaging',
+    'ERC20Messaging',
     wallet,
-    toposMessagingJSON,
-    toposMessagingSalt!,
+    erc20MessagingJSON,
+    erc20MessagingSalt!,
     [tokenDeployerAddress, toposCoreProxyAddress],
     4_000_000
   )
