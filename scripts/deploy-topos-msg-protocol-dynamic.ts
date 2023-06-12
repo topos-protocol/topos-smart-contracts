@@ -11,7 +11,7 @@ import tokenDeployerJSON from '../artifacts/contracts/topos-core/TokenDeployer.s
 import toposCoreJSON from '../artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json'
 import toposCoreProxyJSON from '../artifacts/contracts/topos-core/ToposCoreProxy.sol/ToposCoreProxy.json'
 import toposCoreInterfaceJSON from '../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json'
-import erc20MessagingJSON from '../artifacts/contracts/topos-core/ERC20Messaging.sol/ERC20Messaging.json'
+import erc20MessagingJSON from '../artifacts/contracts/examples/ERC20Messaging.sol/ERC20Messaging.json'
 
 const main = async function (...args: string[]) {
   const [providerEndpoint, _sequencerPrivateKey] = args

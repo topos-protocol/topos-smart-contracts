@@ -2,7 +2,7 @@ import { Contract, providers, utils, Wallet, constants } from 'ethers'
 import { keccak256 } from '@ethersproject/keccak256'
 import { toUtf8Bytes } from '@ethersproject/strings'
 
-import erc20MessagingJSON from '../../artifacts/contracts/topos-core/ERC20Messaging.sol/ERC20Messaging.json'
+import erc20MessagingJSON from '../../artifacts/contracts/examples/ERC20Messaging.sol/ERC20Messaging.json'
 import toposCoreInterfaceJSON from '../../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json'
 import ERC20 from '../../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json'
 

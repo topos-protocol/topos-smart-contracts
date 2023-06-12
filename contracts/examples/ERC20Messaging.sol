@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import "./Bytes32Sets.sol";
+import "./../topos-core/Bytes32Sets.sol";
 
 import "./../interfaces/IERC20Messaging.sol";
 import "./../interfaces/ITokenDeployer.sol";
 
 import {IBurnableMintableCappedERC20} from "./../interfaces/IBurnableMintableCappedERC20.sol";
-import {ToposMessaging} from "./ToposMessaging.sol";
+import {ToposMessaging} from "./../topos-core/ToposMessaging.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
