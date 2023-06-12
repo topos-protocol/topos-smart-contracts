@@ -2,7 +2,7 @@ import { Contract, providers, utils, Wallet, constants } from 'ethers'
 import { keccak256 } from '@ethersproject/keccak256'
 import { toUtf8Bytes } from '@ethersproject/strings'
 
-import toposMessagingInterfaceJSON from '../../artifacts/contracts/interfaces/IToposMessaging.sol/IToposMessaging.json'
+import erc20MessagingJSON from '../../artifacts/contracts/examples/ERC20Messaging.sol/ERC20Messaging.json'
 import toposCoreInterfaceJSON from '../../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json'
 import ERC20 from '../../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json'
 
@@ -17,13 +17,13 @@ import * as testUtils from '../../test/topos-core/shared/utils/common'
 const main = async function (...args: string[]) {
   const [providerEndpoint, senderPrivateKey, receiverAddress, amount] = args
   const provider = providers.getDefaultProvider(providerEndpoint)
-  const toposMessagingAddress = sanitizeHexString(
-    process.env.TOPOS_MESSAGING_ADDRESS || ''
+  const erc20MessagingAddress = sanitizeHexString(
+    process.env.ERC20_MESSAGING_ADDRESS || ''
   )
 
-  if (!utils.isHexString(toposMessagingAddress, 20)) {
+  if (!utils.isHexString(erc20MessagingAddress, 20)) {
     console.error(
-      'ERROR: Please set token deployer contract address TOPOS_MESSAGING_ADDRESS'
+      'ERROR: Please set token deployer contract address ERC20_MESSAGING_ADDRESS'
     )
     process.exit(1)
   }
@@ -41,9 +41,9 @@ const main = async function (...args: string[]) {
 
   const wallet = new Wallet(senderPrivateKey, provider)
 
-  const toposMessaging = new Contract(
-    toposMessagingAddress,
-    toposMessagingInterfaceJSON.abi,
+  const erc20Messaging = new Contract(
+    erc20MessagingAddress,
+    erc20MessagingJSON.abi,
     wallet
   )
   const toposCoreProxy = new Contract(
@@ -67,10 +67,10 @@ const main = async function (...args: string[]) {
   let deploy = true
   let tokenAddress = null
   // Check if token is already deployed. If not, deploy it
-  const numberOfTokens = await toposMessaging.getTokenCount()
+  const numberOfTokens = await erc20Messaging.getTokenCount()
   for (let index = 0; index < numberOfTokens; index++) {
-    const tokenKey = await toposMessaging.getTokenKeyAtIndex(index)
-    const [token, address] = await toposMessaging.tokens(tokenKey)
+    const tokenKey = await erc20Messaging.getTokenKeyAtIndex(index)
+    const [token, address] = await erc20Messaging.tokens(tokenKey)
     if (token == tc.TOKEN_SYMBOL_X) {
       deploy = false
       console.log(
@@ -87,7 +87,7 @@ const main = async function (...args: string[]) {
 
   if (deploy) {
     // Deploy token if not previously deployed
-    const tx = await toposMessaging.deployToken(defaultToken, {
+    const tx = await erc20Messaging.deployToken(defaultToken, {
       gasLimit: 5_000_000,
     })
     const txReceipt = await tx.wait()
@@ -104,7 +104,7 @@ const main = async function (...args: string[]) {
 
   // Approve token burn
   const erc20 = new Contract(tokenAddress, ERC20.abi, wallet)
-  await erc20.approve(toposMessaging.address, amount)
+  await erc20.approve(erc20Messaging.address, amount)
 
   // Send token
   console.log(
@@ -119,7 +119,7 @@ const main = async function (...args: string[]) {
     ' token address:',
     tokenAddress
   )
-  const tx = await toposMessaging.sendToken(
+  const tx = await erc20Messaging.sendToken(
     cc.TARGET_SUBNET_ID_4,
     receiverAddress,
     tokenAddress,
