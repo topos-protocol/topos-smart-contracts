@@ -6,7 +6,7 @@ on:
 
 jobs:
   notification:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-16-core
     steps:
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.23.0
