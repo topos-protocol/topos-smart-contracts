@@ -1,0 +1,52 @@
+import { utils, Wallet } from 'ethers'
+import fs from 'fs'
+
+import {
+  Arg,
+  ContractOutputJSON,
+  predictContractConstant,
+} from './const-addr-deployer'
+
+const main = async function (..._args: Arg[]) {
+  const [contractJsonPath, salt, ...args] = _args
+  const privateKey = process.env.PRIVATE_KEY
+
+  if (!privateKey || !utils.isHexString(privateKey, 32)) {
+    console.error('ERROR: Please provide a valid private key! (PRIVATE_KEY)')
+    return
+  }
+
+  const wallet = new Wallet(process.env.PRIVATE_KEY || '')
+
+  let rawdata
+  try {
+    rawdata = fs.readFileSync(contractJsonPath)
+  } catch (error) {
+    console.error(
+      `ERROR: Could not find a contract JSON file at ${contractJsonPath}`
+    )
+    return
+  }
+
+  let contractJson: ContractOutputJSON
+  try {
+    contractJson = JSON.parse(rawdata.toString())
+  } catch (error) {
+    console.error(
+      `ERROR: Could not parse the contract JSON file found at ${contractJsonPath}`
+    )
+    return
+  }
+
+  const address = await predictContractConstant(
+    wallet,
+    contractJson,
+    <string>salt,
+    args
+  ).catch(console.error)
+
+  return address
+}
+
+const args = process.argv.slice(2)
+main(...args)
