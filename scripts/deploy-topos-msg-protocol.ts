@@ -96,10 +96,10 @@ const main = async function (...args: string[]) {
   setSubnetId(toposCoreProxyAddress, wallet, subnetId)
 
   console.log(`
-    export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}
-    export TOPOS_CORE_PROXY_CONTRACT_ADDRESS=${toposCoreProxyAddress}
-    export TOKEN_DEPLOYER_CONTRACT_ADDRESS=${tokenDeployerAddress}
-    export ERC20_MESSAGING_CONTRACT_ADDRESS=${erc20MessagingAddresss}
+export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}
+export TOPOS_CORE_PROXY_CONTRACT_ADDRESS=${toposCoreProxyAddress}
+export TOKEN_DEPLOYER_CONTRACT_ADDRESS=${tokenDeployerAddress}
+export ERC20_MESSAGING_CONTRACT_ADDRESS=${erc20MessagingAddresss}
   `)
 }
 
