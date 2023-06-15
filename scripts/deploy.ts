@@ -39,7 +39,7 @@ const main = async function (..._args: Arg[]) {
     return
   }
 
-  await deployContractConstant(
+  const address = await deployContractConstant(
     wallet,
     contractJson,
     <string>salt,
@@ -52,8 +52,11 @@ const main = async function (..._args: Arg[]) {
           (<string>contractJsonPath).split('.json')[0]
         } at ${contract.address}`
       )
+      return contract.address
     })
     .catch(console.error)
+
+  return address
 }
 
 const args = process.argv.slice(2)
