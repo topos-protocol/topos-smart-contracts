@@ -58,7 +58,6 @@ const main = async function (...args: string[]) {
   const wallet = new Wallet(toposDeployerPrivateKey, provider)
 
   const tokenDeployerAddress = await processContract(
-    'TokenDeployer',
     wallet,
     tokenDeployerJSON,
     tokenDeployerSalt!,
@@ -67,7 +66,6 @@ const main = async function (...args: string[]) {
   )
 
   const toposCoreAddress = await processContract(
-    'ToposCore',
     wallet,
     toposCoreJSON,
     toposCoreSalt!,
@@ -80,7 +78,6 @@ const main = async function (...args: string[]) {
     [[wallet.address], 1] // TODO: Use a different admin address than ToposDeployer
   )
   const toposCoreProxyAddress = await processContract(
-    'ToposCoreProxy',
     wallet,
     toposCoreProxyJSON,
     toposCoreProxySalt!,
@@ -89,7 +86,6 @@ const main = async function (...args: string[]) {
   )
 
   const erc20MessagingAddresss = await processContract(
-    'ERC20Messaging',
     wallet,
     erc20MessagingJSON,
     erc20MessagingSalt!,
@@ -99,12 +95,12 @@ const main = async function (...args: string[]) {
 
   setSubnetId(toposCoreProxyAddress, wallet, subnetId)
 
-  return `
+  console.log(`
     export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}
     export TOPOS_CORE_PROXY_CONTRACT_ADDRESS=${toposCoreProxyAddress}
     export TOKEN_DEPLOYER_CONTRACT_ADDRESS=${tokenDeployerAddress}
     export ERC20_MESSAGING_CONTRACT_ADDRESS=${erc20MessagingAddresss}
-  `
+  `)
 }
 
 const sanitizeHexString = function (hexString: string) {
@@ -125,15 +121,12 @@ const verifySalt = function (
 }
 
 const processContract = async function (
-  contractName: string,
   wallet: Wallet,
   contractJson: ContractOutputJSON,
   salt: string,
   args: Arg[] = [],
   gasLimit: number | null = null
 ) {
-  console.info(`\nVerifying if ${contractName} is already deployed...`)
-
   const predictedContractAddress = await predictContractConstant(
     wallet,
     contractJson,
@@ -151,14 +144,8 @@ const processContract = async function (
   const thereIsCodeAtAddress = codeAtPredictedAddress !== '0x'
 
   if (thereIsCodeAtAddress) {
-    console.info(
-      `${contractName} is already deployed! (${predictedContractAddress})`
-    )
-
     return predictedContractAddress
   } else {
-    console.info(`Deploying ${contractName} with constant address...`)
-
     const newContractAddress = await deployContractConstant(
       wallet,
       contractJson,
@@ -172,10 +159,6 @@ const processContract = async function (
         process.exit(1)
       })
 
-    console.info(
-      `Successfully deployed ${contractName} at ${newContractAddress}\n`
-    )
-
     return newContractAddress
   }
 }
@@ -185,8 +168,6 @@ const setSubnetId = async function (
   wallet: Wallet,
   subnetId: string
 ) {
-  console.info(`\nSetting subnetId on ToposCore via proxy`)
-
   const toposCoreInterface = new Contract(
     toposCoreProxyAddress,
     toposCoreInterfaceJSON.abi,
@@ -211,10 +192,8 @@ const setSubnetId = async function (
       console.error(error)
       process.exit(1)
     })
-  const networkSubnetId = await toposCoreInterface.networkSubnetId()
-  console.info(
-    `Successfully set ${networkSubnetId} subnetId on ToposCore via proxy\n`
-  )
+
+  await toposCoreInterface.networkSubnetId()
 }
 
 const args = process.argv.slice(2)

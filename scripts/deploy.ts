@@ -46,17 +46,10 @@ const main = async function (..._args: Arg[]) {
     args,
     <number>gasLimit
   )
-    .then((contract) => {
-      console.info(
-        `Successfully deployed ${
-          (<string>contractJsonPath).split('.json')[0]
-        } at ${contract.address}`
-      )
-      return contract.address
-    })
+    .then(({ address }) => address)
     .catch(console.error)
 
-  return address
+  console.log(address)
 }
 
 const args = process.argv.slice(2)
