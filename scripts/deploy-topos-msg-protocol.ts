@@ -88,7 +88,7 @@ const main = async function (...args: string[]) {
     4_000_000
   )
 
-  await processContract(
+  const erc20MessagingAddresss = await processContract(
     'ERC20Messaging',
     wallet,
     erc20MessagingJSON,
@@ -98,6 +98,13 @@ const main = async function (...args: string[]) {
   )
 
   setSubnetId(toposCoreProxyAddress, wallet, subnetId)
+
+  return `
+    export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}
+    export TOPOS_CORE_PROXY_CONTRACT_ADDRESS=${toposCoreProxyAddress}
+    export TOKEN_DEPLOYER_CONTRACT_ADDRESS=${tokenDeployerAddress}
+    export ERC20_MESSAGING_CONTRACT_ADDRESS=${erc20MessagingAddresss}
+  `
 }
 
 const sanitizeHexString = function (hexString: string) {
