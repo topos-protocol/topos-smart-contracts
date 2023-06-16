@@ -17,7 +17,7 @@ jobs:
     uses: ./.github/workflows/docker_utils.yml
   e2e:
     needs: docker
-    if: ${{ github.event_name == "pull_request" }}
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest-16-core
     steps:
       - name: Set environment
