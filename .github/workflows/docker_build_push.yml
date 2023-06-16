@@ -23,6 +23,13 @@ jobs:
     needs: docker
     runs-on: ubuntu-latest-16-core
     steps:
+      - name: Set environment
+        run: |
+          # It's fine to assume a single tag. Our tagging strategy follows a 1:1 mapping of image:tag
+          tags=${{ needs.docker.outputs.tags }}
+          echo "docker_tag=${tags#*:}" >> $GITHUB_ENV
+        shell: bash
+
       - uses: convictional/trigger-workflow-and-wait@v1.6.1
         with:
           owner: topos-network
@@ -31,4 +38,4 @@ jobs:
           workflow_file_name: frontend:erc20-messaging.yml
           ref: main
           wait_interval: 60
-          client_payload: '{ "topos-smart-contracts-docker-tag": "${{ needs.docker.outputs.tags }}" }'
+          client_payload: '{ "topos-smart-contracts-docker-tag": "${{ env.docker_tag }}" }'
