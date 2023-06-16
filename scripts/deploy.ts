@@ -39,21 +39,17 @@ const main = async function (..._args: Arg[]) {
     return
   }
 
-  await deployContractConstant(
+  const address = await deployContractConstant(
     wallet,
     contractJson,
     <string>salt,
     args,
     <number>gasLimit
   )
-    .then((contract) => {
-      console.info(
-        `Successfully deployed ${
-          (<string>contractJsonPath).split('.json')[0]
-        } at ${contract.address}`
-      )
-    })
+    .then(({ address }) => address)
     .catch(console.error)
+
+  console.log(address)
 }
 
 const args = process.argv.slice(2)
