@@ -12,7 +12,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  docker:
+  docker-build-push:
     runs-on: ubuntu-latest-16-core
     outputs:
       tags: ${{ steps.meta.outputs.tags }}
