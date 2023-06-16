@@ -32,7 +32,6 @@
     "lint:sol:fix": "npm run lint:sol -- --fix",
     "lint:ts": "eslint --ext .ts .",
     "lint:ts:fix": "npm run lint:ts -- --fix",
-    "predict-const-address": "ts-node scripts/predict-const-address.ts",
     "register-subnet": "ts-node scripts/register-subnet.ts",
     "test": "hardhat test"
   },
