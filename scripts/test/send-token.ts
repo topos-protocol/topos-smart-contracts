@@ -91,6 +91,7 @@ const main = async function (...args: string[]) {
       gasLimit: 5_000_000,
     })
     const txReceipt = await tx.wait()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const logs = txReceipt.events?.find((e: any) => e.event === 'TokenDeployed')
 
     tokenAddress = logs?.args?.tokenAddress
@@ -130,6 +131,7 @@ const main = async function (...args: string[]) {
   )
   const txReceipt = await tx.wait()
   const logs = txReceipt.events?.find(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (e: any) =>
       e.topics[0] === keccak256(toUtf8Bytes('CrossSubnetMessageSent(bytes32)')) // For some reason e.events is not filled
   )
