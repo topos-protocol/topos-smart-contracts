@@ -48,6 +48,16 @@ describe('ToposCore', () => {
       ).to.be.revertedWith('Bytes32Set: key already exists in the set.')
     })
 
+    it('reverts if non-admin tries to push certificate', async () => {
+      const { defaultCert, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
+      const [, nonAdmin] = await ethers.getSigners()
+      await expect(
+        toposCore.connect(nonAdmin).pushCertificate(defaultCert, cc.CERT_POS_1)
+      ).to.be.revertedWithCustomError(toposCore, 'NotAdmin')
+    })
+
     it('gets the certificate count', async () => {
       const { defaultCert, toposCore } = await loadFixture(
         deployToposCoreFixture

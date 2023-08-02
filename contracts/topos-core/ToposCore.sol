@@ -67,7 +67,7 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     /// @notice Push the certificate on-chain
     /// @param certBytes The certificate in byte
     /// @param position The position of the certificate
-    function pushCertificate(bytes memory certBytes, uint256 position) external override {
+    function pushCertificate(bytes memory certBytes, uint256 position) external override onlyAdmin {
         (
             CertificateId prevId,
             SubnetId sourceSubnetId,
