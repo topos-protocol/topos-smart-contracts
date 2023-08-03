@@ -9,7 +9,7 @@ interface IToposCore {
         CertificateId prevId;
         SubnetId sourceSubnetId;
         bytes32 stateRoot;
-        bytes32 txRoot;
+        bytes32 receiptRoot;
         SubnetId[] targetSubnets;
         uint32 verifier;
         CertificateId certId;
@@ -22,7 +22,7 @@ interface IToposCore {
         SubnetId sourceSubnetId;
     }
 
-    event CertStored(CertificateId certId, bytes32 txRoot);
+    event CertStored(CertificateId certId, bytes32 receiptRoot);
 
     event CrossSubnetMessageSent(SubnetId indexed targetSubnetId, bytes data);
 
@@ -84,5 +84,5 @@ interface IToposCore {
 
     function sourceSubnetIdExists(SubnetId subnetId) external view returns (bool);
 
-    function txRootToCertId(bytes32 txRoot) external view returns (CertificateId);
+    function receiptRootToCertId(bytes32 receiptRoot) external view returns (CertificateId);
 }

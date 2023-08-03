@@ -138,16 +138,12 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
     }
 
     /// @notice Execute a cross-subnet asset transfer
-    /// @param indexOfDataInTxRaw Index of data in txRaw
-    /// @param txRaw Raw transaction data
-    function _execute(uint256 indexOfDataInTxRaw, bytes calldata txRaw) internal override {
-        (SubnetId targetSubnetId, address receiver, address tokenAddress, uint256 amount) = abi.decode(
-            txRaw[indexOfDataInTxRaw + 4:], // omit the 4 bytes function selector
-            (SubnetId, address, address, uint256)
+    /// @param receiptData Encoded receipt data
+    function _execute(bytes memory receiptData) internal override {
+        (, , /*memoryStart*/ /*memoryLength*/ address receiver, address tokenAddress, uint256 amount) = abi.decode(
+            receiptData,
+            (bytes32, bytes32, address, address, uint256)
         );
-        if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
-
-        // prevent reentrancy
         _mintToken(tokenAddress, receiver, amount);
     }
 
