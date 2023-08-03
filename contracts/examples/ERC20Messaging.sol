@@ -91,13 +91,15 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
     /// @notice Entry point for sending a cross-subnet asset transfer
     /// @dev The input data is sent to the target subnet externally
     /// @param targetSubnetId Target subnet ID
-    /// @param /*receiver*/ Receiver's address (avoiding unused local variable warning)
+    /// @param receiver Receiver's address
     /// @param tokenAddress Address of target token contract
     /// @param amount Amount of token to send
-    function sendToken(SubnetId targetSubnetId, address /*receiver*/, address tokenAddress, uint256 amount) external {
+    function sendToken(SubnetId targetSubnetId, address receiver, address tokenAddress, uint256 amount) external {
         if (_toposCoreAddr.code.length == uint256(0)) revert InvalidToposCore();
         _burnTokenFrom(msg.sender, tokenAddress, amount);
-        _emitMessageSentEvent(targetSubnetId);
+        // encode the data to be sent to the target subnet
+        bytes memory packedData = abi.encode(receiver, tokenAddress, amount);
+        _emitMessageSentEvent(targetSubnetId, packedData);
     }
 
     /// @notice Gets the token by address

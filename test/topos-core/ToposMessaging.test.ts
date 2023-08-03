@@ -688,6 +688,12 @@ describe('ToposMessaging', () => {
       const tokenAddress = logs?.args?.tokenAddress
       const erc20 = ERC20.attach(tokenAddress)
       await erc20.approve(erc20Messaging.address, tc.SEND_AMOUNT_50)
+
+      const sendTokenData = ethers.utils.defaultAbiCoder.encode(
+        ['address', 'address', 'uint256'],
+        [tc.RECIPIENT_ADDRESS, tokenAddress, tc.SEND_AMOUNT_50]
+      )
+
       await expect(
         erc20Messaging.sendToken(
           cc.TARGET_SUBNET_ID_4,
@@ -703,7 +709,7 @@ describe('ToposMessaging', () => {
           tc.SEND_AMOUNT_50
         )
         .to.emit(toposCore, 'CrossSubnetMessageSent')
-        .withArgs(cc.TARGET_SUBNET_ID_4)
+        .withArgs(cc.TARGET_SUBNET_ID_4, sendTokenData)
     })
   })
 

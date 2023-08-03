@@ -89,8 +89,8 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     function _execute(uint256 indexOfDataInTxRaw, bytes calldata txRaw) internal virtual {}
 
     /// @notice emit a message sent event from the ToposCore contract
-    function _emitMessageSentEvent(SubnetId targetSubnetId) internal {
-        IToposCore(_toposCoreAddr).emitCrossSubnetMessage(targetSubnetId);
+    function _emitMessageSentEvent(SubnetId targetSubnetId, bytes memory data) internal {
+        IToposCore(_toposCoreAddr).emitCrossSubnetMessage(targetSubnetId, data);
     }
 
     /// @notice Set a flag to indicate that the asset transfer transaction has been executed
