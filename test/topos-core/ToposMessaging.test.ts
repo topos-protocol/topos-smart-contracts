@@ -2,7 +2,7 @@ import { Contract } from 'ethers'
 import { deployContractConstant } from '../../scripts/const-addr-deployer'
 import { ethers, network } from 'hardhat'
 import { expect } from 'chai'
-import { getMptProof } from './shared/utils/mpt_proof'
+import { getReceiptMptProof } from './shared/utils/mpt_proof'
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
@@ -30,7 +30,7 @@ describe('ToposMessaging', () => {
       cc.PREV_CERT_ID_0,
       cc.SOURCE_SUBNET_ID_1,
       cc.STATE_ROOT_MAX,
-      cc.TX_ROOT_MAX,
+      cc.RECEIPT_ROOT_MAX,
       [cc.TARGET_SUBNET_ID_4, cc.TARGET_SUBNET_ID_5],
       cc.VERIFIER,
       cc.CERT_ID_1,
@@ -259,14 +259,16 @@ describe('ToposMessaging', () => {
         tokenAddress
       )
 
-      const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
-        await getMptProof(sendToken, ethers.provider)
+      const { proofBlob, receiptsRoot } = await getReceiptMptProof(
+        sendToken,
+        ethers.provider
+      )
 
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        transactionsRoot,
+        receiptsRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -274,50 +276,13 @@ describe('ToposMessaging', () => {
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
-      await expect(
-        erc20Messaging.execute(
-          indexOfTxData,
-          proofBlob,
-          txRaw,
-          transactionsRoot
-        )
-      )
+      await expect(erc20Messaging.execute(proofBlob, receiptsRoot))
         .to.emit(erc20, 'Transfer')
         .withArgs(
           ethers.constants.AddressZero,
           receiver.address,
           tc.SEND_AMOUNT_50
         )
-    })
-
-    it('reverts if the index of tx data is out of range', async () => {
-      const {
-        admin,
-        receiver,
-        defaultToken,
-        ERC20,
-        erc20Messaging,
-        erc20MessagingContract,
-      } = await loadFixture(deployERC20MessagingFixture)
-      const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
-        await deployDefaultToken(
-          admin,
-          receiver,
-          ERC20,
-          defaultToken,
-          erc20Messaging,
-          erc20MessagingContract
-        )
-
-      const outOfBoundsMax = 300
-      await expect(
-        erc20Messaging.execute(
-          indexOfTxData + outOfBoundsMax,
-          proofBlob,
-          txRaw,
-          transactionsRoot
-        )
-      ).to.be.revertedWithCustomError(erc20Messaging, 'IllegalMemoryAccess')
     })
 
     it('reverts if the certificate is not present', async () => {
@@ -329,23 +294,17 @@ describe('ToposMessaging', () => {
         erc20Messaging,
         erc20MessagingContract,
       } = await loadFixture(deployERC20MessagingFixture)
-      const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
-        await deployDefaultToken(
-          admin,
-          receiver,
-          ERC20,
-          defaultToken,
-          erc20Messaging,
-          erc20MessagingContract
-        )
+      const { proofBlob, receiptsRoot } = await deployDefaultToken(
+        admin,
+        receiver,
+        ERC20,
+        defaultToken,
+        erc20Messaging,
+        erc20MessagingContract
+      )
 
       await expect(
-        erc20Messaging.execute(
-          indexOfTxData,
-          proofBlob,
-          txRaw,
-          transactionsRoot
-        )
+        erc20Messaging.execute(proofBlob, receiptsRoot)
       ).to.be.revertedWithCustomError(erc20Messaging, 'CertNotPresent')
     })
 
@@ -359,22 +318,21 @@ describe('ToposMessaging', () => {
         erc20Messaging,
         erc20MessagingContract,
       } = await loadFixture(deployERC20MessagingFixture)
-      const { indexOfTxData, transactionsRoot, txRaw } =
-        await deployDefaultToken(
-          admin,
-          receiver,
-          ERC20,
-          defaultToken,
-          erc20Messaging,
-          erc20MessagingContract
-        )
+      const { receiptsRoot } = await deployDefaultToken(
+        admin,
+        receiver,
+        ERC20,
+        defaultToken,
+        erc20Messaging,
+        erc20MessagingContract
+      )
 
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        transactionsRoot,
+        receiptsRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -383,14 +341,8 @@ describe('ToposMessaging', () => {
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       const fakeProofBlob = '0x01'
-      await expect(
-        erc20Messaging.execute(
-          indexOfTxData,
-          fakeProofBlob,
-          txRaw,
-          transactionsRoot
-        )
-      ).to.be.reverted
+      await expect(erc20Messaging.execute(fakeProofBlob, receiptsRoot)).to.be
+        .reverted
     })
 
     it('reverts if the target subnet id is mismatched', async () => {
@@ -403,22 +355,21 @@ describe('ToposMessaging', () => {
         erc20Messaging,
         erc20MessagingContract,
       } = await loadFixture(deployERC20MessagingFixture)
-      const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
-        await deployDefaultToken(
-          admin,
-          receiver,
-          ERC20,
-          defaultToken,
-          erc20Messaging,
-          erc20MessagingContract
-        )
+      const { proofBlob, receiptsRoot } = await deployDefaultToken(
+        admin,
+        receiver,
+        ERC20,
+        defaultToken,
+        erc20Messaging,
+        erc20MessagingContract
+      )
 
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_1) // target subnet id = SOURCE_SUBNET_ID_2
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        transactionsRoot,
+        receiptsRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -427,12 +378,7 @@ describe('ToposMessaging', () => {
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
-        erc20Messaging.execute(
-          indexOfTxData,
-          proofBlob,
-          txRaw,
-          transactionsRoot
-        )
+        erc20Messaging.execute(proofBlob, receiptsRoot)
       ).to.be.revertedWithCustomError(erc20Messaging, 'InvalidSubnetId')
     })
 
@@ -446,22 +392,21 @@ describe('ToposMessaging', () => {
         erc20Messaging,
         erc20MessagingContract,
       } = await loadFixture(deployERC20MessagingFixture)
-      const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
-        await deployDefaultToken(
-          admin,
-          receiver,
-          ERC20,
-          defaultToken,
-          erc20Messaging,
-          erc20MessagingContract
-        )
+      const { proofBlob, receiptsRoot } = await deployDefaultToken(
+        admin,
+        receiver,
+        ERC20,
+        defaultToken,
+        erc20Messaging,
+        erc20MessagingContract
+      )
 
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        transactionsRoot,
+        receiptsRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -469,19 +414,9 @@ describe('ToposMessaging', () => {
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
-      await erc20Messaging.execute(
-        indexOfTxData,
-        proofBlob,
-        txRaw,
-        transactionsRoot
-      )
+      await erc20Messaging.execute(proofBlob, receiptsRoot)
       await expect(
-        erc20Messaging.execute(
-          indexOfTxData,
-          proofBlob,
-          txRaw,
-          transactionsRoot
-        )
+        erc20Messaging.execute(proofBlob, receiptsRoot)
       ).to.be.revertedWithCustomError(
         erc20Messaging,
         'TransactionAlreadyExecuted'
@@ -497,7 +432,7 @@ describe('ToposMessaging', () => {
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.UNKNOWN_TOKEN_TRANSACTION.txRoot,
+        txc.UNKNOWN_TOKEN_TRANSACTION.receiptRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -507,10 +442,8 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         erc20Messaging.execute(
-          txc.INDEX_OF_TX_DATA_36,
           txc.UNKNOWN_TOKEN_TRANSACTION.proofBlob,
-          txc.UNKNOWN_TOKEN_TRANSACTION.txRaw,
-          txc.UNKNOWN_TOKEN_TRANSACTION.txRoot
+          txc.UNKNOWN_TOKEN_TRANSACTION.receiptRoot
         )
       ).to.be.revertedWithCustomError(erc20Messaging, 'TokenDoesNotExist')
     })
@@ -525,7 +458,7 @@ describe('ToposMessaging', () => {
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.MINT_EXCEED_TRANSACTION.txRoot,
+        txc.MINT_EXCEED_TRANSACTION.receiptRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -535,10 +468,8 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         erc20Messaging.execute(
-          txc.INDEX_OF_TX_DATA_36,
           txc.MINT_EXCEED_TRANSACTION.proofBlob,
-          txc.MINT_EXCEED_TRANSACTION.txRaw,
-          txc.MINT_EXCEED_TRANSACTION.txRoot
+          txc.MINT_EXCEED_TRANSACTION.receiptRoot
         )
       ).to.be.revertedWithCustomError(erc20Messaging, 'ExceedDailyMintLimit')
     })
@@ -553,7 +484,7 @@ describe('ToposMessaging', () => {
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        txc.ZERO_ADDRESS_TRANSACTION.txRoot,
+        txc.ZERO_ADDRESS_TRANSACTION.receiptRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -563,12 +494,10 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         erc20Messaging.execute(
-          txc.INDEX_OF_TX_DATA_36,
           txc.ZERO_ADDRESS_TRANSACTION.proofBlob,
-          txc.ZERO_ADDRESS_TRANSACTION.txRaw,
-          txc.ZERO_ADDRESS_TRANSACTION.txRoot
+          txc.ZERO_ADDRESS_TRANSACTION.receiptRoot
         )
-      ).to.be.revertedWith('ERC20: mint to the zero address')
+      ).to.be.revertedWithCustomError(erc20Messaging, 'TokenDoesNotExist')
     })
 
     it('emits the Transfer success event', async () => {
@@ -581,21 +510,20 @@ describe('ToposMessaging', () => {
         erc20Messaging,
         erc20MessagingContract,
       } = await loadFixture(deployERC20MessagingFixture)
-      const { erc20, indexOfTxData, proofBlob, transactionsRoot, txRaw } =
-        await deployDefaultToken(
-          admin,
-          receiver,
-          ERC20,
-          defaultToken,
-          erc20Messaging,
-          erc20MessagingContract
-        )
+      const { erc20, proofBlob, receiptsRoot } = await deployDefaultToken(
+        admin,
+        receiver,
+        ERC20,
+        defaultToken,
+        erc20Messaging,
+        erc20MessagingContract
+      )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
-        transactionsRoot,
+        receiptsRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -603,14 +531,7 @@ describe('ToposMessaging', () => {
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
-      await expect(
-        erc20Messaging.execute(
-          indexOfTxData,
-          proofBlob,
-          txRaw,
-          transactionsRoot
-        )
-      )
+      await expect(erc20Messaging.execute(proofBlob, receiptsRoot))
         .to.emit(erc20, 'Transfer')
         .withArgs(
           ethers.constants.AddressZero,
@@ -737,9 +658,11 @@ describe('ToposMessaging', () => {
       tokenAddress
     )
 
-    const { indexOfTxData, proofBlob, transactionsRoot, txRaw } =
-      await getMptProof(sendToken, ethers.provider)
-    return { erc20, indexOfTxData, proofBlob, transactionsRoot, txRaw }
+    const { proofBlob, receiptsRoot } = await getReceiptMptProof(
+      sendToken,
+      ethers.provider
+    )
+    return { erc20, proofBlob, receiptsRoot }
   }
 
   async function sendTokenTx(
