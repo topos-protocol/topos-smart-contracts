@@ -423,6 +423,34 @@ describe('ToposMessaging', () => {
       )
     })
 
+    it('reverts if the transaction status is invalid', async () => {
+      const { toposCore, erc20Messaging } = await loadFixture(
+        deployERC20MessagingFixture
+      )
+      await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
+      const certificate = testUtils.encodeCertParam(
+        cc.PREV_CERT_ID_0,
+        cc.SOURCE_SUBNET_ID_1,
+        cc.STATE_ROOT_MAX,
+        txc.INVALID_STATUS_TRANSACTION.receiptRoot,
+        [cc.SOURCE_SUBNET_ID_2],
+        cc.VERIFIER,
+        cc.CERT_ID_1,
+        cc.DUMMY_STARK_PROOF,
+        cc.DUMMY_SIGNATURE
+      )
+      await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
+      await expect(
+        erc20Messaging.execute(
+          txc.INVALID_STATUS_TRANSACTION.proofBlob,
+          txc.INVALID_STATUS_TRANSACTION.receiptRoot
+        )
+      ).to.be.revertedWithCustomError(
+        erc20Messaging,
+        'InvalidTransactionStatus'
+      )
+    })
+
     it('reverts if the token is not deployed yet', async () => {
       const { toposCore, erc20Messaging } = await loadFixture(
         deployERC20MessagingFixture

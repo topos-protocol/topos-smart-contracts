@@ -15,7 +15,7 @@ export async function getReceiptMptProof(
   ])
 
   const receiptsRoot = rawBlock.receiptsRoot
-  const trie = await createTrie(block)
+  const trie = await createTrie(block, provider)
   const trieRoot = trie.root()
   if ('0x' + trieRoot.toString('hex') !== receiptsRoot) {
     throw new Error(
@@ -39,18 +39,15 @@ export async function getReceiptMptProof(
   return { proofBlob, receiptsRoot }
 }
 
-async function createTrie(block: BlockWithTransactions) {
+async function createTrie(
+  block: BlockWithTransactions,
+  provider: ethers.providers.JsonRpcProvider
+) {
   const trie = new Trie()
   await Promise.all(
     block.transactions.map(async (tx, index) => {
       const { /*type,*/ cumulativeGasUsed, logs, logsBloom, status } =
-        await tx.wait()
-      // console.log('Tx type: ', type)
-      // console.log('status: ', status)
-      // console.log('cumulativeGasUsed: ', cumulativeGasUsed)
-      // console.log('logsBloom: ', logsBloom)
-      // console.log('logs: ', logs)
-
+        await provider.getTransactionReceipt(tx.hash)
       return trie.put(
         Buffer.from(RLP.encode(index)),
         Buffer.from(

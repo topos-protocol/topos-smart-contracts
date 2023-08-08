@@ -17,7 +17,7 @@ interface IToposMessaging {
     error CertNotPresent();
     error InvalidMerkleProof();
     error InvalidSubnetId();
-    error InvalidTransaction();
+    error InvalidTransactionStatus();
     error InvalidToposCore();
     error InvalidToposCoreAddress();
     error TransactionAlreadyExecuted();

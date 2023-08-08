@@ -58,7 +58,7 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
             bytes32[][] memory logsTopics,
             bytes[] memory logsData
         ) = _decodeReceipt(receiptRaw);
-        if (status != 1) revert InvalidTransaction();
+        if (status != 1) revert InvalidTransactionStatus();
 
         // the last event (CrossSubnetMessageSent) is always emitted by the topos core contract
         uint256 logIndex = logsAddress.length - 1;
