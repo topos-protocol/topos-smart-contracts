@@ -73,9 +73,10 @@ const main = async function (...args: string[]) {
     4_000_000
   )
 
+  const sequencerEthAddress = utils.computeAddress(sequencerPrivateKey)
   const toposCoreProxyParams = utils.defaultAbiCoder.encode(
     ['address[]', 'uint256'],
-    [[wallet.address], 1] // TODO: Use a different admin address than ToposDeployer
+    [[sequencerEthAddress], 1]
   )
   const toposCoreProxyAddress = await processContract(
     wallet,
@@ -93,7 +94,8 @@ const main = async function (...args: string[]) {
     4_000_000
   )
 
-  setSubnetId(toposCoreProxyAddress, wallet, subnetId)
+  const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
+  setSubnetId(toposCoreProxyAddress, sequencerWallet, subnetId)
 
   console.log(`
 export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}

@@ -74,9 +74,10 @@ const main = async function (...args: string[]) {
   console.log(`Topos Core contract deployed to ${ToposCore.address}`)
 
   // Deploy ToposCoreProxy
+  const sequencerEthAddress = utils.computeAddress(sequencerPrivateKey)
   const toposCoreProxyParams = utils.defaultAbiCoder.encode(
     ['address[]', 'uint256'],
-    [[wallet.address], 1] // TODO: Use a different admin address than ToposDeployer
+    [[sequencerEthAddress], 1]
   )
   const ToposCoreProxyFactory = new ContractFactory(
     toposCoreProxyJSON.abi,
@@ -106,10 +107,11 @@ const main = async function (...args: string[]) {
   console.log(`ERC20 Messaging contract deployed to ${ERC20Messaging.address}`)
 
   console.info(`\nSetting subnetId on ToposCore via proxy`)
+  const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
   const toposCoreInterface = new Contract(
     ToposCoreProxy.address,
     toposCoreInterfaceJSON.abi,
-    wallet
+    sequencerWallet
   )
   await toposCoreInterface
     .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
