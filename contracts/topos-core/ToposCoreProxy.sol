@@ -10,16 +10,11 @@ contract ToposCoreProxy is EternalStorage {
         bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc);
 
     error InvalidImplementation();
-    error SetupFailed();
     error NativeCurrencyNotAccepted();
 
-    constructor(address tccImplementation, bytes memory params) {
+    constructor(address tccImplementation) {
         if (tccImplementation.code.length == 0) revert InvalidImplementation();
         _setAddress(KEY_IMPLEMENTATION, tccImplementation);
-
-        // solhint-disable-next-line avoid-low-level-calls
-        (bool success, ) = tccImplementation.delegatecall(abi.encodeWithSelector(IToposCore.setup.selector, params));
-        if (!success) revert SetupFailed();
     }
 
     receive() external payable {

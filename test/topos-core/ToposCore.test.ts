@@ -18,24 +18,87 @@ describe('ToposCore', () => {
       cc.DUMMY_STARK_PROOF,
       cc.DUMMY_SIGNATURE
     )
-    const setupParams = ethers.utils.defaultAbiCoder.encode(
-      ['address[]', 'uint256'],
-      [[admin.address], 1]
-    )
+    const adminAddresses = [admin.address]
+    const adminThreshold = 1
 
     const ToposCore = await ethers.getContractFactory('ToposCore')
     const ToposCoreProxy = await ethers.getContractFactory('ToposCoreProxy')
 
-    const toposCoreImplementation = await await ToposCore.deploy()
+    const toposCoreImplementation = await ToposCore.deploy()
     const toposCoreProxy = await ToposCoreProxy.deploy(
-      toposCoreImplementation.address,
-      setupParams
+      toposCoreImplementation.address
     )
     const toposCore = ToposCore.attach(toposCoreProxy.address)
-    const toposCoreNew = await ToposCore.deploy()
+    await toposCore.initialize(adminAddresses, adminThreshold)
 
-    return { admin, defaultCert, setupParams, toposCore, toposCoreNew }
+    const altToposCoreImplementation = await ToposCore.deploy()
+    const altToposCoreProxy = await ToposCoreProxy.deploy(
+      altToposCoreImplementation.address
+    )
+    const altToposCore = ToposCore.attach(altToposCoreProxy.address)
+
+    return {
+      altToposCore,
+      altToposCoreImplementation,
+      admin,
+      adminAddresses,
+      adminThreshold,
+      defaultCert,
+      toposCore,
+      toposCoreImplementation,
+    }
   }
+
+  describe('initialize', () => {
+    it('reverts if implementation contract has already been initialized', async () => {
+      const { adminAddresses, adminThreshold, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
+      await expect(
+        toposCore.initialize(adminAddresses, adminThreshold)
+      ).to.be.revertedWith('Initializable: contract is already initialized')
+    })
+
+    it('reverts if the admin threshold mismatch the length of the admin list', async () => {
+      const { adminAddresses, altToposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
+      const falseAdminThreshold = 2 // admin threshold is 2, but we supply one admin address
+      await expect(
+        altToposCore.initialize(adminAddresses, falseAdminThreshold)
+      ).to.be.revertedWithCustomError(altToposCore, 'InvalidAdmins')
+    })
+
+    it('reverts if the admin threshold is zero', async () => {
+      const { adminAddresses, altToposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
+      const falseAdminThreshold = 0 // admin threshold is 0, but we supply one admin address
+      await expect(
+        altToposCore.initialize(adminAddresses, falseAdminThreshold)
+      ).to.be.revertedWithCustomError(altToposCore, 'InvalidAdminThreshold')
+    })
+
+    it('reverts if trying to add duplicate admins', async () => {
+      const { admin, adminThreshold, altToposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
+      const adminAddresses = [admin.address, admin.address] // duplicate admins
+      await expect(
+        altToposCore.initialize(adminAddresses, adminThreshold)
+      ).to.to.be.revertedWithCustomError(altToposCore, 'DuplicateAdmin')
+    })
+
+    it('reverts if the admin address is zero address', async () => {
+      const { adminThreshold, altToposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
+      const adminAddresses = [ethers.constants.AddressZero] // zero address admin
+      await expect(
+        altToposCore.initialize(adminAddresses, adminThreshold)
+      ).to.to.be.revertedWithCustomError(altToposCore, 'InvalidAdmins')
+    })
+  })
 
   describe('pushCertificate', () => {
     it('reverts if the certificate is already stored', async () => {
@@ -174,119 +237,50 @@ describe('ToposCore', () => {
 
   describe('proxy', () => {
     it('reverts if the ToposCore implementation contract is not present', async () => {
-      const { admin } = await loadFixture(deployToposCoreFixture)
       const ToposCoreProxy = await ethers.getContractFactory('ToposCoreProxy')
-      const setupParams = ethers.utils.defaultAbiCoder.encode(
-        ['address[]', 'uint256'],
-        [[admin.address], 1]
-      )
-      await expect(
-        ToposCoreProxy.deploy(ethers.constants.AddressZero, setupParams)
-      ).to.be.reverted
-    })
-
-    it('reverts if the admin threshold mismatch the length of the admin list', async () => {
-      const { admin, toposCoreNew } = await loadFixture(deployToposCoreFixture)
-      const setupParams = ethers.utils.defaultAbiCoder.encode(
-        ['address[]', 'uint256'],
-        [[admin.address], 2] // admin threshold is 2, but only one admin
-      )
-      const ToposCoreProxy = await ethers.getContractFactory('ToposCoreProxy')
-      await expect(ToposCoreProxy.deploy(toposCoreNew.address, setupParams)).to
-        .be.reverted
-    })
-
-    it('reverts if the admin threshold is zero', async () => {
-      const { admin, toposCoreNew } = await loadFixture(deployToposCoreFixture)
-      const setupParams = ethers.utils.defaultAbiCoder.encode(
-        ['address[]', 'uint256'],
-        [[admin.address], 0] // admin threshold is 0
-      )
-      const ToposCoreProxy = await ethers.getContractFactory('ToposCoreProxy')
-      await expect(ToposCoreProxy.deploy(toposCoreNew.address, setupParams)).to
-        .be.reverted
-    })
-
-    it('reverts if trying to add duplicate admins', async () => {
-      const { admin, toposCoreNew } = await loadFixture(deployToposCoreFixture)
-      const setupParams = ethers.utils.defaultAbiCoder.encode(
-        ['address[]', 'uint256'],
-        [[admin.address, admin.address], 1] // duplicate admin
-      )
-      const ToposCoreProxy = await ethers.getContractFactory('ToposCoreProxy')
-      await expect(ToposCoreProxy.deploy(toposCoreNew.address, setupParams)).to
-        .be.reverted
-    })
-
-    it('reverts if the admin address is zero address', async () => {
-      const { toposCoreNew } = await loadFixture(deployToposCoreFixture)
-      const setupParams = ethers.utils.defaultAbiCoder.encode(
-        ['address[]', 'uint256'],
-        [[ethers.constants.AddressZero], 1] // zero address
-      )
-      const ToposCoreProxy = await ethers.getContractFactory('ToposCoreProxy')
-      await expect(ToposCoreProxy.deploy(toposCoreNew.address, setupParams)).to
-        .be.reverted
-    })
-  })
-
-  describe('setup', () => {
-    it('reverts if not called by the ToposCoreProxy contract', async () => {
-      const { setupParams, toposCoreNew } = await loadFixture(
-        deployToposCoreFixture
-      )
-      await expect(
-        toposCoreNew.setup(setupParams)
-      ).to.be.revertedWithCustomError(toposCoreNew, 'NotProxy')
+      await expect(ToposCoreProxy.deploy(ethers.constants.AddressZero)).to.be
+        .reverted
     })
   })
 
   describe('upgrade', () => {
     it('reverts if the code hash does not match', async () => {
-      const { admin, toposCore, toposCoreNew } = await loadFixture(
+      const { toposCore, altToposCore } = await loadFixture(
         deployToposCoreFixture
       )
-      const setupParams = ethers.utils.defaultAbiCoder.encode(
-        ['address[]', 'uint256'],
-        [[admin.address], 1]
-      )
+      const emptyCodeHash =
+        '0x0000000000000000000000000000000000000000000000000000000000000000'
       await expect(
-        toposCore.upgrade(
-          toposCoreNew.address,
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          setupParams
-        )
+        toposCore.upgrade(altToposCore.address, emptyCodeHash)
       ).to.be.revertedWithCustomError(toposCore, 'InvalidCodeHash')
     })
 
     it('emits an upgraded event', async () => {
-      const { admin, toposCore, toposCoreNew } = await loadFixture(
-        deployToposCoreFixture
-      )
+      const { admin, altToposCoreImplementation, toposCore } =
+        await loadFixture(deployToposCoreFixture)
       expect(await toposCore.implementation()).to.not.equal(
-        toposCoreNew.address
+        altToposCoreImplementation.address
       )
 
       const CodeHash = await ethers.getContractFactory('CodeHash')
       const codeHash = await CodeHash.deploy()
       const implementationCodeHash = await codeHash.getCodeHash(
-        toposCoreNew.address
-      )
-      const setupParams = ethers.utils.defaultAbiCoder.encode(
-        ['address[]', 'uint256'],
-        [[admin.address], 1]
+        altToposCoreImplementation.address
       )
 
       await expect(
         toposCore.upgrade(
-          toposCoreNew.address,
-          implementationCodeHash,
-          setupParams
+          altToposCoreImplementation.address,
+          implementationCodeHash
         )
       )
         .to.emit(toposCore, 'Upgraded')
-        .withArgs(toposCoreNew.address)
-      expect(await toposCore.implementation()).to.equal(toposCoreNew.address)
+        .withArgs(altToposCoreImplementation.address)
+      expect(await toposCore.implementation()).to.equal(
+        altToposCoreImplementation.address
+      )
+      const currentAdmins = await toposCore.admins(1)
+      expect(currentAdmins[0]).to.equal(admin.address) // check that the admin is unchanged
     })
   })
 })
