@@ -86,13 +86,13 @@ const main = async function (...args: string[]) {
   console.log(`Topos Core Proxy contract deployed to ${ToposCoreProxy.address}`)
 
   console.info(`Initializing Topos Core Contract`)
+  const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
   const toposCoreInterface = new Contract(
     ToposCoreProxy.address,
     toposCoreInterfaceJSON.abi,
-    wallet
+    sequencerWallet
   )
   const adminThreshold = 1
-  const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
   await initialize(toposCoreInterface, sequencerWallet, adminThreshold)
 
   // Deploy ERC20Messaging

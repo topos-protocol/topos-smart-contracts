@@ -81,13 +81,13 @@ const main = async function (...args: string[]) {
     4_000_000
   )
 
+  const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
   const toposCoreInterface = new Contract(
     toposCoreProxyAddress,
     toposCoreInterfaceJSON.abi,
-    wallet
+    sequencerWallet
   )
   const adminThreshold = 1
-  const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
   await initialize(toposCoreInterface, sequencerWallet, adminThreshold)
 
   const erc20MessagingAddresss = await processContract(
