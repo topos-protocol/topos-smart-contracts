@@ -97,7 +97,7 @@ const main = async function (...args: string[]) {
     4_000_000
   )
 
-  setSubnetId(toposCoreInterface, wallet, subnetId)
+  setSubnetId(toposCoreInterface, subnetId)
 
   console.log(`
 export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}
