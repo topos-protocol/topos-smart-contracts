@@ -4,9 +4,11 @@ pragma solidity ^0.8.9;
 import "./AdminMultisigBase.sol";
 import "./Bytes32Sets.sol";
 
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
 import "./../interfaces/IToposCore.sol";
 
-contract ToposCore is IToposCore, AdminMultisigBase {
+contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
     using Bytes32SetsLib for Bytes32SetsLib.Set;
 
     /// @dev Storage slot with the address of the current implementation. `keccak256('eip1967.proxy.implementation') - 1`
@@ -31,7 +33,10 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     /// @notice Mapping of transactions root to the certificate ID
     mapping(bytes32 => CertificateId) public txRootToCertId;
 
-    constructor() {}
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     /// @notice Sets the subnet ID
     /// @param _networkSubnetId The subnet ID of the subnet this contract is to be deployed on
@@ -43,31 +48,16 @@ contract ToposCore is IToposCore, AdminMultisigBase {
     /// @dev Need to pass the setup parameters to set the admins again
     /// @param newImplementation The address of the new implementation
     /// @param newImplementationCodeHash The code hash of the new implementation
-    /// @param setupParams The setup parameters for the new implementation
-    function upgrade(
-        address newImplementation,
-        bytes32 newImplementationCodeHash,
-        bytes calldata setupParams
-    ) external override onlyAdmin {
+    function upgrade(address newImplementation, bytes32 newImplementationCodeHash) external override onlyAdmin {
         if (newImplementationCodeHash != newImplementation.codehash) revert InvalidCodeHash();
         _setImplementation(newImplementation);
-        // AUDIT: If `newImplementation.setup` performs `selfdestruct`, it will result in the loss of _this_ implementation (thereby losing the ToposCore)
-        //        if `upgrade` is entered within the context of _this_ implementation itself.
-        if (setupParams.length != 0) {
-            // solhint-disable-next-line avoid-low-level-calls
-            (bool success, ) = newImplementation.delegatecall(
-                abi.encodeWithSelector(IToposCore.setup.selector, setupParams)
-            );
-
-            if (!success) revert SetupFailed();
-        }
         emit Upgraded(newImplementation);
     }
 
     /// @notice Push the certificate on-chain
     /// @param certBytes The certificate in byte
     /// @param position The position of the certificate
-    function pushCertificate(bytes memory certBytes, uint256 position) external override {
+    function pushCertificate(bytes memory certBytes, uint256 position) external override onlyAdmin {
         (
             CertificateId prevId,
             SubnetId sourceSubnetId,
@@ -107,20 +97,6 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         emit CertStored(certId, txRoot);
     }
 
-    /// @notice Sets the admin threshold and admin addresses
-    /// @dev This function can only be called by the proxy contract
-    /// @param params Admin threshold and admin addresses
-    function setup(bytes calldata params) external override {
-        (address[] memory adminAddresses, uint256 newAdminThreshold) = abi.decode(params, (address[], uint256));
-        // Prevent setup from being called on a non-proxy (the implementation).
-        if (implementation() == address(0)) revert NotProxy();
-
-        // NOTE: Admin epoch is incremented to easily invalidate current admin-related state.
-        uint256 newAdminEpoch = _adminEpoch() + uint256(1);
-        _setAdminEpoch(newAdminEpoch);
-        _setAdmins(newAdminEpoch, adminAddresses, newAdminThreshold);
-    }
-
     /// @notice Emits an event to signal a cross subnet message has been sent
     /// @param targetSubnetId The subnet ID of the target subnet
     function emitCrossSubnetMessage(SubnetId targetSubnetId) external {
@@ -145,6 +121,17 @@ contract ToposCore is IToposCore, AdminMultisigBase {
         for (uint256 i; i < adminCount; ++i) {
             results[i] = _getAdmin(epoch, i);
         }
+    }
+
+    /// @notice Contract initializer
+    /// @dev Can only be called once
+    /// @param adminAddresses list of admins
+    /// @param newAdminThreshold number of admins required to approve a call
+    function initialize(address[] memory adminAddresses, uint256 newAdminThreshold) public initializer {
+        // NOTE: Admin epoch is incremented to easily invalidate current admin-related state.
+        uint256 newAdminEpoch = _adminEpoch() + uint256(1);
+        _setAdminEpoch(newAdminEpoch);
+        _setAdmins(newAdminEpoch, adminAddresses, newAdminThreshold);
     }
 
     /// @notice Checks if a certificate exists on the ToposCore contract

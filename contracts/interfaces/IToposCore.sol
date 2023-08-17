@@ -34,13 +34,13 @@ interface IToposCore {
 
     function emitCrossSubnetMessage(SubnetId targetSubnetId) external;
 
+    function initialize(address[] memory adminAddresses, uint256 newAdminThreshold) external;
+
     function pushCertificate(bytes calldata certBytes, uint256 position) external;
 
     function setNetworkSubnetId(SubnetId _networkSubnetId) external;
 
-    function setup(bytes calldata params) external;
-
-    function upgrade(address newImplementation, bytes32 newImplementationCodeHash, bytes calldata setupParams) external;
+    function upgrade(address newImplementation, bytes32 newImplementationCodeHash) external;
 
     function adminEpoch() external view returns (uint256);
 

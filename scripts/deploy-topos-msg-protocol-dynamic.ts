@@ -74,22 +74,26 @@ const main = async function (...args: string[]) {
   console.log(`Topos Core contract deployed to ${ToposCore.address}`)
 
   // Deploy ToposCoreProxy
-  const toposCoreProxyParams = utils.defaultAbiCoder.encode(
-    ['address[]', 'uint256'],
-    [[wallet.address], 1] // TODO: Use a different admin address than ToposDeployer
-  )
   const ToposCoreProxyFactory = new ContractFactory(
     toposCoreProxyJSON.abi,
     toposCoreProxyJSON.bytecode,
     wallet
   )
-  const ToposCoreProxy = await ToposCoreProxyFactory.deploy(
-    ToposCore.address,
-    toposCoreProxyParams,
-    { gasLimit: 5_000_000 }
-  )
+  const ToposCoreProxy = await ToposCoreProxyFactory.deploy(ToposCore.address, {
+    gasLimit: 5_000_000,
+  })
   await ToposCoreProxy.deployed()
   console.log(`Topos Core Proxy contract deployed to ${ToposCoreProxy.address}`)
+
+  console.info(`Initializing Topos Core Contract`)
+  const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
+  const toposCoreInterface = new Contract(
+    ToposCoreProxy.address,
+    toposCoreInterfaceJSON.abi,
+    sequencerWallet
+  )
+  const adminThreshold = 1
+  await initialize(toposCoreInterface, sequencerWallet, adminThreshold)
 
   // Deploy ERC20Messaging
   const ERC20MessagingFactory = new ContractFactory(
@@ -105,12 +109,7 @@ const main = async function (...args: string[]) {
   await ERC20Messaging.deployed()
   console.log(`ERC20 Messaging contract deployed to ${ERC20Messaging.address}`)
 
-  console.info(`\nSetting subnetId on ToposCore via proxy`)
-  const toposCoreInterface = new Contract(
-    ToposCoreProxy.address,
-    toposCoreInterfaceJSON.abi,
-    wallet
-  )
+  console.info(`Setting subnetId on ToposCore via proxy`)
   await toposCoreInterface
     .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
     .then(async (tx: ContractTransaction) => {
@@ -130,7 +129,7 @@ const main = async function (...args: string[]) {
       process.exit(1)
     })
 
-  console.info(`\nReading subnet id`)
+  console.info(`Reading subnet id`)
   const networkSubnetId = await toposCoreInterface.networkSubnetId()
 
   console.info(
@@ -140,6 +139,27 @@ const main = async function (...args: string[]) {
 
 const sanitizeHexString = function (hexString: string) {
   return hexString.startsWith('0x') ? hexString : `0x${hexString}`
+}
+
+async function initialize(
+  toposCoreInterface: Contract,
+  wallet: Wallet,
+  adminThreshold: number
+) {
+  await toposCoreInterface
+    .initialize([wallet.address], adminThreshold, { gasLimit: 4_000_000 })
+    .then(async (tx: ContractTransaction) => {
+      await tx.wait().catch((error) => {
+        console.error(`Error: Failed (wait) to initialize ToposCore via proxy!`)
+        console.error(error)
+        process.exit(1)
+      })
+    })
+    .catch((error: Error) => {
+      console.error(`Error: Failed to initialize ToposCore via proxy!`)
+      console.error(error)
+      process.exit(1)
+    })
 }
 
 const args = process.argv.slice(2)

@@ -45,10 +45,8 @@ describe('ToposMessaging', () => {
       tc.DAILY_MINT_LIMIT_100,
       tc.INITIAL_SUPPLY_10_000_000
     )
-    const setupParams = ethers.utils.defaultAbiCoder.encode(
-      ['address[]', 'uint256'],
-      [[admin.address], 1]
-    )
+    const adminAddresses = [admin.address]
+    const adminThreshold = 1
 
     const ConstAddressDeployer = await ethers.getContractFactory(
       'ConstAddressDeployer'
@@ -73,10 +71,10 @@ describe('ToposMessaging', () => {
 
     const toposCoreImplementation = await ToposCore.deploy()
     const toposCoreProxy = await ToposCoreProxy.deploy(
-      toposCoreImplementation.address,
-      setupParams
+      toposCoreImplementation.address
     )
     const toposCore = ToposCore.attach(toposCoreProxy.address)
+    await toposCore.initialize(adminAddresses, adminThreshold)
 
     const erc20Messaging = await ERC20Messaging.deploy(
       tokenDeployer.address,

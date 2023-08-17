@@ -73,17 +73,22 @@ const main = async function (...args: string[]) {
     4_000_000
   )
 
-  const toposCoreProxyParams = utils.defaultAbiCoder.encode(
-    ['address[]', 'uint256'],
-    [[wallet.address], 1] // TODO: Use a different admin address than ToposDeployer
-  )
   const toposCoreProxyAddress = await processContract(
     wallet,
     toposCoreProxyJSON,
     toposCoreProxySalt!,
-    [toposCoreAddress, toposCoreProxyParams],
+    [toposCoreAddress],
     4_000_000
   )
+
+  const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
+  const toposCoreInterface = new Contract(
+    toposCoreProxyAddress,
+    toposCoreInterfaceJSON.abi,
+    sequencerWallet
+  )
+  const adminThreshold = 1
+  await initialize(toposCoreInterface, sequencerWallet, adminThreshold)
 
   const erc20MessagingAddresss = await processContract(
     wallet,
@@ -93,7 +98,7 @@ const main = async function (...args: string[]) {
     4_000_000
   )
 
-  setSubnetId(toposCoreProxyAddress, wallet, subnetId)
+  setSubnetId(toposCoreInterface, subnetId)
 
   console.log(`
 export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}
@@ -164,16 +169,9 @@ const processContract = async function (
 }
 
 const setSubnetId = async function (
-  toposCoreProxyAddress: string,
-  wallet: Wallet,
+  toposCoreInterface: Contract,
   subnetId: string
 ) {
-  const toposCoreInterface = new Contract(
-    toposCoreProxyAddress,
-    toposCoreInterfaceJSON.abi,
-    wallet
-  )
-
   await toposCoreInterface
     .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
     .then(async (tx: ContractTransaction) => {
@@ -194,6 +192,27 @@ const setSubnetId = async function (
     })
 
   await toposCoreInterface.networkSubnetId()
+}
+
+async function initialize(
+  toposCoreInterface: Contract,
+  wallet: Wallet,
+  adminThreshold: number
+) {
+  await toposCoreInterface
+    .initialize([wallet.address], adminThreshold, { gasLimit: 4_000_000 })
+    .then(async (tx: ContractTransaction) => {
+      await tx.wait().catch((error) => {
+        console.error(`Error: Failed (wait) to initialize ToposCore via proxy!`)
+        console.error(error)
+        process.exit(1)
+      })
+    })
+    .catch((error: Error) => {
+      console.error(`Error: Failed to initialize ToposCore via proxy!`)
+      console.error(error)
+      process.exit(1)
+    })
 }
 
 const args = process.argv.slice(2)
