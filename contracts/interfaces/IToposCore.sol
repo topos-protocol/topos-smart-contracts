@@ -24,7 +24,7 @@ interface IToposCore {
 
     event CertStored(CertificateId certId, bytes32 receiptRoot);
 
-    event CrossSubnetMessageSent(SubnetId indexed targetSubnetId, bytes data);
+    event CrossSubnetMessageSent(SubnetId indexed targetSubnetId);
 
     event Upgraded(address indexed implementation);
 
@@ -32,7 +32,7 @@ interface IToposCore {
     error NotProxy();
     error SetupFailed();
 
-    function emitCrossSubnetMessage(SubnetId targetSubnetId, bytes calldata data) external;
+    function emitCrossSubnetMessage(SubnetId targetSubnetId) external;
 
     function initialize(address[] memory adminAddresses, uint256 newAdminThreshold) external;
 

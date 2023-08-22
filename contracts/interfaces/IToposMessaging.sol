@@ -16,14 +16,13 @@ interface IToposMessaging {
 
     error CertNotPresent();
     error InvalidMerkleProof();
-    error InvalidSubnetId();
     error InvalidTransactionStatus();
     error InvalidToposCore();
-    error InvalidToposCoreAddress();
+    error LogIndexOutOfRange();
     error TransactionAlreadyExecuted();
     error UnsupportedProofKind();
 
-    function execute(bytes calldata proofBlob, bytes32 receiptRoot) external;
+    function execute(uint256[] calldata logIndexes, bytes calldata proofBlob, bytes32 receiptRoot) external;
 
     function validateMerkleProof(
         bytes memory proofBlob,

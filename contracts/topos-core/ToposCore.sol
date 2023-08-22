@@ -99,9 +99,8 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
 
     /// @notice Emits an event to signal a cross subnet message has been sent
     /// @param targetSubnetId The subnet ID of the target subnet
-    /// @param data The data of the cross subnet message
-    function emitCrossSubnetMessage(SubnetId targetSubnetId, bytes calldata data) external {
-        emit CrossSubnetMessageSent(targetSubnetId, data);
+    function emitCrossSubnetMessage(SubnetId targetSubnetId) external {
+        emit CrossSubnetMessageSent(targetSubnetId);
     }
 
     /// @notice Returns the admin epoch

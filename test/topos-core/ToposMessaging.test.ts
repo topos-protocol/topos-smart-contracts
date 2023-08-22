@@ -85,6 +85,10 @@ describe('ToposMessaging', () => {
       ERC20Messaging.interface,
       admin
     )
+    const erc20Messaging2 = await ERC20Messaging.deploy(
+      tokenDeployer.address,
+      toposCore.address
+    )
 
     return {
       admin,
@@ -95,6 +99,7 @@ describe('ToposMessaging', () => {
       toposCore,
       erc20Messaging,
       erc20MessagingContract,
+      erc20Messaging2,
     }
   }
 
@@ -276,13 +281,37 @@ describe('ToposMessaging', () => {
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
-      await expect(erc20Messaging.execute(proofBlob, receiptsRoot))
+      await expect(
+        erc20Messaging.execute([tc.TOKEN_SENT_INDEX_2], proofBlob, receiptsRoot)
+      )
         .to.emit(erc20, 'Transfer')
         .withArgs(
           ethers.constants.AddressZero,
           receiver.address,
           tc.SEND_AMOUNT_50
         )
+    })
+
+    it('reverts if the log index is out of range', async () => {
+      const {
+        admin,
+        receiver,
+        defaultToken,
+        ERC20,
+        erc20Messaging,
+        erc20MessagingContract,
+      } = await loadFixture(deployERC20MessagingFixture)
+      const { proofBlob, receiptsRoot } = await deployDefaultToken(
+        admin,
+        receiver,
+        ERC20,
+        defaultToken,
+        erc20Messaging,
+        erc20MessagingContract
+      )
+      await expect(
+        erc20Messaging.execute([], proofBlob, receiptsRoot)
+      ).to.be.revertedWithCustomError(erc20Messaging, 'LogIndexOutOfRange')
     })
 
     it('reverts if the certificate is not present', async () => {
@@ -304,7 +333,7 @@ describe('ToposMessaging', () => {
       )
 
       await expect(
-        erc20Messaging.execute(proofBlob, receiptsRoot)
+        erc20Messaging.execute([tc.TOKEN_SENT_INDEX_2], proofBlob, receiptsRoot)
       ).to.be.revertedWithCustomError(erc20Messaging, 'CertNotPresent')
     })
 
@@ -341,8 +370,124 @@ describe('ToposMessaging', () => {
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       const fakeProofBlob = '0x01'
-      await expect(erc20Messaging.execute(fakeProofBlob, receiptsRoot)).to.be
-        .reverted
+      await expect(
+        erc20Messaging.execute(
+          [tc.TOKEN_SENT_INDEX_2],
+          fakeProofBlob,
+          receiptsRoot
+        )
+      ).to.be.reverted
+    })
+
+    it('reverts if the transaction is already executed', async () => {
+      const {
+        admin,
+        receiver,
+        defaultToken,
+        ERC20,
+        toposCore,
+        erc20Messaging,
+        erc20MessagingContract,
+      } = await loadFixture(deployERC20MessagingFixture)
+      const { proofBlob, receiptsRoot } = await deployDefaultToken(
+        admin,
+        receiver,
+        ERC20,
+        defaultToken,
+        erc20Messaging,
+        erc20MessagingContract
+      )
+
+      await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
+      const certificate = testUtils.encodeCertParam(
+        cc.PREV_CERT_ID_0,
+        cc.SOURCE_SUBNET_ID_1,
+        cc.STATE_ROOT_MAX,
+        receiptsRoot,
+        [cc.SOURCE_SUBNET_ID_2],
+        cc.VERIFIER,
+        cc.CERT_ID_1,
+        cc.DUMMY_STARK_PROOF,
+        cc.DUMMY_SIGNATURE
+      )
+      await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
+      await erc20Messaging.execute(
+        [tc.TOKEN_SENT_INDEX_2],
+        proofBlob,
+        receiptsRoot
+      )
+      await expect(
+        erc20Messaging.execute([tc.TOKEN_SENT_INDEX_2], proofBlob, receiptsRoot)
+      ).to.be.revertedWithCustomError(
+        erc20Messaging,
+        'TransactionAlreadyExecuted'
+      )
+    })
+
+    it('reverts if the transaction status is invalid', async () => {
+      const { toposCore, erc20Messaging } = await loadFixture(
+        deployERC20MessagingFixture
+      )
+      await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
+      const certificate = testUtils.encodeCertParam(
+        cc.PREV_CERT_ID_0,
+        cc.SOURCE_SUBNET_ID_1,
+        cc.STATE_ROOT_MAX,
+        txc.INVALID_STATUS_TRANSACTION.receiptRoot,
+        [cc.SOURCE_SUBNET_ID_2],
+        cc.VERIFIER,
+        cc.CERT_ID_1,
+        cc.DUMMY_STARK_PROOF,
+        cc.DUMMY_SIGNATURE
+      )
+      await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
+      await expect(
+        erc20Messaging.execute(
+          [tc.TOKEN_SENT_INDEX_2],
+          txc.INVALID_STATUS_TRANSACTION.proofBlob,
+          txc.INVALID_STATUS_TRANSACTION.receiptRoot
+        )
+      ).to.be.revertedWithCustomError(
+        erc20Messaging,
+        'InvalidTransactionStatus'
+      )
+    })
+
+    it('reverts if the tx is not coming from the same sending contract', async () => {
+      const {
+        admin,
+        receiver,
+        defaultToken,
+        ERC20,
+        toposCore,
+        erc20Messaging,
+        erc20Messaging2, // different sending contract
+      } = await loadFixture(deployERC20MessagingFixture)
+      const { proofBlob, receiptsRoot } = await deployDefaultToken(
+        admin,
+        receiver,
+        ERC20,
+        defaultToken,
+        erc20Messaging2,
+        erc20Messaging2
+      )
+
+      await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
+      const certificate = testUtils.encodeCertParam(
+        cc.PREV_CERT_ID_0,
+        cc.SOURCE_SUBNET_ID_1,
+        cc.STATE_ROOT_MAX,
+        receiptsRoot,
+        [cc.SOURCE_SUBNET_ID_2],
+        cc.VERIFIER,
+        cc.CERT_ID_1,
+        cc.DUMMY_STARK_PROOF,
+        cc.DUMMY_SIGNATURE
+      )
+      await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
+      await expect(
+        erc20Messaging.execute([tc.TOKEN_SENT_INDEX_2], proofBlob, receiptsRoot)
+      ).to.be.revertedWithCustomError(erc20Messaging, 'InvalidOriginAddress')
     })
 
     it('reverts if the target subnet id is mismatched', async () => {
@@ -378,77 +523,8 @@ describe('ToposMessaging', () => {
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
-        erc20Messaging.execute(proofBlob, receiptsRoot)
+        erc20Messaging.execute([tc.TOKEN_SENT_INDEX_2], proofBlob, receiptsRoot)
       ).to.be.revertedWithCustomError(erc20Messaging, 'InvalidSubnetId')
-    })
-
-    it('reverts if the transaction is already executed', async () => {
-      const {
-        admin,
-        receiver,
-        defaultToken,
-        ERC20,
-        toposCore,
-        erc20Messaging,
-        erc20MessagingContract,
-      } = await loadFixture(deployERC20MessagingFixture)
-      const { proofBlob, receiptsRoot } = await deployDefaultToken(
-        admin,
-        receiver,
-        ERC20,
-        defaultToken,
-        erc20Messaging,
-        erc20MessagingContract
-      )
-
-      await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
-      const certificate = testUtils.encodeCertParam(
-        cc.PREV_CERT_ID_0,
-        cc.SOURCE_SUBNET_ID_1,
-        cc.STATE_ROOT_MAX,
-        receiptsRoot,
-        [cc.SOURCE_SUBNET_ID_2],
-        cc.VERIFIER,
-        cc.CERT_ID_1,
-        cc.DUMMY_STARK_PROOF,
-        cc.DUMMY_SIGNATURE
-      )
-      await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
-      await erc20Messaging.execute(proofBlob, receiptsRoot)
-      await expect(
-        erc20Messaging.execute(proofBlob, receiptsRoot)
-      ).to.be.revertedWithCustomError(
-        erc20Messaging,
-        'TransactionAlreadyExecuted'
-      )
-    })
-
-    it('reverts if the transaction status is invalid', async () => {
-      const { toposCore, erc20Messaging } = await loadFixture(
-        deployERC20MessagingFixture
-      )
-      await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
-      const certificate = testUtils.encodeCertParam(
-        cc.PREV_CERT_ID_0,
-        cc.SOURCE_SUBNET_ID_1,
-        cc.STATE_ROOT_MAX,
-        txc.INVALID_STATUS_TRANSACTION.receiptRoot,
-        [cc.SOURCE_SUBNET_ID_2],
-        cc.VERIFIER,
-        cc.CERT_ID_1,
-        cc.DUMMY_STARK_PROOF,
-        cc.DUMMY_SIGNATURE
-      )
-      await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
-      await expect(
-        erc20Messaging.execute(
-          txc.INVALID_STATUS_TRANSACTION.proofBlob,
-          txc.INVALID_STATUS_TRANSACTION.receiptRoot
-        )
-      ).to.be.revertedWithCustomError(
-        erc20Messaging,
-        'InvalidTransactionStatus'
-      )
     })
 
     it('reverts if the token is not deployed yet', async () => {
@@ -470,6 +546,7 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         erc20Messaging.execute(
+          [tc.TOKEN_SENT_INDEX_0],
           txc.UNKNOWN_TOKEN_TRANSACTION.proofBlob,
           txc.UNKNOWN_TOKEN_TRANSACTION.receiptRoot
         )
@@ -496,6 +573,7 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         erc20Messaging.execute(
+          [tc.TOKEN_SENT_INDEX_2],
           txc.MINT_EXCEED_TRANSACTION.proofBlob,
           txc.MINT_EXCEED_TRANSACTION.receiptRoot
         )
@@ -522,10 +600,11 @@ describe('ToposMessaging', () => {
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
         erc20Messaging.execute(
+          [tc.TOKEN_SENT_INDEX_2],
           txc.ZERO_ADDRESS_TRANSACTION.proofBlob,
           txc.ZERO_ADDRESS_TRANSACTION.receiptRoot
         )
-      ).to.be.revertedWithCustomError(erc20Messaging, 'TokenDoesNotExist')
+      ).to.be.revertedWith('ERC20: mint to the zero address')
     })
 
     it('emits the Transfer success event', async () => {
@@ -559,7 +638,9 @@ describe('ToposMessaging', () => {
         cc.DUMMY_SIGNATURE
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
-      await expect(erc20Messaging.execute(proofBlob, receiptsRoot))
+      await expect(
+        erc20Messaging.execute([tc.TOKEN_SENT_INDEX_2], proofBlob, receiptsRoot)
+      )
         .to.emit(erc20, 'Transfer')
         .withArgs(
           ethers.constants.AddressZero,
@@ -579,8 +660,8 @@ describe('ToposMessaging', () => {
       await expect(
         erc20Messaging.sendToken(
           cc.TARGET_SUBNET_ID_4,
-          tc.RECIPIENT_ADDRESS,
           token.address,
+          tc.RECIPIENT_ADDRESS,
           tc.SEND_AMOUNT_50
         )
       )
@@ -599,8 +680,8 @@ describe('ToposMessaging', () => {
       await expect(
         erc20Messaging.sendToken(
           cc.TARGET_SUBNET_ID_4,
-          tc.RECIPIENT_ADDRESS,
           tokenAddress,
+          tc.RECIPIENT_ADDRESS,
           0
         )
       ).to.be.revertedWithCustomError(erc20Messaging, 'InvalidAmount')
@@ -618,8 +699,8 @@ describe('ToposMessaging', () => {
       await expect(
         erc20Messaging.sendToken(
           cc.TARGET_SUBNET_ID_4,
-          tc.RECIPIENT_ADDRESS,
           tokenAddress,
+          tc.RECIPIENT_ADDRESS,
           tc.SEND_AMOUNT_50
         )
       )
@@ -638,16 +719,11 @@ describe('ToposMessaging', () => {
       const erc20 = ERC20.attach(tokenAddress)
       await erc20.approve(erc20Messaging.address, tc.SEND_AMOUNT_50)
 
-      const sendTokenData = ethers.utils.defaultAbiCoder.encode(
-        ['address', 'address', 'uint256'],
-        [tc.RECIPIENT_ADDRESS, tokenAddress, tc.SEND_AMOUNT_50]
-      )
-
       await expect(
         erc20Messaging.sendToken(
           cc.TARGET_SUBNET_ID_4,
-          tc.RECIPIENT_ADDRESS,
           tokenAddress,
+          tc.RECIPIENT_ADDRESS,
           tc.SEND_AMOUNT_50
         )
       )
@@ -657,8 +733,15 @@ describe('ToposMessaging', () => {
           ethers.constants.AddressZero,
           tc.SEND_AMOUNT_50
         )
+        .to.emit(erc20Messaging, 'TokenSent')
+        .withArgs(
+          cc.TARGET_SUBNET_ID_4,
+          tokenAddress,
+          tc.RECIPIENT_ADDRESS,
+          tc.SEND_AMOUNT_50
+        )
         .to.emit(toposCore, 'CrossSubnetMessageSent')
-        .withArgs(cc.TARGET_SUBNET_ID_4, sendTokenData)
+        .withArgs(cc.TARGET_SUBNET_ID_4)
     })
   })
 
@@ -703,15 +786,15 @@ describe('ToposMessaging', () => {
   ) {
     const estimatedGasLimit = await contractInstance.estimateGas.sendToken(
       targetSubnetId,
-      receiver,
       tokenAddress,
+      receiver,
       tc.SEND_AMOUNT_50,
       { gasLimit: 4_000_000 }
     )
     const TxUnsigned = await contractInstance.populateTransaction.sendToken(
       targetSubnetId,
-      receiver,
       tokenAddress,
+      receiver,
       tc.SEND_AMOUNT_50,
       { gasLimit: 4_000_000 }
     )

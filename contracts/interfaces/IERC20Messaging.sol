@@ -18,10 +18,14 @@ interface IERC20Messaging is IToposMessaging {
 
     event TokenDeployed(string symbol, address tokenAddress);
 
+    event TokenSent(SubnetId indexed targetSubnetId, address tokenAddress, address receiver, uint256 amount);
+
     error BurnFailed(address tokenAddress);
     error ExceedDailyMintLimit(address tokenAddress);
     error InvalidAmount();
+    error InvalidOriginAddress();
     error InvalidSetDailyMintLimitsParams();
+    error InvalidSubnetId();
     error InvalidTokenDeployer();
     error TokenAlreadyExists(address tokenAddress);
     error TokenDeployFailed();

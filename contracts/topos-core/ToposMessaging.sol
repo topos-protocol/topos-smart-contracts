@@ -35,10 +35,12 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     }
 
     /// @notice Entry point for executing any message on a target subnet
+    /// @param logIndexes Indexes of the logs to process
     /// @param proofBlob RLP encoded proof blob
     /// @param receiptRoot Receipts root of the block
-    function execute(bytes calldata proofBlob, bytes32 receiptRoot) external {
+    function execute(uint256[] calldata logIndexes, bytes calldata proofBlob, bytes32 receiptRoot) external {
         if (_toposCoreAddr.code.length == uint256(0)) revert InvalidToposCore();
+        if (logIndexes.length < 1) revert LogIndexOutOfRange();
 
         CertificateId certId = IToposCore(_toposCoreAddr).receiptRootToCertId(receiptRoot);
         if (!IToposCore(_toposCoreAddr).certificateExists(certId)) revert CertNotPresent();
@@ -60,18 +62,16 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
         ) = _decodeReceipt(receiptRaw);
         if (status != 1) revert InvalidTransactionStatus();
 
-        // the last event (CrossSubnetMessageSent) is always emitted by the topos core contract
-        uint256 logIndex = logsAddress.length - 1;
-        // check that the first log address is the address of the topos core contract
-        if (logsAddress[logIndex] != _toposCoreAddr) revert InvalidToposCoreAddress();
+        // verify that provided indexes are within the range of the number of event logs
+        for (uint256 i = 0; i < logIndexes.length; i++) {
+            if (logIndexes[i] >= logsAddress.length) revert LogIndexOutOfRange();
+        }
 
-        // first topic is the event signature & second topic is the target subnet id
-        bytes32 targetSubnetId = logsTopics[logIndex][1];
-        if (SubnetId.unwrap(IToposCore(_toposCoreAddr).networkSubnetId()) != targetSubnetId) revert InvalidSubnetId();
+        SubnetId networkSubnetId = IToposCore(_toposCoreAddr).networkSubnetId();
 
         // prevent re-entrancy
         _setTxExecuted(receiptHash, receiptRoot);
-        _execute(logsData[logIndex]);
+        _execute(logIndexes, logsAddress, logsData, logsTopics, networkSubnetId);
     }
 
     /// @notice Get the address of topos core contract
@@ -93,12 +93,22 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
 
     /// @notice Execute the message on a target subnet
     /// @dev This function should be implemented by the child contract
-    /// @param receiptData RLP encoded receipt data
-    function _execute(bytes memory receiptData) internal virtual {}
+    /// @param logIndexes Array of indexes of the logs to use
+    /// @param logsAddress Array of addresses of the logs
+    /// @param logsData Array of data of the logs
+    /// @param logsTopics Array of topics of the logs
+    /// @param networkSubnetId Subnet id of the network
+    function _execute(
+        uint256[] memory logIndexes,
+        address[] memory logsAddress,
+        bytes[] memory logsData,
+        bytes32[][] memory logsTopics,
+        SubnetId networkSubnetId
+    ) internal virtual {}
 
     /// @notice emit a message sent event from the ToposCore contract
-    function _emitMessageSentEvent(SubnetId targetSubnetId, bytes memory data) internal {
-        IToposCore(_toposCoreAddr).emitCrossSubnetMessage(targetSubnetId, data);
+    function _emitMessageSentEvent(SubnetId targetSubnetId) internal {
+        IToposCore(_toposCoreAddr).emitCrossSubnetMessage(targetSubnetId);
     }
 
     /// @notice Set a flag to indicate that the asset transfer transaction has been executed
