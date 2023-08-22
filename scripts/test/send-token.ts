@@ -122,8 +122,8 @@ const main = async function (...args: string[]) {
   )
   const tx = await erc20Messaging.sendToken(
     cc.TARGET_SUBNET_ID_4,
-    receiverAddress,
     tokenAddress,
+    receiverAddress,
     amount,
     {
       gasLimit: 5_000_000,
@@ -145,6 +145,9 @@ const main = async function (...args: string[]) {
       ' amount:',
       amount
     )
+
+    const remainingBalance = await erc20.balanceOf(wallet.address)
+    console.log('Remaining balance:', remainingBalance.toString())
   } else {
     console.log('Missing CrossSubnetMessageSent event')
   }
