@@ -12,15 +12,6 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     using RLPReader for RLPReader.RLPItem;
     using RLPReader for bytes;
 
-    // event ReceiptDecodingResult(
-    //     uint256 status,
-    //     uint256 cumulativeGasUsed,
-    //     bytes logsBloom,
-    //     address[] logsAddress,
-    //     bytes32[][] logsTopics,
-    //     bytes[] logsData
-    // );
-
     // Slot names should be prefixed with some standard string
     bytes32 internal constant PREFIX_EXECUTED = keccak256("executed");
 
