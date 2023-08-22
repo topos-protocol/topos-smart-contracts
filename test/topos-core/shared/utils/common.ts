@@ -4,6 +4,7 @@ function encodeCertParam(
   prevId: string,
   sourceSubnetId: string,
   stateRoot: string,
+  txRoot: string,
   receiptRoot: string,
   targetSubnets: string[],
   verifier: number,
@@ -13,6 +14,7 @@ function encodeCertParam(
 ) {
   return ethers.utils.defaultAbiCoder.encode(
     [
+      'bytes32',
       'bytes32',
       'bytes32',
       'bytes32',
@@ -27,6 +29,7 @@ function encodeCertParam(
       prevId,
       sourceSubnetId,
       stateRoot,
+      txRoot,
       receiptRoot,
       targetSubnets,
       verifier,

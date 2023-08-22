@@ -62,6 +62,7 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
             CertificateId prevId,
             SubnetId sourceSubnetId,
             bytes32 stateRoot,
+            bytes32 txRoot,
             bytes32 receiptRoot,
             SubnetId[] memory targetSubnets,
             uint32 verifier,
@@ -70,7 +71,7 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
             bytes memory signature
         ) = abi.decode(
                 certBytes,
-                (CertificateId, SubnetId, bytes32, bytes32, SubnetId[], uint32, CertificateId, bytes, bytes)
+                (CertificateId, SubnetId, bytes32, bytes32, bytes32, SubnetId[], uint32, CertificateId, bytes, bytes)
             );
 
         certificateSet.insert(CertificateId.unwrap(certId)); // add certificate ID to the CRUD storage set
@@ -78,6 +79,7 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
         newCert.prevId = prevId;
         newCert.sourceSubnetId = sourceSubnetId;
         newCert.stateRoot = stateRoot;
+        newCert.txRoot = txRoot;
         newCert.receiptRoot = receiptRoot;
         newCert.targetSubnets = targetSubnets;
         newCert.verifier = verifier;
