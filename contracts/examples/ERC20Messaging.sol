@@ -56,26 +56,16 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
             // If token address is no specified, it indicates a request to deploy one.
             bytes32 salt = keccak256(abi.encodePacked(msg.sender, symbol));
 
-            // slither-disable-start reentrancy-no-eth
-            // solhint-disable-next-line avoid-low-level-calls
-            (bool success, bytes memory data) = _tokenDeployerAddr.delegatecall(
-                abi.encodeWithSelector(
-                    ITokenDeployer.deployToken.selector,
-                    name,
-                    symbol,
-                    cap,
-                    initialSupply,
-                    msg.sender,
-                    address(this),
-                    salt
-                )
+            // Deploy the token contract
+            tokenAddress = ITokenDeployer(_tokenDeployerAddr).deployToken(
+                name,
+                symbol,
+                cap,
+                initialSupply,
+                msg.sender,
+                address(this),
+                salt
             );
-            // slither-disable-end reentrancy-no-eth
-
-            if (!success) revert TokenDeployFailed();
-
-            tokenAddress = abi.decode(data, (address));
-
             _setTokenType(tokenAddress, TokenType.InternalBurnableFrom);
         } else {
             revert UnsupportedTokenType();
