@@ -20,6 +20,22 @@ describe('SubnetRegistrator', () => {
   })
 
   describe('registerSubnet', () => {
+    it('reverts if non-admin tries to register a subnet', async () => {
+      const [, nonAdmin] = await ethers.getSigners()
+      await expect(
+        subnetRegistrator
+          .connect(nonAdmin)
+          .registerSubnet(
+            endpoint,
+            logoURL,
+            subnetName,
+            subnetId,
+            subnetCurrencySymbol,
+            chainId
+          )
+      ).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+
     it('reverts if the subnet is already registered', async () => {
       await registerSubnet(
         endpoint,
@@ -114,6 +130,13 @@ describe('SubnetRegistrator', () => {
   })
 
   describe('removeSubnet', () => {
+    it('reverts if non-admin tries to remove a subnet', async () => {
+      const [, nonAdmin] = await ethers.getSigners()
+      await expect(
+        subnetRegistrator.connect(nonAdmin).removeSubnet(subnetId)
+      ).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+
     it('reverts when removing a non-existent subnet', async () => {
       await expect(removeSubnet(subnetId)).to.be.revertedWith(
         'Bytes32Set: key does not exist in the set.'
