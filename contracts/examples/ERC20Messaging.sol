@@ -91,12 +91,13 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
     /// @notice Entry point for sending a cross-subnet asset transfer
     /// @dev The input data is sent to the target subnet externally
     /// @param targetSubnetId Target subnet ID
-    /// @param /*receiver*/ Receiver's address (avoiding unused local variable warning)
     /// @param tokenAddress Address of target token contract
+    /// @param receiver Receiver's address
     /// @param amount Amount of token to send
-    function sendToken(SubnetId targetSubnetId, address /*receiver*/, address tokenAddress, uint256 amount) external {
+    function sendToken(SubnetId targetSubnetId, address tokenAddress, address receiver, uint256 amount) external {
         if (_toposCoreAddr.code.length == uint256(0)) revert InvalidToposCore();
         _burnTokenFrom(msg.sender, tokenAddress, amount);
+        emit TokenSent(targetSubnetId, tokenAddress, receiver, amount);
         _emitMessageSentEvent(targetSubnetId);
     }
 
@@ -136,16 +137,30 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
     }
 
     /// @notice Execute a cross-subnet asset transfer
-    /// @param indexOfDataInTxRaw Index of data in txRaw
-    /// @param txRaw Raw transaction data
-    function _execute(uint256 indexOfDataInTxRaw, bytes calldata txRaw) internal override {
-        (SubnetId targetSubnetId, address receiver, address tokenAddress, uint256 amount) = abi.decode(
-            txRaw[indexOfDataInTxRaw + 4:], // omit the 4 bytes function selector
-            (SubnetId, address, address, uint256)
-        );
-        if (!_validateTargetSubnetId(targetSubnetId)) revert InvalidSubnetId();
+    /// @param logIndexes Array of indexes of the logs to use
+    /// @param logsAddress Array of addresses of the logs
+    /// @param logsData Array of data of the logs
+    /// @param logsTopics Array of topics of the logs
+    function _execute(
+        uint256[] memory logIndexes,
+        address[] memory logsAddress,
+        bytes[] memory logsData,
+        bytes32[][] memory logsTopics,
+        SubnetId networkSubnetId
+    ) internal override {
+        // verify that the event was emitted by this contract on the source subnet
+        uint256 tokenSentEventIndex = logIndexes[0];
+        if (logsAddress[tokenSentEventIndex] != address(this)) revert InvalidOriginAddress();
 
-        // prevent reentrancy
+        // implication on the application contract to verify the target subnet id
+        // first topic is the event signature & second topic is the target subnet id
+        bytes32 targetSubnetId = logsTopics[tokenSentEventIndex][1];
+        if (SubnetId.unwrap(networkSubnetId) != targetSubnetId) revert InvalidSubnetId();
+
+        (address tokenAddress, address receiver, uint256 amount) = abi.decode(
+            logsData[tokenSentEventIndex],
+            (address, address, uint256)
+        );
         _mintToken(tokenAddress, receiver, amount);
     }
 

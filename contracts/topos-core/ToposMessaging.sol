@@ -26,32 +26,43 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     }
 
     /// @notice Entry point for executing any message on a target subnet
-    /// @param indexOfDataInTxRaw Index of tx.data in raw transaction hex
-    /// @param txRaw RLP encoded raw transaction hex
+    /// @param logIndexes Indexes of the logs to process
     /// @param proofBlob RLP encoded proof blob
-    /// @param txRoot Transactions root
-    function execute(
-        uint256 indexOfDataInTxRaw,
-        bytes calldata proofBlob,
-        bytes calldata txRaw,
-        bytes32 txRoot
-    ) external {
+    /// @param receiptRoot Receipts root of the block
+    function execute(uint256[] calldata logIndexes, bytes calldata proofBlob, bytes32 receiptRoot) external {
         if (_toposCoreAddr.code.length == uint256(0)) revert InvalidToposCore();
-        if (txRaw.length < indexOfDataInTxRaw + 4) revert IllegalMemoryAccess();
+        if (logIndexes.length < 1) revert LogIndexOutOfRange();
 
-        CertificateId certId = IToposCore(_toposCoreAddr).txRootToCertId(txRoot);
+        CertificateId certId = IToposCore(_toposCoreAddr).receiptRootToCertId(receiptRoot);
         if (!IToposCore(_toposCoreAddr).certificateExists(certId)) revert CertNotPresent();
 
-        // In order to validate the transaction pass the entire transaction bytes which is then hashed.
-        // The transaction hash is used as a leaf to validate the inclusion proof.
-        bytes32 txHash = keccak256(abi.encodePacked(txRaw));
-        if (!validateMerkleProof(proofBlob, txHash, txRoot)) revert InvalidMerkleProof();
+        // the raw receipt bytes are taken out of the proof
+        bytes memory receiptRaw = validateMerkleProof(proofBlob, receiptRoot);
+        if (receiptRaw.length == uint256(0)) revert InvalidMerkleProof();
 
-        if (_isTxExecuted(txHash)) revert TransactionAlreadyExecuted();
+        bytes32 receiptHash = keccak256(abi.encodePacked(receiptRaw));
+        if (_isTxExecuted(receiptHash, receiptRoot)) revert TransactionAlreadyExecuted();
+
+        (
+            uint256 status, // uint256 cumulativeGasUsed // bytes memory logsBloom
+            ,
+            ,
+            address[] memory logsAddress,
+            bytes32[][] memory logsTopics,
+            bytes[] memory logsData
+        ) = _decodeReceipt(receiptRaw);
+        if (status != 1) revert InvalidTransactionStatus();
+
+        // verify that provided indexes are within the range of the number of event logs
+        for (uint256 i = 0; i < logIndexes.length; i++) {
+            if (logIndexes[i] >= logsAddress.length) revert LogIndexOutOfRange();
+        }
+
+        SubnetId networkSubnetId = IToposCore(_toposCoreAddr).networkSubnetId();
 
         // prevent re-entrancy
-        _setTxExecuted(txHash);
-        _execute(indexOfDataInTxRaw, txRaw);
+        _setTxExecuted(receiptHash, receiptRoot);
+        _execute(logIndexes, logsAddress, logsData, logsTopics, networkSubnetId);
     }
 
     /// @notice Get the address of topos core contract
@@ -59,34 +70,32 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
         return _toposCoreAddr;
     }
 
-    /// @notice Validate a Merkle proof for an external transaction
+    /// @notice Validate a Merkle proof for an external transaction receipt
     /// @param proofBlob RLP encoded proof blob
-    /// @param txHash Transaction hash
-    /// @param txRoot Transactions root
+    /// @param receiptRoot Receipts root of the block
     function validateMerkleProof(
         bytes memory proofBlob,
-        bytes32 txHash,
-        bytes32 txRoot
-    ) public pure override returns (bool) {
+        bytes32 receiptRoot
+    ) public pure override returns (bytes memory receiptRaw) {
         Proof memory proof = _decodeProofBlob(proofBlob);
-
         if (proof.kind != 1) revert UnsupportedProofKind();
-
-        bytes memory txRawFromProof = MerklePatriciaProofVerifier.extractProofValue(txRoot, proof.mptKey, proof.stack);
-        if (txRawFromProof.length == 0) {
-            // Empty return value for proof of exclusion
-            return false;
-        } else {
-            bytes32 txHashFromProof = keccak256(abi.encodePacked(txRawFromProof));
-            return txHash == txHashFromProof;
-        }
+        receiptRaw = MerklePatriciaProofVerifier.extractProofValue(receiptRoot, proof.mptKey, proof.stack);
     }
 
     /// @notice Execute the message on a target subnet
     /// @dev This function should be implemented by the child contract
-    /// @param indexOfDataInTxRaw Index of tx.data in raw transaction hex
-    /// @param txRaw RLP encoded raw transaction hex
-    function _execute(uint256 indexOfDataInTxRaw, bytes calldata txRaw) internal virtual {}
+    /// @param logIndexes Array of indexes of the logs to use
+    /// @param logsAddress Array of addresses of the logs
+    /// @param logsData Array of data of the logs
+    /// @param logsTopics Array of topics of the logs
+    /// @param networkSubnetId Subnet id of the network
+    function _execute(
+        uint256[] memory logIndexes,
+        address[] memory logsAddress,
+        bytes[] memory logsData,
+        bytes32[][] memory logsTopics,
+        SubnetId networkSubnetId
+    ) internal virtual {}
 
     /// @notice emit a message sent event from the ToposCore contract
     function _emitMessageSentEvent(SubnetId targetSubnetId) internal {
@@ -94,15 +103,19 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     }
 
     /// @notice Set a flag to indicate that the asset transfer transaction has been executed
-    /// @param txHash Hash of asset transfer transaction
-    function _setTxExecuted(bytes32 txHash) internal {
-        _setBool(_getTxExecutedKey(txHash), true);
+    /// @param receiptHash receipt hash
+    /// @param receiptRoot receipt root
+    function _setTxExecuted(bytes32 receiptHash, bytes32 receiptRoot) internal {
+        bytes32 suffix = keccak256(abi.encodePacked(receiptHash, receiptRoot));
+        _setBool(_getTxExecutedKey(suffix), true);
     }
 
     /// @notice Get the flag to indicate that the transaction has been executed
-    /// @param txHash transaction hash
-    function _isTxExecuted(bytes32 txHash) internal view returns (bool) {
-        return getBool(_getTxExecutedKey(txHash));
+    /// @param receiptHash receipt hash
+    /// @param receiptRoot receipt root
+    function _isTxExecuted(bytes32 receiptHash, bytes32 receiptRoot) internal view returns (bool) {
+        bytes32 suffix = keccak256(abi.encodePacked(receiptHash, receiptRoot));
+        return getBool(_getTxExecutedKey(suffix));
     }
 
     /// @notice Validate that the target subnet id is the same as the subnet id of the topos core
@@ -113,9 +126,9 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     }
 
     /// @notice Get the key for the flag to indicate that the transaction has been executed
-    /// @param txHash transaction hash
-    function _getTxExecutedKey(bytes32 txHash) internal pure returns (bytes32) {
-        return keccak256(abi.encode(PREFIX_EXECUTED, txHash));
+    /// @param suffix suffix of the key
+    function _getTxExecutedKey(bytes32 suffix) internal pure returns (bytes32) {
+        return keccak256(abi.encode(PREFIX_EXECUTED, suffix));
     }
 
     /// @notice Decode the proof blob into Proof struct
@@ -155,5 +168,47 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
         }
 
         assert(nibblesLength == nibbles.length);
+    }
+
+    /// @notice Decode the receipt into its components
+    /// @param receiptRaw RLP encoded receipt
+    function _decodeReceipt(
+        bytes memory receiptRaw
+    )
+        internal
+        pure
+        returns (
+            uint256 status,
+            uint256 cumulativeGasUsed,
+            bytes memory logsBloom,
+            address[] memory logsAddress,
+            bytes32[][] memory logsTopics,
+            bytes[] memory logsData
+        )
+    {
+        RLPReader.RLPItem[] memory receipt = receiptRaw.toRlpItem().toList();
+
+        status = receipt[0].toUint();
+        cumulativeGasUsed = receipt[1].toUint();
+        logsBloom = receipt[2].toBytes();
+
+        RLPReader.RLPItem[] memory logs = receipt[3].toList();
+        logsAddress = new address[](logs.length);
+        logsTopics = new bytes32[][](logs.length);
+        logsData = new bytes[](logs.length);
+
+        for (uint256 i = 0; i < logs.length; i++) {
+            RLPReader.RLPItem[] memory log = logs[i].toList();
+            logsAddress[i] = log[0].toAddress();
+
+            RLPReader.RLPItem[] memory topics = log[1].toList();
+            bytes32[] memory topicArray = new bytes32[](topics.length);
+            for (uint256 j = 0; j < topics.length; j++) {
+                topicArray[j] = bytes32(topics[j].toUint());
+            }
+            logsTopics[i] = topicArray;
+
+            logsData[i] = log[2].toBytes();
+        }
     }
 }

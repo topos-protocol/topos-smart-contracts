@@ -30,8 +30,8 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
     /// @notice Mapping to store the last seen certificate for a subnet
     mapping(SubnetId => IToposCore.StreamPosition) checkpoint;
 
-    /// @notice Mapping of transactions root to the certificate ID
-    mapping(bytes32 => CertificateId) public txRootToCertId;
+    /// @notice Mapping of receipts root to the certificate ID
+    mapping(bytes32 => CertificateId) public receiptRootToCertId;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -63,6 +63,7 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
             SubnetId sourceSubnetId,
             bytes32 stateRoot,
             bytes32 txRoot,
+            bytes32 receiptRoot,
             SubnetId[] memory targetSubnets,
             uint32 verifier,
             CertificateId certId,
@@ -70,7 +71,7 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
             bytes memory signature
         ) = abi.decode(
                 certBytes,
-                (CertificateId, SubnetId, bytes32, bytes32, SubnetId[], uint32, CertificateId, bytes, bytes)
+                (CertificateId, SubnetId, bytes32, bytes32, bytes32, SubnetId[], uint32, CertificateId, bytes, bytes)
             );
 
         certificateSet.insert(CertificateId.unwrap(certId)); // add certificate ID to the CRUD storage set
@@ -79,6 +80,7 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
         newCert.sourceSubnetId = sourceSubnetId;
         newCert.stateRoot = stateRoot;
         newCert.txRoot = txRoot;
+        newCert.receiptRoot = receiptRoot;
         newCert.targetSubnets = targetSubnets;
         newCert.verifier = verifier;
         newCert.certId = certId;
@@ -93,8 +95,8 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
         newStreamPosition.position = position;
         newStreamPosition.sourceSubnetId = sourceSubnetId;
 
-        txRootToCertId[txRoot] = certId; // add certificate ID to the transaction root mapping
-        emit CertStored(certId, txRoot);
+        receiptRootToCertId[receiptRoot] = certId; // add certificate ID to the receipt root mapping
+        emit CertStored(certId, receiptRoot);
     }
 
     /// @notice Emits an event to signal a cross subnet message has been sent
@@ -198,7 +200,7 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
             storedCert.prevId,
             storedCert.sourceSubnetId,
             storedCert.stateRoot,
-            storedCert.txRoot,
+            storedCert.receiptRoot,
             storedCert.targetSubnets,
             storedCert.verifier,
             storedCert.certId,

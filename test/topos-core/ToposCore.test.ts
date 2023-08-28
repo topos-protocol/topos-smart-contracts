@@ -12,6 +12,7 @@ describe('ToposCore', () => {
       cc.SOURCE_SUBNET_ID_1,
       cc.STATE_ROOT_MAX,
       cc.TX_ROOT_MAX,
+      cc.RECEIPT_ROOT_MAX,
       [cc.TARGET_SUBNET_ID_4, cc.TARGET_SUBNET_ID_5],
       cc.VERIFIER,
       cc.CERT_ID_1,
@@ -142,6 +143,7 @@ describe('ToposCore', () => {
           checkpoint[2].toString(),
           cc.STATE_ROOT_MAX,
           cc.TX_ROOT_MAX,
+          cc.RECEIPT_ROOT_MAX,
           [cc.TARGET_SUBNET_ID_4],
           cc.VERIFIER,
           checkpoint[0].toString(),
@@ -176,6 +178,7 @@ describe('ToposCore', () => {
           checkpoint[2].toString(),
           cc.STATE_ROOT_MAX,
           cc.TX_ROOT_MAX,
+          cc.RECEIPT_ROOT_MAX,
           [cc.TARGET_SUBNET_ID_4],
           cc.VERIFIER,
           checkpoint[0].toString(),
@@ -202,6 +205,7 @@ describe('ToposCore', () => {
         updatedTestCheckpoint[2].toString(),
         cc.STATE_ROOT_MAX,
         cc.TX_ROOT_MAX,
+        cc.RECEIPT_ROOT_MAX,
         [cc.TARGET_SUBNET_ID_4],
         cc.VERIFIER,
         updatedTestCheckpoint[0].toString(),
@@ -231,7 +235,7 @@ describe('ToposCore', () => {
       const tx = await toposCore.pushCertificate(defaultCert, cc.CERT_POS_1)
       await expect(tx)
         .to.emit(toposCore, 'CertStored')
-        .withArgs(cc.CERT_ID_1, cc.TX_ROOT_MAX)
+        .withArgs(cc.CERT_ID_1, cc.RECEIPT_ROOT_MAX)
     })
   })
 

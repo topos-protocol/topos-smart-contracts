@@ -16,6 +16,8 @@ export const DUMMY_STARK_PROOF = ethers.utils.formatBytes32String('starkProof')
 export const DUMMY_SIGNATURE = ethers.utils.formatBytes32String('signature')
 export const PREV_CERT_ID_0 =
   '0x0000000000000000000000000000000000000000000000000000000000000000'
+export const RECEIPT_ROOT_MAX =
+  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 export const SOURCE_SUBNET_ID_1 =
   '0x0000000000000000000000000000000000000000000000000000000000000001'
 export const SOURCE_SUBNET_ID_2 =

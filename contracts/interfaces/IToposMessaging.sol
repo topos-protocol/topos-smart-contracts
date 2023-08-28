@@ -15,14 +15,19 @@ interface IToposMessaging {
     }
 
     error CertNotPresent();
-    error IllegalMemoryAccess();
     error InvalidMerkleProof();
-    error InvalidSubnetId();
+    error InvalidTransactionStatus();
     error InvalidToposCore();
+    error LogIndexOutOfRange();
     error TransactionAlreadyExecuted();
     error UnsupportedProofKind();
 
-    function validateMerkleProof(bytes memory proofBlob, bytes32 txHash, bytes32 txRoot) external returns (bool);
+    function execute(uint256[] calldata logIndexes, bytes calldata proofBlob, bytes32 receiptRoot) external;
+
+    function validateMerkleProof(
+        bytes memory proofBlob,
+        bytes32 receiptRoot
+    ) external returns (bytes memory receiptRaw);
 
     function toposCore() external view returns (address);
 }
