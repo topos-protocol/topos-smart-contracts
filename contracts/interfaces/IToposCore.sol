@@ -57,23 +57,7 @@ interface IToposCore {
 
     function getCertIdAtIndex(uint256 index) external view returns (CertificateId);
 
-    function getCertificate(
-        CertificateId certId
-    )
-        external
-        view
-        returns (
-            CertificateId,
-            SubnetId,
-            bytes32,
-            bytes32,
-            SubnetId[] memory,
-            uint32,
-            CertificateId,
-            bytes memory,
-            bytes memory,
-            uint256
-        );
+    function getCertificate(CertificateId certId) external view returns (Certificate memory storedCert);
 
     function getCertificateCount() external view returns (uint256);
 
