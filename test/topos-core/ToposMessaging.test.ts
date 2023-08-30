@@ -143,9 +143,7 @@ describe('ToposMessaging', () => {
         deployERC20MessagingFixture
       )
       await erc20Messaging.deployToken(defaultToken)
-      await expect(
-        erc20Messaging.deployToken(defaultToken)
-      ).to.be.revertedWithCustomError(erc20Messaging, 'TokenDeployFailed')
+      await expect(erc20Messaging.deployToken(defaultToken)).to.be.reverted
       expect(await erc20Messaging.getTokenCount()).to.equal(1)
     })
 

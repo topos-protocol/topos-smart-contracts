@@ -28,7 +28,6 @@ interface IERC20Messaging is IToposMessaging {
     error InvalidSubnetId();
     error InvalidTokenDeployer();
     error TokenAlreadyExists(address tokenAddress);
-    error TokenDeployFailed();
     error TokenDoesNotExist(address tokenAddress);
     error UnsupportedTokenType();
 
