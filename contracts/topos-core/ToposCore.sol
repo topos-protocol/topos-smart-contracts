@@ -177,36 +177,8 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
 
     /// @notice Get the certificate for the provided certificate ID
     /// @param certId certificate ID
-    function getCertificate(
-        CertificateId certId
-    )
-        public
-        view
-        returns (
-            CertificateId,
-            SubnetId,
-            bytes32,
-            bytes32,
-            SubnetId[] memory,
-            uint32,
-            CertificateId,
-            bytes memory,
-            bytes memory,
-            uint256
-        )
-    {
-        Certificate memory storedCert = certificates[certId];
-        (
-            storedCert.prevId,
-            storedCert.sourceSubnetId,
-            storedCert.stateRoot,
-            storedCert.receiptRoot,
-            storedCert.targetSubnets,
-            storedCert.verifier,
-            storedCert.certId,
-            storedCert.starkProof,
-            storedCert.signature
-        );
+    function getCertificate(CertificateId certId) public view returns (Certificate memory storedCert) {
+        storedCert = certificates[certId];
     }
 
     /// @notice Get the checkpoints for the received source subnet IDs

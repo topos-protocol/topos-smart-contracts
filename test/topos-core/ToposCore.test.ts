@@ -228,6 +228,27 @@ describe('ToposCore', () => {
       )
     })
 
+    it('gets a storage certificate', async () => {
+      const { defaultCert, toposCore } = await loadFixture(
+        deployToposCoreFixture
+      )
+      await toposCore.pushCertificate(defaultCert, cc.CERT_POS_1)
+      const certificate = await toposCore.getCertificate(cc.CERT_ID_1)
+      const encodedCert = testUtils.encodeCertParam(
+        certificate.prevId,
+        certificate.sourceSubnetId,
+        certificate.stateRoot,
+        certificate.txRoot,
+        certificate.receiptRoot,
+        certificate.targetSubnets,
+        certificate.verifier,
+        certificate.certId,
+        certificate.starkProof,
+        certificate.signature
+      )
+      expect(encodedCert).to.equal(defaultCert)
+    })
+
     it('emits a certificate stored event', async () => {
       const { defaultCert, toposCore } = await loadFixture(
         deployToposCoreFixture
