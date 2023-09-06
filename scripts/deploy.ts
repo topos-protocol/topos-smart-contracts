@@ -1,4 +1,5 @@
-import { providers, utils, Wallet } from 'ethers'
+/* eslint-disable no-case-declarations */
+import { ContractFactory, providers, utils, Wallet } from 'ethers'
 import fs from 'fs'
 
 import {
@@ -8,7 +9,14 @@ import {
 } from './const-addr-deployer'
 
 const main = async function (..._args: Arg[]) {
-  const [providerEndpoint, contractJsonPath, salt, gasLimit, ...args] = _args
+  const [
+    providerEndpoint,
+    contractJsonPath,
+    salt,
+    gasLimit,
+    deployConstant,
+    ...args
+  ] = _args
   const provider = new providers.JsonRpcProvider(<string>providerEndpoint)
   const privateKey = process.env.PRIVATE_KEY
 
@@ -39,17 +47,37 @@ const main = async function (..._args: Arg[]) {
     return
   }
 
-  const address = await deployContractConstant(
-    wallet,
-    contractJson,
-    <string>salt,
-    args,
-    <number>gasLimit
-  )
-    .then(({ address }) => address)
-    .catch(console.error)
+  switch (deployConstant) {
+    case 'true':
+      const address = await deployContractConstant(
+        wallet,
+        contractJson,
+        <string>salt,
+        args,
+        <number>gasLimit
+      )
+        .then(({ address }) => address)
+        .catch(console.error)
 
-  console.log(address)
+      console.log(address)
+      break
+    case 'false':
+      const contractFactory = new ContractFactory(
+        contractJson.abi,
+        contractJson.bytecode,
+        wallet
+      )
+      const contract = await contractFactory.deploy(...args, {
+        gasLimit: BigInt(gasLimit),
+      })
+      await contract.deployed()
+      console.log(contract.address)
+      break
+    default:
+      console.error(
+        `ERROR: Please provide a valid deployConstant flag! (true|false)`
+      )
+  }
 }
 
 const args = process.argv.slice(2)

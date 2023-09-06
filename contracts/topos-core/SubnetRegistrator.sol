@@ -2,9 +2,11 @@
 pragma solidity ^0.8.9;
 
 import "./Bytes32Sets.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 type SubnetId is bytes32;
 
-contract SubnetRegistrator {
+contract SubnetRegistrator is Ownable {
     using Bytes32SetsLib for Bytes32SetsLib.Set;
 
     struct Subnet {
@@ -59,7 +61,7 @@ contract SubnetRegistrator {
         SubnetId subnetId,
         string calldata currencySymbol,
         uint256 chainId
-    ) public {
+    ) public onlyOwner {
         subnetSet.insert(SubnetId.unwrap(subnetId));
         Subnet storage subnet = subnets[subnetId];
         subnet.endpoint = endpoint;
@@ -72,7 +74,7 @@ contract SubnetRegistrator {
 
     /// @notice Remove an already registered subnet
     /// @param subnetId FROST public key of a subnet
-    function removeSubnet(SubnetId subnetId) public {
+    function removeSubnet(SubnetId subnetId) public onlyOwner {
         subnetSet.remove(SubnetId.unwrap(subnetId));
         delete subnets[subnetId];
         emit SubnetRemoved(subnetId);
