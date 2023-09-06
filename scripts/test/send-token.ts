@@ -91,6 +91,7 @@ const main = async function (...args: string[]) {
       gasLimit: 5_000_000,
     })
     const txReceipt = await tx.wait()
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const logs = txReceipt.events?.find((e: any) => e.event === 'TokenDeployed')
 
@@ -105,7 +106,8 @@ const main = async function (...args: string[]) {
 
   // Approve token burn
   const erc20 = new Contract(tokenAddress, ERC20.abi, wallet)
-  await erc20.approve(erc20Messaging.address, amount)
+  const tx1 = await erc20.approve(erc20Messaging.address, amount)
+  const txReceipt1 = await tx1.wait()
 
   // Send token
   console.log(
@@ -120,16 +122,18 @@ const main = async function (...args: string[]) {
     ' token address:',
     tokenAddress
   )
-  const tx = await erc20Messaging.sendToken(
+
+  const tx2 = await erc20Messaging.sendToken(
     cc.TARGET_SUBNET_ID_4,
     tokenAddress,
     receiverAddress,
     amount,
     {
-      gasLimit: 5_000_000,
+      gasLimit: 5_100_000,
     }
   )
-  const txReceipt = await tx.wait()
+  const txReceipt = await tx2.wait()
+  
   const logs = txReceipt.events?.find(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (e: any) =>
