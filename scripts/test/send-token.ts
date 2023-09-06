@@ -107,7 +107,7 @@ const main = async function (...args: string[]) {
   // Approve token burn
   const erc20 = new Contract(tokenAddress, ERC20.abi, wallet)
   const tx1 = await erc20.approve(erc20Messaging.address, amount)
-  const txReceipt1 = await tx1.wait()
+  await tx1.wait()
 
   // Send token
   console.log(
@@ -133,7 +133,7 @@ const main = async function (...args: string[]) {
     }
   )
   const txReceipt = await tx2.wait()
-  
+
   const logs = txReceipt.events?.find(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (e: any) =>
