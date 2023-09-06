@@ -33,7 +33,7 @@ interface IERC20Messaging is IToposMessaging {
 
     function deployToken(bytes calldata params) external;
 
-    function sendToken(SubnetId targetSubnetId, address receiver, address tokenAddress, uint256 amount) external;
+    function sendToken(SubnetId targetSubnetId, address tokenAddress, address receiver, uint256 amount) external;
 
     function getTokenByAddress(address tokenAddress) external view returns (Token memory token);
 
