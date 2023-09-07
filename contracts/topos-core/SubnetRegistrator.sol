@@ -30,6 +30,10 @@ contract SubnetRegistrator is Ownable {
     /// @notice Subnet removal event
     event SubnetRemoved(SubnetId subnetId);
 
+    constructor(address admin) Ownable() {
+        _transferOwnership(admin);
+    }
+
     /// @notice Check if the subnet is already registered
     /// @param subnetId FROST public key of a subnet
     function subnetExists(SubnetId subnetId) external view returns (bool) {

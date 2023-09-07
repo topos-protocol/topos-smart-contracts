@@ -5,6 +5,7 @@ import { expect } from 'chai'
 describe('SubnetRegistrator', () => {
   let subnetRegistrator: Contract
 
+  const admin = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
   const endpoint = 'http://127.0.0.1'
   const logoURL = 'http://image-url.com'
   const subnetName = 'Test Subnet'
@@ -16,7 +17,7 @@ describe('SubnetRegistrator', () => {
     const SubnetRegistrator = await ethers.getContractFactory(
       'SubnetRegistrator'
     )
-    subnetRegistrator = await SubnetRegistrator.deploy()
+    subnetRegistrator = await SubnetRegistrator.deploy(admin)
   })
 
   describe('registerSubnet', () => {
