@@ -1,28 +1,55 @@
-import { providers, utils, Wallet } from 'ethers'
+import { ContractFactory, providers, utils, Wallet } from 'ethers'
 import subnetRegistratorJSON from '../artifacts/contracts/topos-core/SubnetRegistrator.sol/SubnetRegistrator.json'
 import { Arg, deployContractConstant } from './const-addr-deployer'
 
 const main = async function (..._args: Arg[]) {
-  const [providerEndpoint, privateKey, salt, gasLimit, ...args] = _args
+  const [providerEndpoint, sequencerPrivateKey, salt, gasLimit, ...args] = _args
   const provider = new providers.JsonRpcProvider(<string>providerEndpoint)
 
-  const sequencerPrivateKey = sanitizeHexString(<string>privateKey || '')
-  if (!utils.isHexString(sequencerPrivateKey, 32)) {
+  // Fetch the sequencer wallet
+  const sequencerPrivateKeyHex = sanitizeHexString(
+    <string>sequencerPrivateKey || ''
+  )
+  if (!utils.isHexString(sequencerPrivateKeyHex, 32)) {
     console.error('ERROR: Please provide a valid private key!')
     return
   }
+  const sequencerWallet = new Wallet(sequencerPrivateKeyHex || '', provider)
 
-  const wallet = new Wallet(sequencerPrivateKey || '', provider)
-  const address = await deployContractConstant(
-    wallet,
-    subnetRegistratorJSON,
-    <string>salt,
-    [wallet.address, ...args],
-    <number>gasLimit
-  )
-    .then(({ address }) => address)
-    .catch(console.error)
+  // Fetch the deployer wallet
+  const privateKey = process.env.PRIVATE_KEY
+  if (!privateKey || !utils.isHexString(privateKey, 32)) {
+    console.error('ERROR: Please provide a valid private key! (PRIVATE_KEY)')
+    return
+  }
+  const deployerWallet = new Wallet(process.env.PRIVATE_KEY || '', provider)
+
+  // Deploy SubnetRegistrator contract with constant address
+  let address
+  try {
+    address = (
+      await deployContractConstant(
+        deployerWallet,
+        subnetRegistratorJSON,
+        <string>salt,
+        [...args],
+        <number>gasLimit
+      )
+    ).address
+  } catch (error) {
+    console.error(error)
+    return
+  }
   console.log(address)
+
+  // Initialize SubnetRegistrator contract
+  const SubnetRegistratorFactory = new ContractFactory(
+    subnetRegistratorJSON.abi,
+    subnetRegistratorJSON.bytecode,
+    deployerWallet
+  )
+  const subnetRegistrator = SubnetRegistratorFactory.attach(<string>address)
+  subnetRegistrator.initialize(sequencerWallet.address)
 }
 
 const sanitizeHexString = function (hexString: string) {
