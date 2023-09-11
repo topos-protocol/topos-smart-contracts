@@ -1,11 +1,10 @@
-import { Contract } from 'ethers'
+import { Contract, Wallet } from 'ethers'
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
 
 describe('SubnetRegistrator', () => {
   let subnetRegistrator: Contract
 
-  const admin = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
   const endpoint = 'http://127.0.0.1'
   const logoURL = 'http://image-url.com'
   const subnetName = 'Test Subnet'
@@ -13,16 +12,26 @@ describe('SubnetRegistrator', () => {
   const subnetCurrencySymbol = 'SUB'
   const chainId = 1
 
-  beforeEach(async () => {
+  async function deploySubnetRegistratorFixture() {
+    const [admin, nonAdmin, toposDeployer] = await ethers.getSigners()
     const SubnetRegistrator = await ethers.getContractFactory(
       'SubnetRegistrator'
     )
-    subnetRegistrator = await SubnetRegistrator.deploy(admin)
-  })
+    subnetRegistrator = await SubnetRegistrator.connect(toposDeployer).deploy()
+    await subnetRegistrator.deployed()
+    await subnetRegistrator.initialize(admin.address)
+    return {
+      admin,
+      nonAdmin,
+      subnetRegistrator,
+      toposDeployer,
+    }
+  }
 
   describe('registerSubnet', () => {
     it('reverts if non-admin tries to register a subnet', async () => {
-      const [, nonAdmin] = await ethers.getSigners()
+      const { nonAdmin, subnetRegistrator } =
+        await deploySubnetRegistratorFixture()
       await expect(
         subnetRegistrator
           .connect(nonAdmin)
@@ -38,13 +47,17 @@ describe('SubnetRegistrator', () => {
     })
 
     it('reverts if the subnet is already registered', async () => {
+      const { admin, subnetRegistrator } =
+        await deploySubnetRegistratorFixture()
       await registerSubnet(
         endpoint,
         logoURL,
         subnetName,
         subnetId,
         subnetCurrencySymbol,
-        chainId
+        chainId,
+        subnetRegistrator,
+        admin
       )
       await expect(
         registerSubnet(
@@ -53,19 +66,25 @@ describe('SubnetRegistrator', () => {
           subnetName,
           subnetId,
           subnetCurrencySymbol,
-          chainId
+          chainId,
+          subnetRegistrator,
+          admin
         )
       ).to.be.revertedWith('Bytes32Set: key already exists in the set.')
     })
 
     it('registers a subnet', async () => {
+      const { admin, subnetRegistrator } =
+        await deploySubnetRegistratorFixture()
       await registerSubnet(
         endpoint,
         logoURL,
         subnetName,
         subnetId,
         subnetCurrencySymbol,
-        chainId
+        chainId,
+        subnetRegistrator,
+        admin
       )
       const subnet = await subnetRegistrator.subnets(subnetId)
       expect(subnet.name).to.equal(subnetName)
@@ -76,45 +95,59 @@ describe('SubnetRegistrator', () => {
     })
 
     it('gets the subnet count', async () => {
+      const { admin, subnetRegistrator } =
+        await deploySubnetRegistratorFixture()
       await registerSubnet(
         endpoint,
         logoURL,
         subnetName,
         subnetId,
         subnetCurrencySymbol,
-        chainId
+        chainId,
+        subnetRegistrator,
+        admin
       )
       const count = await subnetRegistrator.getSubnetCount()
       expect(count).to.equal(1)
     })
 
     it('gets the subnet at a given index', async () => {
+      const { admin, subnetRegistrator } =
+        await deploySubnetRegistratorFixture()
       await registerSubnet(
         endpoint,
         logoURL,
         subnetName,
         subnetId,
         subnetCurrencySymbol,
-        chainId
+        chainId,
+        subnetRegistrator,
+        admin
       )
       const id = await subnetRegistrator.getSubnetIdAtIndex(0)
       expect(id).to.equal(subnetId)
     })
 
     it('checks if a subnet exists', async () => {
+      const { admin, subnetRegistrator } =
+        await deploySubnetRegistratorFixture()
       await registerSubnet(
         endpoint,
         logoURL,
         subnetName,
         subnetId,
         subnetCurrencySymbol,
-        chainId
+        chainId,
+        subnetRegistrator,
+        admin
       )
       const exists = await subnetRegistrator.subnetExists(subnetId)
       expect(exists).to.be.true
     })
 
     it('emits a new subnet registered event', async () => {
+      const { admin, subnetRegistrator } =
+        await deploySubnetRegistratorFixture()
       await expect(
         registerSubnet(
           endpoint,
@@ -122,7 +155,9 @@ describe('SubnetRegistrator', () => {
           subnetName,
           subnetId,
           subnetCurrencySymbol,
-          chainId
+          chainId,
+          subnetRegistrator,
+          admin
         )
       )
         .to.emit(subnetRegistrator, 'NewSubnetRegistered')
@@ -139,21 +174,27 @@ describe('SubnetRegistrator', () => {
     })
 
     it('reverts when removing a non-existent subnet', async () => {
-      await expect(removeSubnet(subnetId)).to.be.revertedWith(
-        'Bytes32Set: key does not exist in the set.'
-      )
+      const { admin, subnetRegistrator } =
+        await deploySubnetRegistratorFixture()
+      await expect(
+        removeSubnet(subnetId, subnetRegistrator, admin)
+      ).to.be.revertedWith('Bytes32Set: key does not exist in the set.')
     })
 
     it('emit a subnet removed event', async () => {
+      const { admin, subnetRegistrator } =
+        await deploySubnetRegistratorFixture()
       await registerSubnet(
         endpoint,
         logoURL,
         subnetName,
         subnetId,
         subnetCurrencySymbol,
-        chainId
+        chainId,
+        subnetRegistrator,
+        admin
       )
-      await expect(removeSubnet(subnetId))
+      await expect(removeSubnet(subnetId, subnetRegistrator, admin))
         .to.emit(subnetRegistrator, 'SubnetRemoved')
         .withArgs(subnetId)
     })
@@ -165,19 +206,27 @@ describe('SubnetRegistrator', () => {
     subnetName: string,
     subnetId: string,
     subnetCurrencySymbol: string,
-    chainId: number
+    chainId: number,
+    subnetRegistrator: Contract,
+    admin: Wallet
   ) {
-    return await subnetRegistrator.registerSubnet(
-      endpoint,
-      logoURL,
-      subnetName,
-      subnetId,
-      subnetCurrencySymbol,
-      chainId
-    )
+    return await subnetRegistrator
+      .connect(admin)
+      .registerSubnet(
+        endpoint,
+        logoURL,
+        subnetName,
+        subnetId,
+        subnetCurrencySymbol,
+        chainId
+      )
   }
 
-  async function removeSubnet(subnetId: string) {
-    return await subnetRegistrator.removeSubnet(subnetId)
+  async function removeSubnet(
+    subnetId: string,
+    subnetRegistrator: Contract,
+    admin: Wallet
+  ) {
+    return await subnetRegistrator.connect(admin).removeSubnet(subnetId)
   }
 })

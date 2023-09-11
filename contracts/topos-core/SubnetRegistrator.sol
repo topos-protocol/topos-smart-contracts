@@ -3,10 +3,11 @@ pragma solidity ^0.8.9;
 
 import "./Bytes32Sets.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 type SubnetId is bytes32;
 
-contract SubnetRegistrator is Ownable {
+contract SubnetRegistrator is Initializable, Ownable {
     using Bytes32SetsLib for Bytes32SetsLib.Set;
 
     struct Subnet {
@@ -30,10 +31,6 @@ contract SubnetRegistrator is Ownable {
     /// @notice Subnet removal event
     event SubnetRemoved(SubnetId subnetId);
 
-    constructor(address admin) Ownable() {
-        _transferOwnership(admin);
-    }
-
     /// @notice Check if the subnet is already registered
     /// @param subnetId FROST public key of a subnet
     function subnetExists(SubnetId subnetId) external view returns (bool) {
@@ -49,6 +46,13 @@ contract SubnetRegistrator is Ownable {
     /// @param index index at which the Subnet ID is stored
     function getSubnetIdAtIndex(uint256 index) external view returns (SubnetId) {
         return SubnetId.wrap(subnetSet.keyAtIndex(index));
+    }
+
+    /// @notice Contract initializer
+    /// @dev Can only be called once
+    /// @param admin address of the admin
+    function initialize(address admin) public initializer {
+        _transferOwnership(admin);
     }
 
     /// @notice Register a new subnet
