@@ -55,7 +55,7 @@ const main = async function (...args: string[]) {
 
   const adminPrivateKey = sanitizeHexString(_adminPrivateKey)
 
-  if (!utils.isHexString(_adminPrivateKey, 32)) {
+  if (!utils.isHexString(adminPrivateKey, 32)) {
     console.error('ERROR: The admin private key is not a valid key!')
     process.exit(1)
   }

@@ -1,4 +1,4 @@
-import { Contract, ContractFactory, providers, utils, Wallet } from 'ethers'
+import { Contract, providers, utils, Wallet } from 'ethers'
 
 import subnetRegistratorJSON from '../artifacts/contracts/topos-core/SubnetRegistrator.sol/SubnetRegistrator.json'
 import { Arg, deployContractConstant } from './const-addr-deployer'
