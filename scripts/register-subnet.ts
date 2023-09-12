@@ -11,16 +11,14 @@ const main = async function (...args: string[]) {
     subnetRPCEndpoint,
     subnetCurrencySymbol,
     subnetLogoUrl,
+    _adminPrivateKey,
     _sequencerPrivateKey,
   ] = args
   const provider = new providers.JsonRpcProvider(toposSubnetProviderEndpoint)
-  const toposDeployerPrivateKey = sanitizeHexString(
-    process.env.PRIVATE_KEY || ''
-  )
 
-  if (!utils.isHexString(toposDeployerPrivateKey, 32)) {
+  if (!_adminPrivateKey) {
     console.error(
-      'ERROR: Please provide a valid toposDeployer private key! (PRIVATE_KEY)'
+      'ERROR: Please provide the SubnetRegistrator admin private key!'
     )
     process.exit(1)
   }
@@ -55,6 +53,13 @@ const main = async function (...args: string[]) {
     process.exit(1)
   }
 
+  const adminPrivateKey = sanitizeHexString(_adminPrivateKey)
+
+  if (!utils.isHexString(adminPrivateKey, 32)) {
+    console.error('ERROR: The admin private key is not a valid key!')
+    process.exit(1)
+  }
+
   const sequencerPrivateKey = sanitizeHexString(_sequencerPrivateKey)
 
   if (!utils.isHexString(sequencerPrivateKey, 32)) {
@@ -77,7 +82,7 @@ const main = async function (...args: string[]) {
     process.exit(1)
   }
 
-  const wallet = new Wallet(sequencerPrivateKey, provider)
+  const wallet = new Wallet(adminPrivateKey, provider)
 
   const contract = new Contract(
     subnetRegistratorAddress,
