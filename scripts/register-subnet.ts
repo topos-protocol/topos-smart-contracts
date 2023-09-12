@@ -77,7 +77,7 @@ const main = async function (...args: string[]) {
     process.exit(1)
   }
 
-  const wallet = new Wallet(toposDeployerPrivateKey, provider)
+  const wallet = new Wallet(sequencerPrivateKey, provider)
 
   const contract = new Contract(
     subnetRegistratorAddress,
