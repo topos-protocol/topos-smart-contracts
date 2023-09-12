@@ -102,7 +102,8 @@ const main = async function (...args: string[]) {
     subnetName,
     subnetId,
     subnetCurrencySymbol,
-    subnetChainId
+    subnetChainId,
+    { gasLimit: 4_000_000 }
   )
 
   await tx
