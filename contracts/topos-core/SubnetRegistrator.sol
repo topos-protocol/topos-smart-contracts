@@ -11,7 +11,8 @@ contract SubnetRegistrator is Initializable, Ownable {
     using Bytes32SetsLib for Bytes32SetsLib.Set;
 
     struct Subnet {
-        string endpoint;
+        string httpEndpoint;
+        string wsEndpoint;
         string logoURL;
         string name;
         string currencySymbol;
@@ -56,14 +57,16 @@ contract SubnetRegistrator is Initializable, Ownable {
     }
 
     /// @notice Register a new subnet
-    /// @param endpoint JSON RPC endpoint of a subnet
+    /// @param httpEndpoint JSON RPC http endpoint of a subnet
+    /// @param wsEndpoint JSON RPC ws endpoint of a subnet
     /// @param logoURL URL for the logo of a subnet
     /// @param name name of a subnet
     /// @param subnetId FROST public key of a subnet
     /// @param currencySymbol currencySymbol for a subnet currency
     /// @param chainId subnet network ID
     function registerSubnet(
-        string calldata endpoint,
+        string calldata httpEndpoint,
+        string calldata wsEndpoint,
         string calldata logoURL,
         string calldata name,
         SubnetId subnetId,
@@ -72,7 +75,8 @@ contract SubnetRegistrator is Initializable, Ownable {
     ) public onlyOwner {
         subnetSet.insert(SubnetId.unwrap(subnetId));
         Subnet storage subnet = subnets[subnetId];
-        subnet.endpoint = endpoint;
+        subnet.httpEndpoint = httpEndpoint;
+        subnet.wsEndpoint = wsEndpoint;
         subnet.logoURL = logoURL;
         subnet.name = name;
         subnet.currencySymbol = currencySymbol;

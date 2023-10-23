@@ -5,7 +5,8 @@ import { expect } from 'chai'
 describe('SubnetRegistrator', () => {
   let subnetRegistrator: Contract
 
-  const endpoint = 'http://127.0.0.1'
+  const httpEndpoint = 'http://127.0.0.1'
+  const wsEndpoint = 'ws://127.0.0.1'
   const logoURL = 'http://image-url.com'
   const subnetName = 'Test Subnet'
   const subnetId = ethers.utils.formatBytes32String('subnetId')
@@ -36,7 +37,8 @@ describe('SubnetRegistrator', () => {
         subnetRegistrator
           .connect(nonAdmin)
           .registerSubnet(
-            endpoint,
+            httpEndpoint,
+            wsEndpoint,
             logoURL,
             subnetName,
             subnetId,
@@ -50,7 +52,8 @@ describe('SubnetRegistrator', () => {
       const { admin, subnetRegistrator } =
         await deploySubnetRegistratorFixture()
       await registerSubnet(
-        endpoint,
+        httpEndpoint,
+        wsEndpoint,
         logoURL,
         subnetName,
         subnetId,
@@ -61,7 +64,8 @@ describe('SubnetRegistrator', () => {
       )
       await expect(
         registerSubnet(
-          endpoint,
+          httpEndpoint,
+          wsEndpoint,
           logoURL,
           subnetName,
           subnetId,
@@ -77,7 +81,8 @@ describe('SubnetRegistrator', () => {
       const { admin, subnetRegistrator } =
         await deploySubnetRegistratorFixture()
       await registerSubnet(
-        endpoint,
+        httpEndpoint,
+        wsEndpoint,
         logoURL,
         subnetName,
         subnetId,
@@ -89,7 +94,8 @@ describe('SubnetRegistrator', () => {
       const subnet = await subnetRegistrator.subnets(subnetId)
       expect(subnet.name).to.equal(subnetName)
       expect(subnet.currencySymbol).to.equal(subnetCurrencySymbol)
-      expect(subnet.endpoint).to.equal(endpoint)
+      expect(subnet.httpEndpoint).to.equal(httpEndpoint)
+      expect(subnet.wsEndpoint).to.equal(wsEndpoint)
       expect(subnet.logoURL).to.equal(logoURL)
       expect(subnet.chainId).to.equal(chainId)
     })
@@ -98,7 +104,8 @@ describe('SubnetRegistrator', () => {
       const { admin, subnetRegistrator } =
         await deploySubnetRegistratorFixture()
       await registerSubnet(
-        endpoint,
+        httpEndpoint,
+        wsEndpoint,
         logoURL,
         subnetName,
         subnetId,
@@ -115,7 +122,8 @@ describe('SubnetRegistrator', () => {
       const { admin, subnetRegistrator } =
         await deploySubnetRegistratorFixture()
       await registerSubnet(
-        endpoint,
+        httpEndpoint,
+        wsEndpoint,
         logoURL,
         subnetName,
         subnetId,
@@ -132,7 +140,8 @@ describe('SubnetRegistrator', () => {
       const { admin, subnetRegistrator } =
         await deploySubnetRegistratorFixture()
       await registerSubnet(
-        endpoint,
+        httpEndpoint,
+        wsEndpoint,
         logoURL,
         subnetName,
         subnetId,
@@ -150,7 +159,8 @@ describe('SubnetRegistrator', () => {
         await deploySubnetRegistratorFixture()
       await expect(
         registerSubnet(
-          endpoint,
+          httpEndpoint,
+          wsEndpoint,
           logoURL,
           subnetName,
           subnetId,
@@ -185,7 +195,8 @@ describe('SubnetRegistrator', () => {
       const { admin, subnetRegistrator } =
         await deploySubnetRegistratorFixture()
       await registerSubnet(
-        endpoint,
+        httpEndpoint,
+        wsEndpoint,
         logoURL,
         subnetName,
         subnetId,
@@ -201,7 +212,8 @@ describe('SubnetRegistrator', () => {
   })
 
   async function registerSubnet(
-    endpoint: string,
+    httpEndpoint: string,
+    wsEndpoint: string,
     logoURL: string,
     subnetName: string,
     subnetId: string,
@@ -213,7 +225,8 @@ describe('SubnetRegistrator', () => {
     return await subnetRegistrator
       .connect(admin)
       .registerSubnet(
-        endpoint,
+        httpEndpoint,
+        wsEndpoint,
         logoURL,
         subnetName,
         subnetId,
