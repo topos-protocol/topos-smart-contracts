@@ -8,7 +8,8 @@ const main = async function (...args: string[]) {
     subnetRegistratorAddress,
     subnetName,
     subnetChainId,
-    subnetRPCEndpoint,
+    subnetEndpointHttp,
+    subnetEndpointWs,
     subnetCurrencySymbol,
     subnetLogoUrl,
     _adminPrivateKey,
@@ -28,8 +29,13 @@ const main = async function (...args: string[]) {
     process.exit(1)
   }
 
-  if (!subnetRPCEndpoint) {
-    console.error('ERROR: Please provide the subnet endpoint private key!')
+  if (!subnetEndpointHttp) {
+    console.error('ERROR: Please provide the subnet HTTP endpoint!')
+    process.exit(1)
+  }
+
+  if (!subnetEndpointWs) {
+    console.error('ERROR: Please provide the subnet WS endpoint!')
     process.exit(1)
   }
 
@@ -102,12 +108,13 @@ const main = async function (...args: string[]) {
   }
 
   const tx: ContractTransaction = await contract.registerSubnet(
-    subnetRPCEndpoint,
+    subnetChainId,
+    subnetCurrencySymbol,
+    subnetEndpointHttp,
+    subnetEndpointWs,
     subnetLogoUrl,
     subnetName,
     subnetId,
-    subnetCurrencySymbol,
-    subnetChainId,
     { gasLimit: 4_000_000 }
   )
 

@@ -11,11 +11,12 @@ contract SubnetRegistrator is Initializable, Ownable {
     using Bytes32SetsLib for Bytes32SetsLib.Set;
 
     struct Subnet {
-        string endpoint;
+        uint256 chainId;
+        string currencySymbol;
+        string endpointHttp;
+        string endpointWs;
         string logoURL;
         string name;
-        string currencySymbol;
-        uint256 chainId;
     }
 
     /// @notice Set of subnet IDs
@@ -56,27 +57,30 @@ contract SubnetRegistrator is Initializable, Ownable {
     }
 
     /// @notice Register a new subnet
-    /// @param endpoint JSON RPC endpoint of a subnet
+    /// @param chainId subnet network ID
+    /// @param currencySymbol currencySymbol for a subnet currency
+    /// @param endpointHttp JSON RPC http endpoint of a subnet
+    /// @param endpointWs JSON RPC ws endpoint of a subnet
     /// @param logoURL URL for the logo of a subnet
     /// @param name name of a subnet
     /// @param subnetId FROST public key of a subnet
-    /// @param currencySymbol currencySymbol for a subnet currency
-    /// @param chainId subnet network ID
     function registerSubnet(
-        string calldata endpoint,
+        uint256 chainId,
+        string calldata currencySymbol,
+        string calldata endpointHttp,
+        string calldata endpointWs,
         string calldata logoURL,
         string calldata name,
-        SubnetId subnetId,
-        string calldata currencySymbol,
-        uint256 chainId
+        SubnetId subnetId
     ) public onlyOwner {
         subnetSet.insert(SubnetId.unwrap(subnetId));
         Subnet storage subnet = subnets[subnetId];
-        subnet.endpoint = endpoint;
+        subnet.chainId = chainId;
+        subnet.currencySymbol = currencySymbol;
+        subnet.endpointHttp = endpointHttp;
+        subnet.endpointWs = endpointWs;
         subnet.logoURL = logoURL;
         subnet.name = name;
-        subnet.currencySymbol = currencySymbol;
-        subnet.chainId = chainId;
         emit NewSubnetRegistered(subnetId);
     }
 
