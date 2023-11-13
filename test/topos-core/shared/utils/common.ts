@@ -44,13 +44,12 @@ function encodeTokenParam(
   tokenName: string,
   tokenSymbol: string,
   mintCap: number,
-  address: string,
   dailyMintLimit: number,
   initialSupply: number
 ) {
   return ethers.utils.defaultAbiCoder.encode(
-    ['string', 'string', 'uint256', 'address', 'uint256', 'uint256'],
-    [tokenName, tokenSymbol, mintCap, address, dailyMintLimit, initialSupply]
+    ['string', 'string', 'uint256', 'uint256', 'uint256'],
+    [tokenName, tokenSymbol, mintCap, dailyMintLimit, initialSupply]
   )
 }
 

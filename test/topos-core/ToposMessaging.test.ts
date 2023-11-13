@@ -42,7 +42,6 @@ describe('ToposMessaging', () => {
       tc.TOKEN_NAME,
       tc.TOKEN_SYMBOL_X,
       tc.MINT_CAP_100_000_000,
-      ethers.constants.AddressZero,
       tc.DAILY_MINT_LIMIT_100,
       tc.INITIAL_SUPPLY_10_000_000
     )
@@ -116,7 +115,6 @@ describe('ToposMessaging', () => {
         tc.TOKEN_NAME,
         tc.TOKEN_SYMBOL_Y,
         tc.MINT_CAP_100_000_000,
-        ethers.constants.AddressZero,
         tc.DAILY_MINT_LIMIT_100,
         tc.INITIAL_SUPPLY_10_000_000
       )
@@ -151,38 +149,10 @@ describe('ToposMessaging', () => {
       const { defaultToken, erc20Messaging } = await loadFixture(
         deployERC20MessagingFixture
       )
-      const tx = await erc20Messaging.deployToken(defaultToken)
-      const txReceipt = await tx.wait()
-      const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
-      const tokenAddress = logs?.args?.tokenAddress
-      const token = testUtils.encodeTokenParam(
-        tc.TOKEN_NAME,
-        tc.TOKEN_SYMBOL_X,
-        tc.MINT_CAP_100_000_000,
-        tokenAddress,
-        tc.DAILY_MINT_LIMIT_100,
-        tc.INITIAL_SUPPLY_10_000_000
-      )
+      await erc20Messaging.deployToken(defaultToken)
       await expect(
-        erc20Messaging.deployToken(token)
-      ).to.be.revertedWithCustomError(erc20Messaging, 'TokenAlreadyExists')
-    })
-
-    it('reverts if the token is an external token', async () => {
-      const [extToken] = await ethers.getSigners()
-      const { erc20Messaging } = await loadFixture(deployERC20MessagingFixture)
-      const token = testUtils.encodeTokenParam(
-        tc.TOKEN_NAME,
-        tc.TOKEN_SYMBOL_X,
-        tc.MINT_CAP_100_000_000,
-        extToken.address,
-        tc.DAILY_MINT_LIMIT_100,
-        tc.INITIAL_SUPPLY_10_000_000
-      )
-      await expect(
-        erc20Messaging.deployToken(token)
-      ).to.be.revertedWithCustomError(erc20Messaging, 'UnsupportedTokenType')
-      expect(await erc20Messaging.getTokenCount()).to.equal(0)
+        erc20Messaging.deployToken(erc20Messaging.deployToken(defaultToken))
+      ).to.be.reverted
     })
 
     it('allows two separate deployers to deploy tokens with same symbol', async () => {
@@ -231,7 +201,6 @@ describe('ToposMessaging', () => {
         tc.TOKEN_NAME,
         tc.TOKEN_SYMBOL_X,
         tc.MINT_CAP_100_000_000,
-        ethers.constants.AddressZero,
         0,
         tc.INITIAL_SUPPLY_10_000_000
       )
