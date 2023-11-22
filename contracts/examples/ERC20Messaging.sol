@@ -70,8 +70,8 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
     /// @param amount Amount of token to send
     function sendToken(SubnetId targetSubnetId, string calldata symbol, address receiver, uint256 amount) external {
         if (_toposCoreAddr.code.length == uint256(0)) revert InvalidToposCore();
-        _burnTokenFrom(msg.sender, symbol, amount);
         Token memory token = getTokenBySymbol(symbol);
+        _burnTokenFrom(msg.sender, symbol, amount);
         emit TokenSent(targetSubnetId, symbol, token.addr, receiver, amount);
         _emitMessageSentEvent(targetSubnetId);
     }
