@@ -36,42 +36,26 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
         _tokenDeployerAddr = tokenDeployerAddr;
     }
 
-    /// @notice Deploy/register a token
-    /// @param params Encoded token params for deploying/registering a token
+    /// @notice Deploy an internal token
+    /// @param params Encoded token params for deploying an internal token
     function deployToken(bytes calldata params) external {
-        (
-            string memory name,
-            string memory symbol,
-            uint256 cap,
-            address tokenAddress,
-            uint256 dailyMintLimit,
-            uint256 initialSupply
-        ) = abi.decode(params, (string, string, uint256, address, uint256, uint256));
+        (string memory name, string memory symbol, uint256 cap, uint256 dailyMintLimit, uint256 initialSupply) = abi
+            .decode(params, (string, string, uint256, uint256, uint256));
 
-        // Ensure that this token does not exist already.
-        bytes32 tokenKey = _getTokenKey(tokenAddress);
-        if (tokenSet.exists(tokenKey)) revert TokenAlreadyExists(tokenAddress);
+        bytes32 salt = keccak256(abi.encodePacked(msg.sender, symbol));
+        // Deploy the token contract
+        // The tx will revert if the token already exists because the salt will be the same
+        address tokenAddress = ITokenDeployer(_tokenDeployerAddr).deployToken(
+            name,
+            symbol,
+            cap,
+            initialSupply,
+            msg.sender,
+            address(this),
+            salt
+        );
 
-        if (tokenAddress == address(0)) {
-            // If token address is no specified, it indicates a request to deploy one.
-            bytes32 salt = keccak256(abi.encodePacked(msg.sender, symbol));
-
-            // Deploy the token contract
-            tokenAddress = ITokenDeployer(_tokenDeployerAddr).deployToken(
-                name,
-                symbol,
-                cap,
-                initialSupply,
-                msg.sender,
-                address(this),
-                salt
-            );
-            _setTokenType(tokenAddress, TokenType.InternalBurnableFrom);
-        } else {
-            revert UnsupportedTokenType();
-            // _setTokenType(tokenAddress, TokenType.External);
-        }
-
+        _setTokenType(tokenAddress, TokenType.InternalBurnableFrom);
         _setTokenAddress(symbol, tokenAddress);
         _setTokenDailyMintLimit(dailyMintLimit, tokenAddress);
 

@@ -1,4 +1,4 @@
-import { Contract, providers, utils, Wallet, constants } from 'ethers'
+import { Contract, providers, utils, Wallet } from 'ethers'
 import { keccak256 } from '@ethersproject/keccak256'
 import { toUtf8Bytes } from '@ethersproject/strings'
 
@@ -59,7 +59,6 @@ const main = async function (...args: string[]) {
     tc.TOKEN_NAME,
     tc.TOKEN_SYMBOL_X,
     tc.MINT_CAP_100_000_000,
-    constants.AddressZero,
     tc.DAILY_MINT_LIMIT_100,
     tc.INITIAL_SUPPLY_10_000_000
   )
