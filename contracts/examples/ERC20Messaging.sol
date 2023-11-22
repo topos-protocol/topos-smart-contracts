@@ -41,8 +41,8 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
     function deployToken(bytes calldata params) external {
         (string memory name, string memory symbol, uint256 cap, uint256 dailyMintLimit, uint256 initialSupply) = abi
             .decode(params, (string, string, uint256, uint256, uint256));
-
-        bytes32 salt = keccak256(abi.encodePacked(msg.sender, symbol));
+        // Note: this does not stop deployment of the same symbol to other subnets. Do not use in a production system.
+        bytes32 salt = keccak256(abi.encodePacked(symbol));
         // Deploy the token contract
         // The tx will revert if the token already exists because the salt will be the same
         address tokenAddress = ITokenDeployer(_tokenDeployerAddr).deployToken(
@@ -55,9 +55,9 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
             salt
         );
 
-        _setTokenType(tokenAddress, TokenType.InternalBurnableFrom);
+        _setTokenType(symbol, TokenType.InternalBurnableFrom);
         _setTokenAddress(symbol, tokenAddress);
-        _setTokenDailyMintLimit(dailyMintLimit, tokenAddress);
+        _setTokenDailyMintLimit(dailyMintLimit, symbol);
 
         emit TokenDeployed(symbol, tokenAddress);
     }
@@ -65,20 +65,21 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
     /// @notice Entry point for sending a cross-subnet asset transfer
     /// @dev The input data is sent to the target subnet externally
     /// @param targetSubnetId Target subnet ID
-    /// @param tokenAddress Address of target token contract
+    /// @param symbol Symbol of token
     /// @param receiver Receiver's address
     /// @param amount Amount of token to send
-    function sendToken(SubnetId targetSubnetId, address tokenAddress, address receiver, uint256 amount) external {
+    function sendToken(SubnetId targetSubnetId, string calldata symbol, address receiver, uint256 amount) external {
         if (_toposCoreAddr.code.length == uint256(0)) revert InvalidToposCore();
-        _burnTokenFrom(msg.sender, tokenAddress, amount);
-        emit TokenSent(targetSubnetId, tokenAddress, receiver, amount);
+        Token memory token = getTokenBySymbol(symbol);
+        _burnTokenFrom(msg.sender, symbol, amount);
+        emit TokenSent(targetSubnetId, symbol, token.addr, receiver, amount);
         _emitMessageSentEvent(targetSubnetId);
     }
 
-    /// @notice Gets the token by address
-    /// @param tokenAddress Address of token contract
-    function getTokenByAddress(address tokenAddress) public view returns (Token memory token) {
-        bytes32 tokenKey = _getTokenKey(tokenAddress);
+    /// @notice Gets the token by symbol
+    /// @param symbol Symbol of token
+    function getTokenBySymbol(string calldata symbol) public view returns (Token memory token) {
+        bytes32 tokenKey = _getTokenKey(symbol);
         token = tokens[tokenKey];
     }
 
@@ -94,15 +95,15 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
     }
 
     /// @notice Get the token daily mint amount
-    /// @param tokenAddress Address of token contract
-    function tokenDailyMintAmount(address tokenAddress) public view returns (uint256) {
-        return getUint(_getTokenDailyMintAmountKey(tokenAddress, block.timestamp / 1 days));
+    /// @param symbol Symbol of token
+    function tokenDailyMintAmount(string memory symbol) public view returns (uint256) {
+        return getUint(_getTokenDailyMintAmountKey(symbol, block.timestamp / 1 days));
     }
 
     /// @notice Get the token daily mint limit
-    /// @param tokenAddress Address of token contract
-    function tokenDailyMintLimit(address tokenAddress) public view returns (uint256) {
-        return getUint(_getTokenDailyMintLimitKey(tokenAddress));
+    /// @param symbol Symbol of token
+    function tokenDailyMintLimit(string memory symbol) public view returns (uint256) {
+        return getUint(_getTokenDailyMintLimitKey(symbol));
     }
 
     /// @notice Get the address of token deployer contract
@@ -131,33 +132,34 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
         bytes32 targetSubnetId = logsTopics[tokenSentEventIndex][1];
         if (SubnetId.unwrap(networkSubnetId) != targetSubnetId) revert InvalidSubnetId();
 
-        (address tokenAddress, address receiver, uint256 amount) = abi.decode(
+        (string memory symbol, , address receiver, uint256 amount) = abi.decode(
             logsData[tokenSentEventIndex],
-            (address, address, uint256)
+            (string, address, address, uint256)
         );
-        _mintToken(tokenAddress, receiver, amount);
+        _mintToken(symbol, receiver, amount);
     }
 
     /// @notice Burn token internally
-    /// @param sender Account to burn token from
-    /// @param tokenAddress Address of target token contract
+    /// @param sender Sender of token
+    /// @param symbol Symbol of token
     /// @param amount Amount of token to burn
-    function _burnTokenFrom(address sender, address tokenAddress, uint256 amount) internal {
-        bytes32 tokenKey = _getTokenKey(tokenAddress);
-        if (!tokenSet.exists(tokenKey)) revert TokenDoesNotExist(tokenAddress);
+    function _burnTokenFrom(address sender, string calldata symbol, uint256 amount) internal {
+        bytes32 tokenKey = _getTokenKey(symbol);
+        if (!tokenSet.exists(tokenKey)) revert TokenDoesNotExist(symbol);
         if (amount == 0) revert InvalidAmount();
 
-        TokenType tokenType = _getTokenType(tokenAddress);
+        TokenType tokenType = _getTokenType(symbol);
         bool burnSuccess;
 
         if (tokenType == TokenType.External) {
             revert UnsupportedTokenType();
         } else {
+            Token memory token = tokens[tokenKey];
             burnSuccess = _callERC20Token(
-                tokenAddress,
+                token.addr,
                 abi.encodeWithSelector(IBurnableMintableCappedERC20.burnFrom.selector, sender, amount)
             );
-            if (!burnSuccess) revert BurnFailed(tokenAddress);
+            if (!burnSuccess) revert BurnFailed(symbol);
         }
     }
 
@@ -172,19 +174,20 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
     }
 
     /// @notice Mint token internally
-    /// @param tokenAddress Address of token contract
+    /// @param symbol Symbol of token
     /// @param account Account to mint token to
     /// @param amount Amount of token to mint
-    function _mintToken(address tokenAddress, address account, uint256 amount) internal {
-        bytes32 tokenKey = _getTokenKey(tokenAddress);
-        if (!tokenSet.exists(tokenKey)) revert TokenDoesNotExist(tokenAddress);
+    function _mintToken(string memory symbol, address account, uint256 amount) internal {
+        bytes32 tokenKey = _getTokenKey(symbol);
+        if (!tokenSet.exists(tokenKey)) revert TokenDoesNotExist(symbol);
 
-        _setTokenDailyMintAmount(tokenAddress, tokenDailyMintAmount(tokenAddress) + amount);
+        _setTokenDailyMintAmount(symbol, tokenDailyMintAmount(symbol) + amount);
 
-        if (_getTokenType(tokenAddress) == TokenType.External) {
+        if (_getTokenType(symbol) == TokenType.External) {
             revert UnsupportedTokenType();
         } else {
-            IBurnableMintableCappedERC20(tokenAddress).mint(account, amount);
+            Token memory token = tokens[tokenKey];
+            IBurnableMintableCappedERC20(token.addr).mint(account, amount);
         }
     }
 
@@ -192,7 +195,7 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
     /// @param symbol Symbol of token
     /// @param tokenAddress Address of token contract
     function _setTokenAddress(string memory symbol, address tokenAddress) internal {
-        bytes32 tokenKey = _getTokenKey(tokenAddress);
+        bytes32 tokenKey = _getTokenKey(symbol);
         tokenSet.insert(tokenKey);
         Token storage token = tokens[tokenKey];
         token.symbol = symbol;
@@ -201,58 +204,58 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
 
     /// @notice Set the token daily mint limit for a token address
     /// @param limit Daily mint limit of token
-    /// @param tokenAddress Address of token contract
-    function _setTokenDailyMintLimit(uint256 limit, address tokenAddress) internal {
-        _setUint(_getTokenDailyMintLimitKey(tokenAddress), limit);
+    /// @param symbol Symbol of token
+    function _setTokenDailyMintLimit(uint256 limit, string memory symbol) internal {
+        _setUint(_getTokenDailyMintLimitKey(symbol), limit);
 
-        emit TokenDailyMintLimitUpdated(tokenAddress, limit);
+        emit TokenDailyMintLimitUpdated(symbol, limit);
     }
 
     /// @notice Set the token daily mint amount for a token address
-    /// @param tokenAddress Address of token contract
+    /// @param symbol Symbol of token
     /// @param amount Daily mint amount of token
-    function _setTokenDailyMintAmount(address tokenAddress, uint256 amount) internal {
-        uint256 limit = tokenDailyMintLimit(tokenAddress);
-        if (limit > 0 && amount > limit) revert ExceedDailyMintLimit(tokenAddress);
+    function _setTokenDailyMintAmount(string memory symbol, uint256 amount) internal {
+        uint256 limit = tokenDailyMintLimit(symbol);
+        if (limit > 0 && amount > limit) revert ExceedDailyMintLimit(symbol);
 
-        _setUint(_getTokenDailyMintAmountKey(tokenAddress, block.timestamp / 1 days), amount);
+        _setUint(_getTokenDailyMintAmountKey(symbol, block.timestamp / 1 days), amount);
     }
 
     /// @notice Set the token type for a token address
-    /// @param tokenAddress Address of token contract
+    /// @param symbol Symbol of token
     /// @param tokenType Type of token (external/internal)
-    function _setTokenType(address tokenAddress, TokenType tokenType) internal {
-        _setUint(_getTokenTypeKey(tokenAddress), uint256(tokenType));
+    function _setTokenType(string memory symbol, TokenType tokenType) internal {
+        _setUint(_getTokenTypeKey(symbol), uint256(tokenType));
     }
 
     /// @notice Get the token type for a token address
-    /// @param tokenAddress Address of token contract
-    function _getTokenType(address tokenAddress) internal view returns (TokenType) {
-        return TokenType(getUint(_getTokenTypeKey(tokenAddress)));
+    /// @param symbol Symbol of token
+    function _getTokenType(string memory symbol) internal view returns (TokenType) {
+        return TokenType(getUint(_getTokenTypeKey(symbol)));
     }
 
     /// @notice Get the key for the token daily mint limit
-    /// @param tokenAddress Address of token contract
-    function _getTokenDailyMintLimitKey(address tokenAddress) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(PREFIX_TOKEN_DAILY_MINT_LIMIT, tokenAddress));
+    /// @param symbol Symbol of token
+    function _getTokenDailyMintLimitKey(string memory symbol) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(PREFIX_TOKEN_DAILY_MINT_LIMIT, symbol));
     }
 
     /// @notice Get the key for the token daily mint amount
-    /// @param tokenAddress Address of token contract
+    /// @param symbol Symbol of token
     /// @param day Day of token daily mint amount
-    function _getTokenDailyMintAmountKey(address tokenAddress, uint256 day) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(PREFIX_TOKEN_DAILY_MINT_AMOUNT, tokenAddress, day));
+    function _getTokenDailyMintAmountKey(string memory symbol, uint256 day) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(PREFIX_TOKEN_DAILY_MINT_AMOUNT, symbol, day));
     }
 
     /// @notice Get the key for the token type
-    /// @param tokenAddress Address of token contract
-    function _getTokenTypeKey(address tokenAddress) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(PREFIX_TOKEN_TYPE, tokenAddress));
+    /// @param symbol Symbol of token
+    function _getTokenTypeKey(string memory symbol) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(PREFIX_TOKEN_TYPE, symbol));
     }
 
     /// @notice Get the key for the token
-    /// @param tokenAddress Address of token contract
-    function _getTokenKey(address tokenAddress) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(PREFIX_TOKEN_KEY, tokenAddress));
+    /// @param symbol Symbol of token
+    function _getTokenKey(string memory symbol) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(PREFIX_TOKEN_KEY, symbol));
     }
 }
