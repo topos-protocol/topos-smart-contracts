@@ -41,7 +41,7 @@ contract ERC20Messaging is IERC20Messaging, ToposMessaging {
     function deployToken(bytes calldata params) external {
         (string memory name, string memory symbol, uint256 cap, uint256 dailyMintLimit, uint256 initialSupply) = abi
             .decode(params, (string, string, uint256, uint256, uint256));
-
+        // Note: this does not stop deployment of the same symbol to other subnets. Do not use in a production system.
         bytes32 salt = keccak256(abi.encodePacked(symbol));
         // Deploy the token contract
         // The tx will revert if the token already exists because the salt will be the same
