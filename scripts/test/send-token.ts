@@ -15,26 +15,26 @@ import * as testUtils from '../../test/topos-core/shared/utils/common'
 /// e.g.:
 /// reset; ts-node ./scripts/test/send-token.ts http://127.0.0.1:8545 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 10
 const main = async function (...args: string[]) {
-  const [providerEndpoint, senderPrivateKey, receiverAddress, amount] = args
+  const [providerEndpoint, senderPrivateKey, receiverAddress, amount, targetSubnet] = args
   const provider = providers.getDefaultProvider(providerEndpoint)
   const erc20MessagingAddress = sanitizeHexString(
-    process.env.ERC20_MESSAGING_ADDRESS || ''
+    process.env.ERC20_MESSAGING_CONTRACT_ADDRESS || ''
   )
 
   if (!utils.isHexString(erc20MessagingAddress, 20)) {
     console.error(
-      'ERROR: Please set token deployer contract address ERC20_MESSAGING_ADDRESS'
+      'ERROR: Please set token deployer contract address ERC20_MESSAGING_CONTRACT_ADDRESS'
     )
     process.exit(1)
   }
 
   const toposCoreProxyAddress = sanitizeHexString(
-    process.env.TOPOS_CORE_PROXY_ADDRESS || ''
+    process.env.TOPOS_CORE_PROXY_CONTRACT_ADDRESS || ''
   )
 
   if (!utils.isHexString(toposCoreProxyAddress, 20)) {
     console.error(
-      'ERROR: Please set topos core proxy contract address  TOPOS_CORE_PROXY_ADDRESS'
+      'ERROR: Please set topos core proxy contract address  TOPOS_CORE_PROXY_CONTRACT_ADDRESS'
     )
     process.exit(1)
   }
@@ -123,8 +123,8 @@ const main = async function (...args: string[]) {
   )
 
   const tx2 = await erc20Messaging.sendToken(
-    cc.TARGET_SUBNET_ID_4,
-    tokenAddress,
+    targetSubnet,
+    tc.TOKEN_SYMBOL_X,
     receiverAddress,
     amount,
     {
