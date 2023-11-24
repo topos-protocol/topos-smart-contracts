@@ -497,12 +497,13 @@ describe('ToposMessaging', () => {
       const { admin, receiver, ERC20, toposCore, erc20Messaging } =
         await loadFixture(deployERC20MessagingFixture)
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
+      const smallDailyMintLimit = 1;
       const token = testUtils.encodeTokenParam(
         tc.TOKEN_NAME,
         tc.TOKEN_SYMBOL_X,
         tc.MINT_CAP_100_000_000,
         ethers.constants.AddressZero,
-        1,
+        smallDailyMintLimit,
         tc.INITIAL_SUPPLY_10_000_000
       )
       const tx = await erc20Messaging.deployToken(token)
@@ -544,17 +545,44 @@ describe('ToposMessaging', () => {
     })
 
     it('reverts if trying to mint for zero address', async () => {
-      const { defaultToken, toposCore, erc20Messaging } = await loadFixture(
-        deployERC20MessagingFixture
-      )
+      const { admin,  ERC20, toposCore, erc20Messaging } =
+        await loadFixture(deployERC20MessagingFixture)
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
-      await erc20Messaging.deployToken(defaultToken)
+      const token = testUtils.encodeTokenParam(
+        tc.TOKEN_NAME,
+        tc.TOKEN_SYMBOL_X,
+        tc.MINT_CAP_100_000_000,
+        ethers.constants.AddressZero,
+        tc.DAILY_MINT_LIMIT_100,
+        tc.INITIAL_SUPPLY_10_000_000
+      )
+      const tx = await erc20Messaging.deployToken(token)
+      const txReceipt = await tx.wait()
+      const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
+      const tokenAddress = logs?.args?.tokenAddress
+      const erc20 = ERC20.attach(tokenAddress)
+      await erc20.approve(erc20Messaging.address, tc.SEND_AMOUNT_50)
+
+      const sendToken = await sendTokenTx(
+        erc20Messaging,
+        ethers.provider,
+        ethers.constants.AddressZero,
+        admin,
+        cc.SOURCE_SUBNET_ID_2,
+        tokenAddress
+      )
+
+      const { proofBlob, receiptsRoot } = await getReceiptMptProof(
+        sendToken,
+        ethers.provider
+      )
+
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
         cc.SOURCE_SUBNET_ID_1,
         cc.STATE_ROOT_MAX,
         cc.TX_ROOT_MAX,
-        txc.ZERO_ADDRESS_TRANSACTION.receiptRoot,
+        receiptsRoot,
         [cc.SOURCE_SUBNET_ID_2],
         cc.VERIFIER,
         cc.CERT_ID_1,
@@ -565,8 +593,8 @@ describe('ToposMessaging', () => {
       await expect(
         erc20Messaging.execute(
           [tc.TOKEN_SENT_INDEX_2],
-          txc.ZERO_ADDRESS_TRANSACTION.proofBlob,
-          txc.ZERO_ADDRESS_TRANSACTION.receiptRoot
+          proofBlob,
+          receiptsRoot
         )
       ).to.be.revertedWith('ERC20: mint to the zero address')
     })
