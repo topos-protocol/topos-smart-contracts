@@ -463,7 +463,6 @@ describe('ToposMessaging', () => {
       } = await loadFixture(deployERC20MessagingFixture)
 
       const snapshot = await takeSnapshot()
-
       const { proofBlob, receiptsRoot } = await deployDefaultToken(
         admin,
         receiver,
@@ -471,7 +470,6 @@ describe('ToposMessaging', () => {
         defaultToken,
         erc20Messaging
       )
-
       await snapshot.restore()
 
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
@@ -502,15 +500,14 @@ describe('ToposMessaging', () => {
         tc.TOKEN_NAME,
         tc.TOKEN_SYMBOL_X,
         tc.MINT_CAP_100_000_000,
-        ethers.constants.AddressZero,
         smallDailyMintLimit,
         tc.INITIAL_SUPPLY_10_000_000
       )
-      const tx = await erc20Messaging.deployToken(token)
-      const txReceipt = await tx.wait()
-      const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
-      const tokenAddress = logs?.args?.tokenAddress
-      const erc20 = ERC20.attach(tokenAddress)
+      await erc20Messaging.deployToken(token)
+      const deployedToken = await erc20Messaging.getTokenBySymbol(
+        tc.TOKEN_SYMBOL_X
+      )
+      const erc20 = ERC20.attach(deployedToken.addr)
       await erc20.approve(erc20Messaging.address, tc.SEND_AMOUNT_50)
 
       const sendToken = await sendTokenTx(
@@ -519,7 +516,7 @@ describe('ToposMessaging', () => {
         receiver.address,
         admin,
         cc.SOURCE_SUBNET_ID_2,
-        tokenAddress
+        tc.TOKEN_SYMBOL_X
       )
 
       const { proofBlob, receiptsRoot } = await getReceiptMptProof(
@@ -553,24 +550,23 @@ describe('ToposMessaging', () => {
         tc.TOKEN_NAME,
         tc.TOKEN_SYMBOL_X,
         tc.MINT_CAP_100_000_000,
-        ethers.constants.AddressZero,
         tc.DAILY_MINT_LIMIT_100,
         tc.INITIAL_SUPPLY_10_000_000
       )
-      const tx = await erc20Messaging.deployToken(token)
-      const txReceipt = await tx.wait()
-      const logs = txReceipt.events?.find((e) => e.event === 'TokenDeployed')
-      const tokenAddress = logs?.args?.tokenAddress
-      const erc20 = ERC20.attach(tokenAddress)
+      await erc20Messaging.deployToken(token)
+      const deployedToken = await erc20Messaging.getTokenBySymbol(
+        tc.TOKEN_SYMBOL_X
+      )
+      const erc20 = ERC20.attach(deployedToken.addr)
       await erc20.approve(erc20Messaging.address, tc.SEND_AMOUNT_50)
 
       const sendToken = await sendTokenTx(
         erc20Messaging,
         ethers.provider,
-        ethers.constants.AddressZero,
+        ethers.constants.AddressZero, // sending to a zero address
         admin,
         cc.SOURCE_SUBNET_ID_2,
-        tokenAddress
+        tc.TOKEN_SYMBOL_X
       )
 
       const { proofBlob, receiptsRoot } = await getReceiptMptProof(
