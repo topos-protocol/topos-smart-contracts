@@ -497,7 +497,7 @@ describe('ToposMessaging', () => {
       const { admin, receiver, ERC20, toposCore, erc20Messaging } =
         await loadFixture(deployERC20MessagingFixture)
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
-      const smallDailyMintLimit = 1;
+      const smallDailyMintLimit = 1
       const token = testUtils.encodeTokenParam(
         tc.TOKEN_NAME,
         tc.TOKEN_SYMBOL_X,
@@ -545,8 +545,9 @@ describe('ToposMessaging', () => {
     })
 
     it('reverts if trying to mint for zero address', async () => {
-      const { admin,  ERC20, toposCore, erc20Messaging } =
-        await loadFixture(deployERC20MessagingFixture)
+      const { admin, ERC20, toposCore, erc20Messaging } = await loadFixture(
+        deployERC20MessagingFixture
+      )
       await toposCore.setNetworkSubnetId(cc.SOURCE_SUBNET_ID_2)
       const token = testUtils.encodeTokenParam(
         tc.TOKEN_NAME,
@@ -591,11 +592,7 @@ describe('ToposMessaging', () => {
       )
       await toposCore.pushCertificate(certificate, cc.CERT_POS_1)
       await expect(
-        erc20Messaging.execute(
-          [tc.TOKEN_SENT_INDEX_2],
-          proofBlob,
-          receiptsRoot
-        )
+        erc20Messaging.execute([tc.TOKEN_SENT_INDEX_2], proofBlob, receiptsRoot)
       ).to.be.revertedWith('ERC20: mint to the zero address')
     })
 
