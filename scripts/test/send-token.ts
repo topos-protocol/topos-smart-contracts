@@ -53,7 +53,7 @@ const main = async function (...args: string[]) {
   )
 
   const id = await toposCoreProxy.networkSubnetId()
-  console.log('Network subnet id=', id)
+  console.log('Network subnet ID =', id)
 
   const defaultToken = testUtils.encodeTokenParam(
     tc.TOKEN_NAME,
@@ -86,15 +86,12 @@ const main = async function (...args: string[]) {
 
   if (deploy) {
     // Deploy token if not previously deployed
-    const tx = await erc20Messaging.deployToken(defaultToken, {
+    await erc20Messaging.deployToken(defaultToken, {
       gasLimit: 5_000_000,
     })
-    const txReceipt = await tx.wait()
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const logs = txReceipt.events?.find((e: any) => e.event === 'TokenDeployed')
-
-    tokenAddress = logs?.args?.tokenAddress
+    // get token address
+    const token = await erc20Messaging.getTokenBySymbol(tc.TOKEN_SYMBOL_X)
+    tokenAddress = token.addr
     console.log(
       'Token:',
       tc.TOKEN_SYMBOL_X,
@@ -105,8 +102,7 @@ const main = async function (...args: string[]) {
 
   // Approve token burn
   const erc20 = new Contract(tokenAddress, ERC20.abi, wallet)
-  const tx1 = await erc20.approve(erc20Messaging.address, amount)
-  await tx1.wait()
+  await erc20.approve(erc20Messaging.address, amount)
 
   // Send token
   console.log(
@@ -124,7 +120,7 @@ const main = async function (...args: string[]) {
 
   const tx2 = await erc20Messaging.sendToken(
     cc.TARGET_SUBNET_ID_4,
-    tokenAddress,
+    tc.TOKEN_SYMBOL_X,
     receiverAddress,
     amount,
     {
