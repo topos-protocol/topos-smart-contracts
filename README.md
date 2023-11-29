@@ -13,6 +13,21 @@
   </p>
 </div>
 
+<div align="center">
+
+![analyze](https://github.com/topos-protocol/topos-smart-contracts/actions/workflows/analyze.yml/badge.svg)
+![build](https://github.com/topos-protocol/topos-smart-contracts/actions/workflows/build.yml/badge.svg)
+![docker-build](https://github.com/topos-protocol/topos-smart-contracts/actions/workflows/docker_build_push.yml/badge.svg)
+![format](https://github.com/topos-protocol/topos-smart-contracts/actions/workflows/format.yml/badge.svg)
+![lint](https://github.com/topos-protocol/topos-smart-contracts/actions/workflows/lint.yml/badge.svg)
+![sequencer-e2e](https://github.com/topos-protocol/topos-smart-contracts/actions/workflows/sequencer-e2e.yml/badge.svg)
+![test](https://github.com/topos-protocol/topos-smart-contracts/actions/workflows/test.yml/badge.svg)
+![npm](https://img.shields.io/npm/v/@topos-protocol/topos-smart-contracts.svg)
+![release](https://img.shields.io/github/v/release/topos-protocol/topos-smart-contracts)
+[![](https://dcbadge.vercel.app/api/server/7HZ8F8ykBT?style=flat)](https://discord.gg/7HZ8F8ykBT)
+
+</div>
+
 ## Description
 
 This repository contains Solidity smart contracts to be used with the Topos Protocol in the Topos ecosystem. The contract compilation/deployment and testing methods are taken care by the **Hardhat** development framework.
