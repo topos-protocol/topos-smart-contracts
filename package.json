@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
-    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@ethereumjs/rlp": "^4.0.1",
     "@ethereumjs/trie": "^5.0.4",
     "@ethereumjs/util": "^8.0.5",
@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.8.3",
-    "ethers": "^5.7.2",
+    "ethers": "^6.9.0",
     "solidity-rlp": "2.0.7"
   }
 }
