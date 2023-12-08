@@ -1,15 +1,8 @@
-import {
-  Contract,
-  ContractTransaction,
-  isHexString,
-  JsonRpcProvider,
-  Wallet,
-} from 'ethers'
+import { isHexString, JsonRpcProvider, Wallet } from 'ethers'
 
 import tokenDeployerJSON from '../artifacts/contracts/topos-core/TokenDeployer.sol/TokenDeployer.json'
 import toposCoreJSON from '../artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json'
 import toposCoreProxyJSON from '../artifacts/contracts/topos-core/ToposCoreProxy.sol/ToposCoreProxy.json'
-import toposCoreInterfaceJSON from '../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json'
 import erc20MessagingJSON from '../artifacts/contracts/examples/ERC20Messaging.sol/ERC20Messaging.json'
 import {
   Arg,
@@ -105,7 +98,7 @@ const main = async function (...args: string[]) {
     4_000_000
   )
 
-  setSubnetId(toposCoreConnectedToSequencer, sequencerWallet, subnetId)
+  setSubnetId(toposCoreConnectedToSequencer, subnetId)
 
   console.log(`
 export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}
@@ -175,16 +168,11 @@ const processContract = async function (
   }
 }
 
-const setSubnetId = async function (
-  toposCore: ToposCore,
-  wallet: Wallet,
-  subnetId: string
-) {
+const setSubnetId = async function (toposCore: ToposCore, subnetId: string) {
   await toposCore
     .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
     .then(async (tx) => {
-      const response = await wallet.sendTransaction(tx)
-      await response.wait().catch((error) => {
+      await tx.wait().catch((error) => {
         console.error(
           `Error: Failed (wait) to set ${subnetId} subnetId on ToposCore via proxy!`
         )
@@ -213,8 +201,7 @@ async function initialize(
       gasLimit: 4_000_000,
     })
     .then(async (tx) => {
-      const response = await wallet.sendTransaction(tx)
-      await response.wait().catch((error) => {
+      await tx.wait().catch((error) => {
         console.error(`Error: Failed (wait) to initialize ToposCore via proxy!`)
         console.error(error)
         process.exit(1)

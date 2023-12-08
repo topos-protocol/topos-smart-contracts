@@ -56,7 +56,7 @@ const main = async function (...args: string[]) {
 
   const sequencerPublicKey = sequencerWallet.signingKey.publicKey
   const subnetId = sanitizeHexString(sequencerPublicKey.substring(4))
-  await setSubnetId(toposCoreConnectedToSequencer, subnetId, sequencerWallet)
+  await setSubnetId(toposCoreConnectedToSequencer, subnetId)
 
   console.log(`
 export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}
@@ -72,8 +72,7 @@ async function initialize(
   await toposCore
     .initialize([wallet.address], adminThreshold, { gasLimit: 4_000_000 })
     .then(async (tx) => {
-      const txResponse = await wallet.sendTransaction(tx)
-      await txResponse.wait().catch((error) => {
+      await tx.wait().catch((error) => {
         console.error(`Error: Failed (wait) to initialize ToposCore via proxy!`)
         console.error(error)
         process.exit(1)
@@ -86,16 +85,11 @@ async function initialize(
     })
 }
 
-const setSubnetId = async function (
-  toposCore: ToposCore,
-  subnetId: string,
-  wallet: Wallet
-) {
+const setSubnetId = async function (toposCore: ToposCore, subnetId: string) {
   await toposCore
     .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
     .then(async (tx) => {
-      const txResponse = await wallet.sendTransaction(tx)
-      await txResponse.wait().catch((error) => {
+      await tx.wait().catch((error) => {
         console.error(
           `Error: Failed (wait) to set ${subnetId} subnetId on ToposCore via proxy!`
         )

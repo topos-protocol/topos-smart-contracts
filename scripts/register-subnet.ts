@@ -89,7 +89,8 @@ const main = async function (...args: string[]) {
   const adminWallet = new Wallet(adminPrivateKey, provider)
 
   const subnetRegistrator = SubnetRegistrator__factory.connect(
-    subnetRegistratorAddress
+    subnetRegistratorAddress,
+    adminWallet
   )
 
   const alreadyRegisteredSubnet = await verifyIfSubnetAlreadyRegistered(
@@ -113,9 +114,8 @@ const main = async function (...args: string[]) {
     subnetId,
     { gasLimit: 4_000_000 }
   )
-  const response = await adminWallet.sendTransaction(tx)
 
-  await response
+  await tx
     .wait()
     .then(() => {
       console.log(`Successfully registered the ${subnetName} subnet!`)
