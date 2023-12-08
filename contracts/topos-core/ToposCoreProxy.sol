@@ -23,7 +23,7 @@ contract ToposCoreProxy is EternalStorage {
 
     // solhint-disable-next-line no-complex-fallback
     fallback() external payable {
-        address implementation = getAddress(KEY_IMPLEMENTATION);
+        address implementation = getAddressStorage(KEY_IMPLEMENTATION);
 
         // solhint-disable-next-line no-inline-assembly
         assembly {

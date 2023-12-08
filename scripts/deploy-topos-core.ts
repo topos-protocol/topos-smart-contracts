@@ -1,25 +1,17 @@
-import {
-  Contract,
-  ContractFactory,
-  ContractTransaction,
-  BigNumber,
-  Wallet,
-  providers,
-  utils,
-} from 'ethers'
+import { isHexString, JsonRpcProvider, Wallet } from 'ethers'
 
-import toposCoreJSON from '../artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json'
-import toposCoreProxyJSON from '../artifacts/contracts/topos-core/ToposCoreProxy.sol/ToposCoreProxy.json'
-import toposCoreInterfaceJSON from '../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json'
+import { ToposCore__factory } from '../typechain-types/factories/contracts/topos-core/ToposCore__factory'
+import { ToposCoreProxy__factory } from '../typechain-types/factories/contracts/topos-core/ToposCoreProxy__factory'
+import { ToposCore } from '../typechain-types/contracts/topos-core/ToposCore'
 
 const main = async function (...args: string[]) {
   const [_providerEndpoint, _sequencerPrivateKey, _gasLimit] = args
-  const provider = new providers.JsonRpcProvider(_providerEndpoint)
+  const provider = new JsonRpcProvider(_providerEndpoint)
 
   const toposDeployerPrivateKey = sanitizeHexString(
     process.env.PRIVATE_KEY || ''
   )
-  if (!utils.isHexString(toposDeployerPrivateKey, 32)) {
+  if (!isHexString(toposDeployerPrivateKey, 32)) {
     console.error(
       'ERROR: Please provide a valid toposDeployer private key! (PRIVATE_KEY)'
     )
@@ -27,64 +19,61 @@ const main = async function (...args: string[]) {
   }
 
   const sequencerPrivateKey = sanitizeHexString(_sequencerPrivateKey || '')
-  if (!utils.isHexString(sequencerPrivateKey, 32)) {
+  if (!isHexString(sequencerPrivateKey, 32)) {
     console.error('ERROR: Please provide a valid sequencer private key!')
     process.exit(1)
   }
 
   const toposDeployerWallet = new Wallet(toposDeployerPrivateKey, provider)
-  const ToposCoreFactory = new ContractFactory(
-    toposCoreJSON.abi,
-    toposCoreJSON.bytecode,
-    toposDeployerWallet
-  )
-  const toposCore = await ToposCoreFactory.deploy({
-    gasLimit: _gasLimit ? BigNumber.from(_gasLimit) : 5_000_000,
-  })
-  await toposCore.deployed()
 
-  const ToposCoreProxyFactory = new ContractFactory(
-    toposCoreProxyJSON.abi,
-    toposCoreProxyJSON.bytecode,
-    toposDeployerWallet
-  )
-  const toposCoreProxy = await ToposCoreProxyFactory.deploy(toposCore.address, {
-    gasLimit: _gasLimit ? BigNumber.from(_gasLimit) : 5_000_000,
+  const toposCore = await new ToposCore__factory(toposDeployerWallet).deploy({
+    gasLimit: _gasLimit ? BigInt(_gasLimit) : 5_000_000,
   })
-  await toposCoreProxy.deployed()
+  await toposCore.waitForDeployment()
+  const toposCoreAddress = await toposCore.getAddress()
+
+  const toposCoreProxy = await new ToposCoreProxy__factory(
+    toposDeployerWallet
+  ).deploy(toposCoreAddress, {
+    gasLimit: _gasLimit ? BigInt(_gasLimit) : 5_000_000,
+  })
+  await toposCoreProxy.waitForDeployment()
+  const toposCoreProxyAddress = await toposCoreProxy.getAddress()
 
   const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
-  const toposCoreInterface = new Contract(
-    toposCoreProxy.address,
-    toposCoreInterfaceJSON.abi,
+
+  const toposCoreConnectedToSequencer = ToposCore__factory.connect(
+    toposCoreProxyAddress,
     sequencerWallet
   )
-  const adminThreshold = 1
-  await initialize(toposCoreInterface, sequencerWallet, adminThreshold)
 
-  const isCompressed = true
-  const sequencerPublicKey = utils.computePublicKey(
-    sequencerPrivateKey,
-    isCompressed
+  const adminThreshold = 1
+  await initialize(
+    toposCoreConnectedToSequencer,
+    sequencerWallet,
+    adminThreshold
   )
+
+  const sequencerPublicKey = sequencerWallet.signingKey.publicKey
   const subnetId = sanitizeHexString(sequencerPublicKey.substring(4))
-  await setSubnetId(toposCoreInterface, subnetId)
+  await setSubnetId(toposCoreConnectedToSequencer, subnetId, sequencerWallet)
 
   console.log(`
-export TOPOS_CORE_CONTRACT_ADDRESS=${toposCore.address}
-export TOPOS_CORE_PROXY_CONTRACT_ADDRESS=${toposCoreProxy.address}
+export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}
+export TOPOS_CORE_PROXY_CONTRACT_ADDRESS=${toposCoreProxyAddress}
   `)
 }
 
 async function initialize(
-  toposCoreInterface: Contract,
+  toposCore: ToposCore,
   wallet: Wallet,
   adminThreshold: number
 ) {
-  await toposCoreInterface
+  await toposCore
     .initialize([wallet.address], adminThreshold, { gasLimit: 4_000_000 })
-    .then(async (tx: ContractTransaction) => {
-      await tx.wait().catch((error) => {
+    .then(async (tx) => {
+      const txResponse = await wallet.sendTransaction(tx)
+      await txResponse.wait().catch((error) => {
         console.error(`Error: Failed (wait) to initialize ToposCore via proxy!`)
         console.error(error)
         process.exit(1)
@@ -98,13 +87,15 @@ async function initialize(
 }
 
 const setSubnetId = async function (
-  toposCoreInterface: Contract,
-  subnetId: string
+  toposCore: ToposCore,
+  subnetId: string,
+  wallet: Wallet
 ) {
-  await toposCoreInterface
+  await toposCore
     .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
-    .then(async (tx: ContractTransaction) => {
-      await tx.wait().catch((error) => {
+    .then(async (tx) => {
+      const txResponse = await wallet.sendTransaction(tx)
+      await txResponse.wait().catch((error) => {
         console.error(
           `Error: Failed (wait) to set ${subnetId} subnetId on ToposCore via proxy!`
         )
@@ -120,7 +111,7 @@ const setSubnetId = async function (
       process.exit(1)
     })
 
-  await toposCoreInterface.networkSubnetId()
+  await toposCore.networkSubnetId()
 }
 
 const sanitizeHexString = function (hexString: string) {

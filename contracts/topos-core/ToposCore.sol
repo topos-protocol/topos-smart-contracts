@@ -172,7 +172,7 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
 
     /// @notice Get the ToposCore implmentation address
     function implementation() public view override returns (address) {
-        return getAddress(KEY_IMPLEMENTATION);
+        return getAddressStorage(KEY_IMPLEMENTATION);
     }
 
     /// @notice Get the certificate for the provided certificate ID
