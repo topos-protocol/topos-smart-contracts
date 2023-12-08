@@ -1,10 +1,10 @@
-import { ethers } from 'ethers'
+import { Block, hexlify, JsonRpcProvider, TransactionResponse } from 'ethers'
 import { RLP } from '@ethereumjs/rlp'
 import { Trie } from '@ethereumjs/trie'
 
 export async function getReceiptMptProof(
-  tx: ethers.TransactionResponse,
-  provider: ethers.JsonRpcProvider
+  tx: TransactionResponse,
+  provider: JsonRpcProvider
 ) {
   const receipt = await provider.getTransactionReceipt(tx.hash)
   const prefectTxs = true
@@ -37,14 +37,11 @@ export async function getReceiptMptProof(
 
   const { stack: _stack } = await trie.findPath(key)
   const stack = _stack.map((node) => node.raw())
-  const proofBlob = ethers.hexlify(RLP.encode([1, indexOfTx, stack]))
+  const proofBlob = hexlify(RLP.encode([1, indexOfTx, stack]))
   return { proofBlob, receiptsRoot }
 }
 
-async function createTrie(
-  block: ethers.Block,
-  provider: ethers.JsonRpcProvider
-) {
+async function createTrie(block: Block, provider: JsonRpcProvider) {
   const trie = new Trie()
   await Promise.all(
     block.prefetchedTransactions.map(async (tx, index) => {

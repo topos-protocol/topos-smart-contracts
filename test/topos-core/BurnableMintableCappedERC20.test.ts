@@ -1,41 +1,44 @@
-import { ethers } from 'hardhat'
+import { EventLog } from 'ethers'
 import { expect } from 'chai'
+import { ethers } from 'hardhat'
 
+import { BurnableMintableCappedERC20__factory } from '../../typechain-types/factories/contracts/topos-core/BurnableMintableCappedERC20__factory'
+import { TokenDeployer__factory } from '../../typechain-types/factories/contracts/topos-core/TokenDeployer__factory'
 import * as tc from './shared/constants/tokens'
 
 describe('BurnableMintableCappedERC20', () => {
   async function deployTokenFixture() {
     const [deployer, operator, user1] = await ethers.getSigners()
-    const tokenSalt = ethers.utils.keccak256(
-      Buffer.from(deployer.address),
-      Buffer.from(tc.TOKEN_SYMBOL_X)
+    const tokenSalt = ethers.keccak256(
+      Buffer.concat([
+        Buffer.from(deployer.address),
+        Buffer.from(tc.TOKEN_SYMBOL_X),
+      ])
     )
 
-    const tokenDeployerFactory = await ethers.getContractFactory(
-      'TokenDeployer'
-    )
-    const BurnableMintableCappedERC20Factory = await ethers.getContractFactory(
-      'BurnableMintableCappedERC20'
-    )
+    const tokenDeployer = await new TokenDeployer__factory(deployer).deploy()
+    await tokenDeployer.waitForDeployment()
 
-    const tokenDeployer = await tokenDeployerFactory.deploy()
-    await tokenDeployer.deployed()
-
-    const tx = await tokenDeployer.deployToken(
+    const deployTokenTx = await tokenDeployer.deployToken(
       tc.TOKEN_NAME,
       tc.TOKEN_SYMBOL_X,
       tc.MINT_CAP_100_000_000,
       tc.INITIAL_SUPPLY_10_000_000,
       deployer.address,
       operator.address,
-      tokenSalt
+      tokenSalt,
+      {}
     )
-    const txReceipt = await tx.wait()
-    const logs = txReceipt.events?.find(
-      (e: { event: string }) => e.event === 'Deployed'
+
+    const txReceipt = await deployTokenTx.wait()
+    const log = txReceipt!.logs?.find(
+      (l) => (l as EventLog).eventName === 'Deployed'
     )
-    const tokenAddress = logs?.args?.tokenAddress
-    const token = BurnableMintableCappedERC20Factory.attach(tokenAddress)
+    const tokenAddress = (log as EventLog).args['tokenAddress']
+    const token = BurnableMintableCappedERC20__factory.connect(
+      tokenAddress,
+      deployer
+    )
 
     return { deployer, operator, user1, token }
   }
@@ -105,7 +108,7 @@ describe('BurnableMintableCappedERC20', () => {
       const { deployer, operator, user1, token } = await deployTokenFixture()
       await token
         .connect(deployer)
-        .revokeRole(ethers.utils.id('OPERATOR_ROLE'), operator.address)
+        .revokeRole(ethers.id('OPERATOR_ROLE'), operator.address)
       await expect(
         token.connect(operator).mint(user1.address, tc.MINT_AMOUNT_100)
       ).to.be.revertedWith(
@@ -117,10 +120,10 @@ describe('BurnableMintableCappedERC20', () => {
       const { deployer, operator, user1, token } = await deployTokenFixture()
       await token
         .connect(deployer)
-        .revokeRole(ethers.utils.id('OPERATOR_ROLE'), operator.address)
+        .revokeRole(ethers.id('OPERATOR_ROLE'), operator.address)
       await token
         .connect(deployer)
-        .grantRole(ethers.utils.id('OPERATOR_ROLE'), operator.address)
+        .grantRole(ethers.id('OPERATOR_ROLE'), operator.address)
       await token.connect(operator).mint(user1.address, tc.MINT_AMOUNT_100)
       await expect(token.balanceOf(user1.address)).to.eventually.equal(
         tc.MINT_AMOUNT_100
@@ -132,7 +135,7 @@ describe('BurnableMintableCappedERC20', () => {
       await expect(
         token
           .connect(operator)
-          .grantRole(ethers.utils.id('OPERATOR_ROLE'), user1.address)
+          .grantRole(ethers.id('OPERATOR_ROLE'), user1.address)
       ).to.be.reverted
     })
 
@@ -141,7 +144,7 @@ describe('BurnableMintableCappedERC20', () => {
       await expect(
         token
           .connect(operator)
-          .revokeRole(ethers.utils.id('OPERATOR_ROLE'), user1.address)
+          .revokeRole(ethers.id('OPERATOR_ROLE'), user1.address)
       ).to.be.reverted
     })
   })

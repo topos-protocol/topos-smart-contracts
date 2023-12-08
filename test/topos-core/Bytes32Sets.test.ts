@@ -5,13 +5,13 @@ import { expect } from 'chai'
 describe('Bytes32Sets', () => {
   let bytes32SetsTest: Contract
 
-  const key1 = ethers.utils.formatBytes32String('key1')
-  const key2 = ethers.utils.formatBytes32String('key2')
+  const key1 = ethers.encodeBytes32String('key1')
+  const key2 = ethers.encodeBytes32String('key2')
 
   beforeEach(async () => {
     const Bytes32SetsTest = await ethers.getContractFactory('Bytes32SetsTest')
     bytes32SetsTest = await Bytes32SetsTest.deploy()
-    await bytes32SetsTest.deployed()
+    await bytes32SetsTest.waitForDeployment()
   })
 
   describe('insert', () => {

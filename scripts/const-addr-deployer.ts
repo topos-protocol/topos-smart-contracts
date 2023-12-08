@@ -2,6 +2,7 @@ import {
   AbiCoder,
   Contract,
   ContractFactory,
+  HDNodeWallet,
   InterfaceAbi,
   keccak256,
   Wallet,
@@ -21,7 +22,7 @@ const getSaltFromKey = (key: string) => {
 }
 
 export const estimateGasForDeploy = async (
-  wallet: Wallet,
+  wallet: Wallet | HDNodeWallet,
   contractJson: ContractOutputJSON,
   args: Arg[] = []
 ) => {
@@ -59,7 +60,7 @@ export const estimateGasForDeployAndInit = async (
 }
 
 export const deployContractConstant = async (
-  wallet: Wallet,
+  wallet: Wallet | HDNodeWallet,
   contractJson: ContractOutputJSON,
   key: string,
   args: Arg[] = [],

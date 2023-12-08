@@ -1,6 +1,9 @@
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
+
+import { ToposCore__factory } from '../../typechain-types/factories/contracts/topos-core/ToposCore__factory'
+import { ToposCoreProxy__factory } from '../../typechain-types/factories/contracts/topos-core/ToposCoreProxy__factory'
 import * as cc from './shared/constants/certificates'
 import * as testUtils from './shared/utils/common'
 
@@ -22,30 +25,52 @@ describe('ToposCore', () => {
     const adminAddresses = [admin.address]
     const adminThreshold = 1
 
-    const ToposCore = await ethers.getContractFactory('ToposCore')
-    const ToposCoreProxy = await ethers.getContractFactory('ToposCoreProxy')
+    const toposCoreImplementation = await new ToposCore__factory(admin).deploy()
+    await toposCoreImplementation.waitForDeployment()
+    const toposCoreImplementationAddress =
+      await toposCoreImplementation.getAddress()
 
-    const toposCoreImplementation = await ToposCore.deploy()
-    const toposCoreProxy = await ToposCoreProxy.deploy(
-      toposCoreImplementation.address
+    const toposCoreProxy = await new ToposCoreProxy__factory(admin).deploy(
+      toposCoreImplementationAddress
     )
-    const toposCore = ToposCore.attach(toposCoreProxy.address)
+    await toposCoreProxy.waitForDeployment()
+    const toposCoreProxyAddress = await toposCoreProxy.getAddress()
+
+    const toposCore = await ToposCore__factory.connect(
+      toposCoreProxyAddress,
+      admin
+    )
     await toposCore.initialize(adminAddresses, adminThreshold)
 
-    const altToposCoreImplementation = await ToposCore.deploy()
-    const altToposCoreProxy = await ToposCoreProxy.deploy(
-      altToposCoreImplementation.address
+    const altToposCoreImplementation = await new ToposCore__factory(
+      admin
+    ).deploy()
+    await altToposCoreImplementation.waitForDeployment()
+    const altToposCoreImplementationAddress =
+      await altToposCoreImplementation.getAddress()
+
+    const altToposCoreProxy = await new ToposCoreProxy__factory(admin).deploy(
+      altToposCoreImplementationAddress
     )
-    const altToposCore = ToposCore.attach(altToposCoreProxy.address)
+    await altToposCoreProxy.waitForDeployment()
+    const altToposCoreProxyAddress = await altToposCoreProxy.getAddress()
+    const altToposCore = await ToposCore__factory.connect(
+      altToposCoreProxyAddress,
+      admin
+    )
+    const altToposCoreAddress = await altToposCore.getAddress()
 
     return {
       altToposCore,
+      altToposCoreAddress,
       altToposCoreImplementation,
+      altToposCoreImplementationAddress,
       admin,
       adminAddresses,
       adminThreshold,
       defaultCert,
       toposCore,
+      toposCoreProxyAddress,
       toposCoreImplementation,
     }
   }
@@ -94,7 +119,7 @@ describe('ToposCore', () => {
       const { adminThreshold, altToposCore } = await loadFixture(
         deployToposCoreFixture
       )
-      const adminAddresses = [ethers.constants.AddressZero] // zero address admin
+      const adminAddresses = [ethers.ZeroAddress] // zero address admin
       await expect(
         altToposCore.initialize(adminAddresses, adminThreshold)
       ).to.to.be.revertedWithCustomError(altToposCore, 'InvalidAdmins')
@@ -190,7 +215,7 @@ describe('ToposCore', () => {
 
       const encodedCheckpoints = await toposCore.getCheckpoints()
       const checkpoints = encodedCheckpoints.map((checkpoint) => {
-        return [checkpoint[0], checkpoint[1].toNumber(), checkpoint[2]]
+        return [checkpoint[0], Number(checkpoint[1]), checkpoint[2]]
       })
       testCheckpoints.map((innerArr1, i) =>
         innerArr1.map((item, j) => expect(item).to.equal(checkpoints[i][j]))
@@ -218,7 +243,7 @@ describe('ToposCore', () => {
       )
       const updatedEncodedCheckpoints = await toposCore.getCheckpoints()
       const updatedCheckpoints = updatedEncodedCheckpoints.map((checkpoint) => {
-        return [checkpoint[0], checkpoint[1].toNumber(), checkpoint[2]]
+        return [checkpoint[0], Number(checkpoint[1]), checkpoint[2]]
       })
       testCheckpoints[1] = updatedTestCheckpoint
       testCheckpoints.map((innerArr1, i) =>
@@ -241,7 +266,7 @@ describe('ToposCore', () => {
         certificate.txRoot,
         certificate.receiptRoot,
         certificate.targetSubnets,
-        certificate.verifier,
+        Number(certificate.verifier),
         certificate.certId,
         certificate.starkProof,
         certificate.signature
@@ -263,46 +288,45 @@ describe('ToposCore', () => {
   describe('proxy', () => {
     it('reverts if the ToposCore implementation contract is not present', async () => {
       const ToposCoreProxy = await ethers.getContractFactory('ToposCoreProxy')
-      await expect(ToposCoreProxy.deploy(ethers.constants.AddressZero)).to.be
-        .reverted
+      await expect(ToposCoreProxy.deploy(ethers.ZeroAddress)).to.be.reverted
     })
   })
 
   describe('upgrade', () => {
     it('reverts if the code hash does not match', async () => {
-      const { toposCore, altToposCore } = await loadFixture(
+      const { toposCore, altToposCoreAddress } = await loadFixture(
         deployToposCoreFixture
       )
       const emptyCodeHash =
         '0x0000000000000000000000000000000000000000000000000000000000000000'
       await expect(
-        toposCore.upgrade(altToposCore.address, emptyCodeHash)
+        toposCore.upgrade(altToposCoreAddress, emptyCodeHash)
       ).to.be.revertedWithCustomError(toposCore, 'InvalidCodeHash')
     })
 
     it('emits an upgraded event', async () => {
-      const { admin, altToposCoreImplementation, toposCore } =
+      const { admin, altToposCoreImplementationAddress, toposCore } =
         await loadFixture(deployToposCoreFixture)
       expect(await toposCore.implementation()).to.not.equal(
-        altToposCoreImplementation.address
+        altToposCoreImplementationAddress
       )
 
       const CodeHash = await ethers.getContractFactory('CodeHash')
       const codeHash = await CodeHash.deploy()
       const implementationCodeHash = await codeHash.getCodeHash(
-        altToposCoreImplementation.address
+        altToposCoreImplementationAddress
       )
 
       await expect(
         toposCore.upgrade(
-          altToposCoreImplementation.address,
+          altToposCoreImplementationAddress,
           implementationCodeHash
         )
       )
         .to.emit(toposCore, 'Upgraded')
-        .withArgs(altToposCoreImplementation.address)
+        .withArgs(altToposCoreImplementationAddress)
       expect(await toposCore.implementation()).to.equal(
-        altToposCoreImplementation.address
+        altToposCoreImplementationAddress
       )
       const currentAdmins = await toposCore.admins(1)
       expect(currentAdmins[0]).to.equal(admin.address) // check that the admin is unchanged

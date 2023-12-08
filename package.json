@@ -36,7 +36,7 @@
     "test": "hardhat test"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@ethereumjs/rlp": "^4.0.1",
     "@ethereumjs/trie": "^5.0.4",
@@ -49,7 +49,7 @@
     "chai": "^4.3.7",
     "eslint": "^8.38.0",
     "eslint-config-prettier": "^8.8.0",
-    "hardhat": "2.14.0",
+    "hardhat": "^2.19.2",
     "mocha": "^10.2.0",
     "prettier": "^2.8.4",
     "prettier-plugin-solidity": "^1.1.3",
