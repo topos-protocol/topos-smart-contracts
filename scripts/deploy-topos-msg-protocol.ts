@@ -198,7 +198,7 @@ async function initialize(
 ) {
   await toposCore
     .initialize([wallet.address], adminThreshold, {
-      gasLimit: 4_000_000,
+      gasLimit: 8_000_000,
     })
     .then(async (tx) => {
       await tx.wait().catch((error) => {
