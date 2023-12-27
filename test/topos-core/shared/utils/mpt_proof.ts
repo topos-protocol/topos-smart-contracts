@@ -6,16 +6,15 @@ export async function getReceiptMptProof(
   tx: TransactionResponse,
   provider: JsonRpcProvider
 ) {
-  const receipt = await provider.getTransactionReceipt(tx.hash)
-  const prefectTxs = true
-  const block = await provider.getBlock(receipt!.blockHash, prefectTxs)
+  const prefetchTxs = true
+  const block = await provider.getBlock(tx.blockHash!, prefetchTxs)
   const rawBlock = await provider.send('eth_getBlockByHash', [
-    receipt!.blockHash,
-    true,
+    tx.blockHash,
+    prefetchTxs,
   ])
 
   const receiptsRoot = rawBlock.receiptsRoot
-  const trie = await createTrie(block!, provider)
+  const trie = await createTrie(block!)
   const trieRoot = trie.root()
   if ('0x' + trieRoot.toString('hex') !== receiptsRoot) {
     throw new Error(
@@ -41,12 +40,13 @@ export async function getReceiptMptProof(
   return { proofBlob, receiptsRoot }
 }
 
-async function createTrie(block: Block, provider: JsonRpcProvider) {
+async function createTrie(block: Block) {
   const trie = new Trie()
   await Promise.all(
     block.prefetchedTransactions.map(async (tx, index) => {
-      const receipt = await provider.getTransactionReceipt(tx.hash)
+      const receipt = await tx.wait()
       const { cumulativeGasUsed, logs, logsBloom, status } = receipt!
+
       return trie.put(
         Buffer.from(RLP.encode(index)),
         Buffer.from(
@@ -54,7 +54,7 @@ async function createTrie(block: Block, provider: JsonRpcProvider) {
             status,
             Number(cumulativeGasUsed),
             logsBloom,
-            logs.map((l) => [l.address, <string[]>l.topics, l.data]),
+            logs.map((l) => [l.address, l.topics as string[], l.data]),
           ])
         )
       )

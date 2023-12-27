@@ -83,7 +83,10 @@ describe('ToposMessaging', () => {
     await toposCoreProxy.waitForDeployment()
     const toposCoreProxyAddress = await toposCoreProxy.getAddress()
 
-    const toposCore = await ToposCore__factory.connect(toposCoreProxyAddress)
+    const toposCore = await ToposCore__factory.connect(
+      toposCoreProxyAddress,
+      admin
+    )
     await toposCore.initialize(adminAddresses, adminThreshold)
 
     const erc20Messaging = await new ERC20Messaging__factory(admin).deploy(
@@ -764,8 +767,9 @@ describe('ToposMessaging', () => {
     TxUnsigned.gasLimit = estimatedGasLimit
     const address = await signer.getAddress()
     const nonce = await provider.getTransactionCount(address)
+    const feeData = await provider.getFeeData()
     TxUnsigned.nonce = nonce
-    // TxUnsigned.gasPrice = BigInt(await provider.getGasPrice()) // SEDTOBO: verify that the test works without this
+    TxUnsigned.gasPrice = BigInt(feeData.gasPrice!)
 
     const submittedTx = await signer.sendTransaction(TxUnsigned)
     const receipt = await submittedTx.wait()
