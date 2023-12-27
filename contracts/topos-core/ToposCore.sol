@@ -38,6 +38,17 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
         _disableInitializers();
     }
 
+    /// @notice Contract initializer
+    /// @dev Can only be called once
+    /// @param adminAddresses list of admins
+    /// @param newAdminThreshold number of admins required to approve a call
+    function initialize(address[] memory adminAddresses, uint256 newAdminThreshold) public initializer {
+        // NOTE: Admin epoch is incremented to easily invalidate current admin-related state.
+        uint256 newAdminEpoch = _adminEpoch() + uint256(1);
+        _setAdminEpoch(newAdminEpoch);
+        _setAdmins(newAdminEpoch, adminAddresses, newAdminThreshold);
+    }
+
     /// @notice Sets the subnet ID
     /// @param _networkSubnetId The subnet ID of the subnet this contract is to be deployed on
     function setNetworkSubnetId(SubnetId _networkSubnetId) external onlyAdmin {
@@ -123,17 +134,6 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
         for (uint256 i; i < adminCount; ++i) {
             results[i] = _getAdmin(epoch, i);
         }
-    }
-
-    /// @notice Contract initializer
-    /// @dev Can only be called once
-    /// @param adminAddresses list of admins
-    /// @param newAdminThreshold number of admins required to approve a call
-    function initialize(address[] memory adminAddresses, uint256 newAdminThreshold) public initializer {
-        // NOTE: Admin epoch is incremented to easily invalidate current admin-related state.
-        uint256 newAdminEpoch = _adminEpoch() + uint256(1);
-        _setAdminEpoch(newAdminEpoch);
-        _setAdmins(newAdminEpoch, adminAddresses, newAdminThreshold);
     }
 
     /// @notice Checks if a certificate exists on the ToposCore contract

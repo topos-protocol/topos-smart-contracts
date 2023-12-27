@@ -1,4 +1,4 @@
-import { Signer, Wallet } from 'ethers'
+import { Signer } from 'ethers'
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
 

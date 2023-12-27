@@ -229,6 +229,7 @@ describe('ToposMessaging', () => {
 
       const { proofBlob, receiptsRoot } = await getReceiptMptProof(
         sendToken,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ethers.provider as any
       )
 
@@ -513,6 +514,7 @@ describe('ToposMessaging', () => {
 
       const { proofBlob, receiptsRoot } = await getReceiptMptProof(
         sendToken,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ethers.provider as any
       )
       const certificate = testUtils.encodeCertParam(
@@ -562,6 +564,7 @@ describe('ToposMessaging', () => {
 
       const { proofBlob, receiptsRoot } = await getReceiptMptProof(
         sendToken,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ethers.provider as any
       )
 
@@ -736,6 +739,7 @@ describe('ToposMessaging', () => {
 
     const { proofBlob, receiptsRoot } = await getReceiptMptProof(
       sendToken,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ethers.provider as any
     )
     return { erc20, proofBlob, receiptsRoot }

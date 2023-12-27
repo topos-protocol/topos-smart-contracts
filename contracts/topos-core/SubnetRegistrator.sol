@@ -32,6 +32,13 @@ contract SubnetRegistrator is Initializable, Ownable {
     /// @notice Subnet removal event
     event SubnetRemoved(SubnetId subnetId);
 
+    /// @notice Contract initializer
+    /// @dev Can only be called once
+    /// @param admin address of the admin
+    function initialize(address admin) public initializer {
+        _transferOwnership(admin);
+    }
+
     /// @notice Check if the subnet is already registered
     /// @param subnetId FROST public key of a subnet
     function subnetExists(SubnetId subnetId) external view returns (bool) {
@@ -47,13 +54,6 @@ contract SubnetRegistrator is Initializable, Ownable {
     /// @param index index at which the Subnet ID is stored
     function getSubnetIdAtIndex(uint256 index) external view returns (SubnetId) {
         return SubnetId.wrap(subnetSet.keyAtIndex(index));
-    }
-
-    /// @notice Contract initializer
-    /// @dev Can only be called once
-    /// @param admin address of the admin
-    function initialize(address admin) public initializer {
-        _transferOwnership(admin);
     }
 
     /// @notice Register a new subnet
