@@ -1,4 +1,4 @@
-import { getDefaultProvider, isHexString, Wallet } from 'ethers'
+import { isHexString, JsonRpcProvider, Wallet } from 'ethers'
 
 import { TokenDeployer__factory } from '../typechain-types/factories/contracts/topos-core/TokenDeployer__factory'
 import { ToposCore__factory } from '../typechain-types/factories/contracts/topos-core/ToposCore__factory'
@@ -8,7 +8,7 @@ import { ToposCore } from '../typechain-types/contracts/topos-core/ToposCore'
 
 const main = async function (...args: string[]) {
   const [providerEndpoint, _sequencerPrivateKey] = args
-  const provider = getDefaultProvider(providerEndpoint)
+  const provider = new JsonRpcProvider(providerEndpoint)
   const toposDeployerPrivateKey = sanitizeHexString(
     process.env.PRIVATE_KEY || ''
   )
@@ -26,7 +26,7 @@ const main = async function (...args: string[]) {
   }
 
   const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
-  const sequencerPublicKey = sequencerWallet.signingKey.publicKey
+  const sequencerPublicKey = sequencerWallet.signingKey.compressedPublicKey
 
   const subnetId = sanitizeHexString(sequencerPublicKey.substring(4))
 
@@ -60,12 +60,12 @@ const main = async function (...args: string[]) {
     toposDeployerWallet
   ).deploy(toposCoreAddress, { gasLimit: 5_000_000 })
   await ToposCoreProxy.waitForDeployment()
-  const toposCoreProxyAddress = ToposCoreProxy.getAddress()
+  const toposCoreProxyAddress = await ToposCoreProxy.getAddress()
   console.log(`Topos Core Proxy contract deployed to ${toposCoreProxyAddress}`)
 
   console.info(`Initializing Topos Core Contract`)
   const toposCoreConnectedToSequencer = ToposCore__factory.connect(
-    toposCoreAddress,
+    toposCoreProxyAddress,
     sequencerWallet
   )
   const adminThreshold = 1
@@ -81,7 +81,7 @@ const main = async function (...args: string[]) {
   ).deploy(tokenDeployerAddress, toposCoreProxyAddress, { gasLimit: 5_000_000 })
   await ERC20Messaging.waitForDeployment()
   const erc20MessagingAddress = await ERC20Messaging.getAddress()
-  console.log(`ERC20 Messaging contract deployed to ${erc20MessagingAddress}}`)
+  console.log(`ERC20 Messaging contract deployed to ${erc20MessagingAddress}`)
 
   console.info(`Setting subnetId on ToposCore via proxy`)
   await toposCoreConnectedToSequencer
