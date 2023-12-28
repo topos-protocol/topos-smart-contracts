@@ -1,19 +1,13 @@
-import { EventLog, keccak256, Provider, Signer, Wallet } from 'ethers'
-import { deployContractConstant } from '../../scripts/const-addr-deployer'
-import { ethers, network } from 'hardhat'
-import { expect } from 'chai'
-import { getReceiptMptProof } from './shared/utils/mpt_proof'
 import {
   loadFixture,
   takeSnapshot,
 } from '@nomicfoundation/hardhat-network-helpers'
-
-import * as cc from './shared/constants/certificates'
-import * as tc from './shared/constants/tokens'
-import * as txc from './shared/constants/transactions'
-import * as testUtils from './shared/utils/common'
+import { expect } from 'chai'
+import { EventLog, keccak256, Provider, Signer, Wallet } from 'ethers'
+import { ethers, network } from 'hardhat'
 
 import * as tokenDeployerJSON from '../../artifacts/contracts/topos-core/TokenDeployer.sol/TokenDeployer.json'
+import { deployContractConstant } from '../../scripts/const-addr-deployer'
 import {
   ConstAddressDeployer__factory,
   ERC20__factory,
@@ -22,6 +16,11 @@ import {
   ERC20Messaging__factory,
   ERC20Messaging,
 } from '../../typechain-types'
+import * as cc from './shared/constants/certificates'
+import * as testUtils from './shared/utils/common'
+import { getReceiptMptProof } from './shared/utils/mpt_proof'
+import * as tc from './shared/constants/tokens'
+import * as txc from './shared/constants/transactions'
 
 describe('ToposMessaging', () => {
   async function deployERC20MessagingFixture() {
@@ -229,8 +228,7 @@ describe('ToposMessaging', () => {
 
       const { proofBlob, receiptsRoot } = await getReceiptMptProof(
         sendToken,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ethers.provider as any
+        ethers.provider
       )
 
       const certificate = testUtils.encodeCertParam(
@@ -514,8 +512,7 @@ describe('ToposMessaging', () => {
 
       const { proofBlob, receiptsRoot } = await getReceiptMptProof(
         sendToken,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ethers.provider as any
+        ethers.provider
       )
       const certificate = testUtils.encodeCertParam(
         cc.PREV_CERT_ID_0,
@@ -564,8 +561,7 @@ describe('ToposMessaging', () => {
 
       const { proofBlob, receiptsRoot } = await getReceiptMptProof(
         sendToken,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ethers.provider as any
+        ethers.provider
       )
 
       const certificate = testUtils.encodeCertParam(
@@ -739,8 +735,7 @@ describe('ToposMessaging', () => {
 
     const { proofBlob, receiptsRoot } = await getReceiptMptProof(
       sendToken,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ethers.provider as any
+      ethers.provider
     )
     return { erc20, proofBlob, receiptsRoot }
   }

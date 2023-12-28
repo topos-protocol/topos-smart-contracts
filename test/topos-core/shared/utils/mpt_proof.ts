@@ -1,10 +1,11 @@
-import { Block, hexlify, JsonRpcProvider, TransactionResponse } from 'ethers'
 import { RLP } from '@ethereumjs/rlp'
 import { Trie } from '@ethereumjs/trie'
+import { HardhatEthersProvider } from '@nomicfoundation/hardhat-ethers/internal/hardhat-ethers-provider'
+import { Block, hexlify, TransactionResponse } from 'ethers'
 
 export async function getReceiptMptProof(
   tx: TransactionResponse,
-  provider: JsonRpcProvider
+  provider: HardhatEthersProvider
 ) {
   const prefetchTxs = true
   const block = await provider.getBlock(tx.blockHash!, prefetchTxs)
