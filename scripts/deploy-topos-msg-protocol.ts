@@ -80,7 +80,7 @@ const main = async function (...args: string[]) {
   )
 
   const toposCoreConnectedToSequencer = ToposCore__factory.connect(
-    toposCoreAddress,
+    toposCoreProxyAddress,
     sequencerWallet
   )
   const adminThreshold = 1
