@@ -40,6 +40,7 @@ const main = async function (..._args: Arg[]) {
   )
     .then(async (contract) => {
       const address = await contract.getAddress()
+      console.log(address)
       const subnetRegistrator = SubnetRegistrator__factory.connect(
         address,
         deployerWallet

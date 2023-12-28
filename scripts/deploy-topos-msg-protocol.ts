@@ -90,7 +90,7 @@ const main = async function (...args: string[]) {
     adminThreshold
   )
 
-  const erc20MessagingAddresss = await processContract(
+  const erc20MessagingAddress = await processContract(
     toposDeployerWallet,
     erc20MessagingJSON,
     erc20MessagingSalt!,
@@ -104,7 +104,7 @@ const main = async function (...args: string[]) {
 export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}
 export TOPOS_CORE_PROXY_CONTRACT_ADDRESS=${toposCoreProxyAddress}
 export TOKEN_DEPLOYER_CONTRACT_ADDRESS=${tokenDeployerAddress}
-export ERC20_MESSAGING_CONTRACT_ADDRESS=${erc20MessagingAddresss}
+export ERC20_MESSAGING_CONTRACT_ADDRESS=${erc20MessagingAddress}
   `)
 }
 
