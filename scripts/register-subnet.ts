@@ -75,7 +75,7 @@ const main = async function (...args: string[]) {
   }
 
   const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
-  const sequencerPublicKey = sequencerWallet.signingKey.publicKey
+  const sequencerPublicKey = sequencerWallet.signingKey.compressedPublicKey
 
   const subnetId = sanitizeHexString(sequencerPublicKey.substring(4))
 

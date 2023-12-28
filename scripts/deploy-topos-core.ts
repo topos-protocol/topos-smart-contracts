@@ -54,7 +54,7 @@ const main = async function (...args: string[]) {
     adminThreshold
   )
 
-  const sequencerPublicKey = sequencerWallet.signingKey.publicKey
+  const sequencerPublicKey = sequencerWallet.signingKey.compressedPublicKey
   const subnetId = sanitizeHexString(sequencerPublicKey.substring(4))
   await setSubnetId(toposCoreConnectedToSequencer, subnetId)
 
