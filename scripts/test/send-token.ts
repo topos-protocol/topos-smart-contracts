@@ -1,60 +1,51 @@
-import { Contract, providers, utils, Wallet } from 'ethers'
-import { keccak256 } from '@ethersproject/keccak256'
-import { toUtf8Bytes } from '@ethersproject/strings'
-
-import erc20MessagingJSON from '../../artifacts/contracts/examples/ERC20Messaging.sol/ERC20Messaging.json'
-import toposCoreInterfaceJSON from '../../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json'
-import ERC20 from '../../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json'
-
+import { isHexString, JsonRpcProvider, Wallet } from 'ethers'
+import { ERC20Messaging__factory } from '../../typechain-types/factories/contracts/examples/ERC20Messaging__factory'
+import { BurnableMintableCappedERC20__factory } from '../../typechain-types/factories/contracts/topos-core/BurnableMintableCappedERC20__factory'
+import { ERC20Messaging } from '../../typechain-types/contracts/examples/ERC20Messaging'
 import * as cc from '../../test/topos-core/shared/constants/certificates'
 import * as tc from '../../test/topos-core/shared/constants/tokens'
 import * as testUtils from '../../test/topos-core/shared/utils/common'
 
-/// Usage:
-/// ts-node ./scripts/test/send-token.ts <node endpoint> <sender private key> <receiver account> <amount>
-/// e.g.:
-/// reset; ts-node ./scripts/test/send-token.ts http://127.0.0.1:8545 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 10
-const main = async function (...args: string[]) {
+const sanitizeHexString = (hexString: string) =>
+  hexString.startsWith('0x') ? hexString : `0x${hexString}`
+
+const checkAndDeployToken = async (
+  erc20Messaging: ERC20Messaging,
+  tokenSymbol: string,
+  defaultTokenParams: string
+) => {
+  const numberOfTokens = await erc20Messaging.getTokenCount()
+  for (let index = 0; index < numberOfTokens; index++) {
+    const tokenKey = await erc20Messaging.getTokenKeyAtIndex(index)
+    const [token, address] = await erc20Messaging.tokens(tokenKey)
+    if (token === tokenSymbol) {
+      return address
+    }
+  }
+
+  const tokenDeployTx = await erc20Messaging.deployToken(defaultTokenParams, {
+    gasLimit: 5_000_000,
+  })
+  await tokenDeployTx.wait()
+  const token = await erc20Messaging.getTokenBySymbol(tokenSymbol)
+  return token.addr
+}
+
+const main = async (...args: string[]) => {
   const [providerEndpoint, senderPrivateKey, receiverAddress, amount] = args
-  const provider = providers.getDefaultProvider(providerEndpoint)
+  const provider = new JsonRpcProvider(providerEndpoint)
   const erc20MessagingAddress = sanitizeHexString(
     process.env.ERC20_MESSAGING_ADDRESS || ''
   )
-
-  if (!utils.isHexString(erc20MessagingAddress, 20)) {
-    console.error(
-      'ERROR: Please set token deployer contract address ERC20_MESSAGING_ADDRESS'
-    )
-    process.exit(1)
-  }
-
-  const toposCoreProxyAddress = sanitizeHexString(
-    process.env.TOPOS_CORE_PROXY_ADDRESS || ''
-  )
-
-  if (!utils.isHexString(toposCoreProxyAddress, 20)) {
-    console.error(
-      'ERROR: Please set topos core proxy contract address  TOPOS_CORE_PROXY_ADDRESS'
-    )
-    process.exit(1)
-  }
-
   const wallet = new Wallet(senderPrivateKey, provider)
 
-  const erc20Messaging = new Contract(
+  if (!isHexString(erc20MessagingAddress, 20))
+    throw new Error('Invalid ERC20_MESSAGING_ADDRESS')
+
+  const erc20Messaging = ERC20Messaging__factory.connect(
     erc20MessagingAddress,
-    erc20MessagingJSON.abi,
     wallet
   )
-  const toposCoreProxy = new Contract(
-    toposCoreProxyAddress,
-    toposCoreInterfaceJSON.abi,
-    wallet
-  )
-
-  const id = await toposCoreProxy.networkSubnetId()
-  console.log('Network subnet ID =', id)
-
   const defaultToken = testUtils.encodeTokenParam(
     tc.TOKEN_NAME,
     tc.TOKEN_SYMBOL_X,
@@ -62,99 +53,35 @@ const main = async function (...args: string[]) {
     tc.DAILY_MINT_LIMIT_100,
     tc.INITIAL_SUPPLY_10_000_000
   )
-
-  let deploy = true
-  let tokenAddress = null
-  // Check if token is already deployed. If not, deploy it
-  const numberOfTokens = await erc20Messaging.getTokenCount()
-  for (let index = 0; index < numberOfTokens; index++) {
-    const tokenKey = await erc20Messaging.getTokenKeyAtIndex(index)
-    const [token, address] = await erc20Messaging.tokens(tokenKey)
-    if (token == tc.TOKEN_SYMBOL_X) {
-      deploy = false
-      console.log(
-        'Token already deployed, token key:',
-        tokenKey,
-        ' token:',
-        token,
-        ' address:',
-        address
-      )
-      tokenAddress = address
-    }
-  }
-
-  if (deploy) {
-    // Deploy token if not previously deployed
-    await erc20Messaging.deployToken(defaultToken, {
-      gasLimit: 5_000_000,
-    })
-    // get token address
-    const token = await erc20Messaging.getTokenBySymbol(tc.TOKEN_SYMBOL_X)
-    tokenAddress = token.addr
-    console.log(
-      'Token:',
-      tc.TOKEN_SYMBOL_X,
-      ' deployed to address:',
-      tokenAddress
-    )
-  }
-
-  // Approve token burn
-  const erc20 = new Contract(tokenAddress, ERC20.abi, wallet)
-  await erc20.approve(erc20Messaging.address, amount)
-
-  // Send token
-  console.log(
-    'Sending token:',
+  const tokenAddress = await checkAndDeployToken(
+    erc20Messaging,
     tc.TOKEN_SYMBOL_X,
-    ' from:',
-    wallet.address,
-    ' to:',
-    receiverAddress,
-    ' amount:',
-    amount,
-    ' token address:',
-    tokenAddress
+    defaultToken
   )
 
-  const tx2 = await erc20Messaging.sendToken(
+  const erc20 = BurnableMintableCappedERC20__factory.connect(
+    tokenAddress,
+    wallet
+  )
+  console.log(`Balance before: ${await erc20.balanceOf(wallet.address)}`)
+  const approveTx = await erc20.approve(erc20MessagingAddress, amount)
+  await approveTx.wait()
+
+  const sendTokenTx = await erc20Messaging.sendToken(
     cc.TARGET_SUBNET_ID_4,
     tc.TOKEN_SYMBOL_X,
     receiverAddress,
-    amount,
-    {
-      gasLimit: 5_100_000,
-    }
+    BigInt(amount)
   )
-  const txReceipt = await tx2.wait()
+  const txReceipt = await sendTokenTx.wait()
 
-  const logs = txReceipt.events?.find(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (e: any) =>
-      e.topics[0] === keccak256(toUtf8Bytes('CrossSubnetMessageSent(bytes32)')) // For some reason e.events is not filled
-  )
-
-  if (logs) {
-    console.log(
-      'Token sent, from:',
-      wallet.address,
-      ' to:',
-      receiverAddress,
-      ' amount:',
-      amount
-    )
-
+  if (txReceipt!.status === 1) {
     const remainingBalance = await erc20.balanceOf(wallet.address)
-    console.log('Remaining balance:', remainingBalance.toString())
+    console.log(`Token sent. Remaining balance: ${remainingBalance.toString()}`)
   } else {
-    console.log('Missing CrossSubnetMessageSent event')
+    console.error('Sending token failed', txReceipt)
   }
 }
 
-const sanitizeHexString = function (hexString: string) {
-  return hexString.startsWith('0x') ? hexString : `0x${hexString}`
-}
-
 const args = process.argv.slice(2)
-main(...args)
+main(...args).catch(console.error)
