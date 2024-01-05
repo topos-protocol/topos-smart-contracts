@@ -4,6 +4,8 @@ import { expect } from 'chai'
 
 import { ToposCore__factory } from '../../typechain-types/factories/contracts/topos-core/ToposCore__factory'
 import { ToposCoreProxy__factory } from '../../typechain-types/factories/contracts/topos-core/ToposCoreProxy__factory'
+import { CodeHash__factory } from '../../typechain-types/factories/contracts/topos-core/CodeHash__factory'
+import { ToposCoreProxy } from '../../typechain-types/contracts/topos-core/ToposCoreProxy'
 import * as cc from './shared/constants/certificates'
 import * as testUtils from './shared/utils/common'
 
@@ -33,7 +35,6 @@ describe('ToposCore', () => {
     const toposCoreProxy = await new ToposCoreProxy__factory(admin).deploy(
       toposCoreImplementationAddress
     )
-    await toposCoreProxy.waitForDeployment()
     const toposCoreProxyAddress = await toposCoreProxy.getAddress()
 
     const toposCore = await ToposCore__factory.connect(
@@ -70,6 +71,7 @@ describe('ToposCore', () => {
       adminThreshold,
       defaultCert,
       toposCore,
+      toposCoreProxy,
       toposCoreProxyAddress,
       toposCoreImplementation,
     }
@@ -287,8 +289,15 @@ describe('ToposCore', () => {
 
   describe('proxy', () => {
     it('reverts if the ToposCore implementation contract is not present', async () => {
-      const ToposCoreProxy = await ethers.getContractFactory('ToposCoreProxy')
-      await expect(ToposCoreProxy.deploy(ethers.ZeroAddress)).to.be.reverted
+      const { admin, toposCoreProxy } = await loadFixture(
+        deployToposCoreFixture
+      )
+      await expect(
+        new ToposCoreProxy__factory(admin).deploy(ethers.ZeroAddress)
+      ).to.be.revertedWithCustomError(
+        toposCoreProxy as ToposCoreProxy,
+        'InvalidImplementation'
+      )
     })
   })
 
@@ -311,8 +320,8 @@ describe('ToposCore', () => {
         altToposCoreImplementationAddress
       )
 
-      const CodeHash = await ethers.getContractFactory('CodeHash')
-      const codeHash = await CodeHash.deploy()
+      const CodeHash = await new CodeHash__factory(admin).deploy()
+      const codeHash = await CodeHash.waitForDeployment()
       const implementationCodeHash = await codeHash.getCodeHash(
         altToposCoreImplementationAddress
       )
