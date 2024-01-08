@@ -1,11 +1,12 @@
-import { Contract, providers, utils, Wallet } from 'ethers'
+import { computeAddress, isHexString, JsonRpcProvider, Wallet } from 'ethers'
 
 import subnetRegistratorJSON from '../artifacts/contracts/topos-core/SubnetRegistrator.sol/SubnetRegistrator.json'
+import { SubnetRegistrator__factory } from '../typechain-types/factories/contracts/topos-core/SubnetRegistrator__factory'
 import { Arg, deployContractConstant } from './const-addr-deployer'
 
 const main = async function (..._args: Arg[]) {
   const [providerEndpoint, _adminPrivateKey, salt, gasLimit, ...args] = _args
-  const provider = new providers.JsonRpcProvider(<string>providerEndpoint)
+  const provider = new JsonRpcProvider(<string>providerEndpoint)
 
   if (!_adminPrivateKey) {
     console.error('ERROR: Please provide the admin private key!')
@@ -13,19 +14,16 @@ const main = async function (..._args: Arg[]) {
   }
 
   const adminPrivateKey = sanitizeHexString(_adminPrivateKey as string)
-  if (!utils.isHexString(adminPrivateKey, 32)) {
+  if (!isHexString(adminPrivateKey, 32)) {
     console.error('ERROR: Please provide a valid private key!')
     process.exit(1)
   }
 
-  const isCompressed = true
-  const adminPublicKey = utils.computePublicKey(adminPrivateKey, isCompressed)
-
-  const adminAddress = utils.computeAddress(adminPublicKey)
+  const adminAddress = computeAddress(adminPrivateKey)
 
   // Fetch the deployer wallet
   const privateKey = process.env.PRIVATE_KEY
-  if (!privateKey || !utils.isHexString(privateKey, 32)) {
+  if (!privateKey || !isHexString(privateKey, 32)) {
     console.error(
       'ERROR: Please provide a valid deployer private key! (PRIVATE_KEY)'
     )
@@ -40,11 +38,11 @@ const main = async function (..._args: Arg[]) {
     [...args],
     gasLimit as number
   )
-    .then(({ address }) => {
+    .then(async (contract) => {
+      const address = await contract.getAddress()
       console.log(address)
-      const subnetRegistrator = new Contract(
+      const subnetRegistrator = SubnetRegistrator__factory.connect(
         address,
-        subnetRegistratorJSON.abi,
         deployerWallet
       )
 

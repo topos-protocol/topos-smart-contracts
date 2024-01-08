@@ -1,17 +1,20 @@
-import { Contract } from 'ethers'
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
 
-describe('Bytes32Sets', () => {
-  let bytes32SetsTest: Contract
+import { Bytes32SetsTest__factory } from '../../typechain-types/factories/contracts/topos-core/Bytes32Sets.sol/Bytes32SetsTest__factory'
+import { Bytes32SetsTest } from '../../typechain-types/contracts/topos-core/Bytes32Sets.sol/Bytes32SetsTest'
 
-  const key1 = ethers.utils.formatBytes32String('key1')
-  const key2 = ethers.utils.formatBytes32String('key2')
+describe('Bytes32Sets', () => {
+  let bytes32SetsTest: Bytes32SetsTest
+
+  const key1 = ethers.encodeBytes32String('key1')
+  const key2 = ethers.encodeBytes32String('key2')
 
   beforeEach(async () => {
-    const Bytes32SetsTest = await ethers.getContractFactory('Bytes32SetsTest')
-    bytes32SetsTest = await Bytes32SetsTest.deploy()
-    await bytes32SetsTest.deployed()
+    const [admin] = await ethers.getSigners()
+    const Bytes32SetsTest = await new Bytes32SetsTest__factory(admin).deploy()
+    bytes32SetsTest = await Bytes32SetsTest.waitForDeployment()
+    await bytes32SetsTest.waitForDeployment()
   })
 
   describe('insert', () => {

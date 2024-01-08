@@ -12,7 +12,7 @@ function encodeCertParam(
   starkProof: string,
   signature: string
 ) {
-  return ethers.utils.defaultAbiCoder.encode(
+  return ethers.AbiCoder.defaultAbiCoder().encode(
     [
       'bytes32',
       'bytes32',
@@ -47,7 +47,7 @@ function encodeTokenParam(
   dailyMintLimit: number,
   initialSupply: number
 ) {
-  return ethers.utils.defaultAbiCoder.encode(
+  return ethers.AbiCoder.defaultAbiCoder().encode(
     ['string', 'string', 'uint256', 'uint256', 'uint256'],
     [tokenName, tokenSymbol, mintCap, dailyMintLimit, initialSupply]
   )

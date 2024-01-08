@@ -12,8 +12,8 @@ export const CERT_POS_1 = 1
 export const CERT_POS_2 = 2
 export const CERT_POS_3 = 3
 export const CERT_POS_4 = 4
-export const DUMMY_STARK_PROOF = ethers.utils.formatBytes32String('starkProof')
-export const DUMMY_SIGNATURE = ethers.utils.formatBytes32String('signature')
+export const DUMMY_STARK_PROOF = ethers.encodeBytes32String('starkProof')
+export const DUMMY_SIGNATURE = ethers.encodeBytes32String('signature')
 export const PREV_CERT_ID_0 =
   '0x0000000000000000000000000000000000000000000000000000000000000000'
 export const RECEIPT_ROOT_MAX =

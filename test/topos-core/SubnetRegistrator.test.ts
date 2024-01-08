@@ -1,25 +1,25 @@
-import { Contract, Wallet } from 'ethers'
+import { Signer } from 'ethers'
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
 
-describe('SubnetRegistrator', () => {
-  let subnetRegistrator: Contract
+import { SubnetRegistrator__factory } from '../../typechain-types/factories/contracts/topos-core/SubnetRegistrator__factory'
+import { SubnetRegistrator } from '../../typechain-types'
 
+describe('SubnetRegistrator', () => {
   const chainId = 1
   const currencySymbol = 'SUB'
   const endpointHttp = 'http://127.0.0.1'
   const endpointWs = 'ws://127.0.0.1'
   const logoURL = 'http://image-url.com'
   const name = 'Test Subnet'
-  const subnetId = ethers.utils.formatBytes32String('subnetId')
+  const subnetId = ethers.encodeBytes32String('subnetId')
 
   async function deploySubnetRegistratorFixture() {
     const [admin, nonAdmin, toposDeployer] = await ethers.getSigners()
-    const SubnetRegistrator = await ethers.getContractFactory(
-      'SubnetRegistrator'
-    )
-    subnetRegistrator = await SubnetRegistrator.connect(toposDeployer).deploy()
-    await subnetRegistrator.deployed()
+    const subnetRegistrator = await new SubnetRegistrator__factory(
+      toposDeployer
+    ).deploy()
+    await subnetRegistrator.waitForDeployment()
     await subnetRegistrator.initialize(admin.address)
     return {
       admin,
@@ -177,7 +177,8 @@ describe('SubnetRegistrator', () => {
 
   describe('removeSubnet', () => {
     it('reverts if non-admin tries to remove a subnet', async () => {
-      const [, nonAdmin] = await ethers.getSigners()
+      const { nonAdmin, subnetRegistrator } =
+        await deploySubnetRegistratorFixture()
       await expect(
         subnetRegistrator.connect(nonAdmin).removeSubnet(subnetId)
       ).to.be.revertedWith('Ownable: caller is not the owner')
@@ -212,7 +213,7 @@ describe('SubnetRegistrator', () => {
   })
 
   async function registerSubnet(
-    admin: Wallet,
+    admin: Signer,
     chainId: number,
     currencySymbol: string,
     endpointHttp: string,
@@ -220,7 +221,7 @@ describe('SubnetRegistrator', () => {
     logoURL: string,
     name: string,
     subnetId: string,
-    subnetRegistrator: Contract
+    subnetRegistrator: SubnetRegistrator
   ) {
     return await subnetRegistrator
       .connect(admin)
@@ -237,8 +238,8 @@ describe('SubnetRegistrator', () => {
 
   async function removeSubnet(
     subnetId: string,
-    subnetRegistrator: Contract,
-    admin: Wallet
+    subnetRegistrator: SubnetRegistrator,
+    admin: Signer
   ) {
     return await subnetRegistrator.connect(admin).removeSubnet(subnetId)
   }

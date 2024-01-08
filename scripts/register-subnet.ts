@@ -1,6 +1,7 @@
-import { Contract, ContractTransaction, providers, utils, Wallet } from 'ethers'
+import { isHexString, JsonRpcProvider, Wallet } from 'ethers'
 
-import subnetRegistratorJSON from '../artifacts/contracts/topos-core/SubnetRegistrator.sol/SubnetRegistrator.json'
+import { SubnetRegistrator__factory } from '../typechain-types/factories/contracts/topos-core/SubnetRegistrator__factory'
+import { SubnetRegistrator } from '../typechain-types/contracts/topos-core/SubnetRegistrator'
 
 const main = async function (...args: string[]) {
   const [
@@ -15,7 +16,7 @@ const main = async function (...args: string[]) {
     _adminPrivateKey,
     _sequencerPrivateKey,
   ] = args
-  const provider = new providers.JsonRpcProvider(toposSubnetProviderEndpoint)
+  const provider = new JsonRpcProvider(toposSubnetProviderEndpoint)
 
   if (!_adminPrivateKey) {
     console.error(
@@ -61,43 +62,39 @@ const main = async function (...args: string[]) {
 
   const adminPrivateKey = sanitizeHexString(_adminPrivateKey)
 
-  if (!utils.isHexString(adminPrivateKey, 32)) {
+  if (!isHexString(adminPrivateKey, 32)) {
     console.error('ERROR: The admin private key is not a valid key!')
     process.exit(1)
   }
 
   const sequencerPrivateKey = sanitizeHexString(_sequencerPrivateKey)
 
-  if (!utils.isHexString(sequencerPrivateKey, 32)) {
+  if (!isHexString(sequencerPrivateKey, 32)) {
     console.error('ERROR: The sequencer private key is not a valid key!')
     process.exit(1)
   }
 
-  const isCompressed = true
-  const sequencerPublicKey = utils.computePublicKey(
-    sequencerPrivateKey,
-    isCompressed
-  )
+  const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
+  const sequencerPublicKey = sequencerWallet.signingKey.compressedPublicKey
 
   const subnetId = sanitizeHexString(sequencerPublicKey.substring(4))
 
-  if (!utils.isHexString(subnetRegistratorAddress, 20)) {
+  if (!isHexString(subnetRegistratorAddress, 20)) {
     console.error(
       'ERROR: Please provide a valid SubnetRegistrator contract address!'
     )
     process.exit(1)
   }
 
-  const wallet = new Wallet(adminPrivateKey, provider)
+  const adminWallet = new Wallet(adminPrivateKey, provider)
 
-  const contract = new Contract(
+  const subnetRegistrator = SubnetRegistrator__factory.connect(
     subnetRegistratorAddress,
-    subnetRegistratorJSON.abi,
-    wallet
+    adminWallet
   )
 
   const alreadyRegisteredSubnet = await verifyIfSubnetAlreadyRegistered(
-    contract,
+    subnetRegistrator,
     subnetId
   )
   if (alreadyRegisteredSubnet.name) {
@@ -107,7 +104,7 @@ const main = async function (...args: string[]) {
     process.exit(0)
   }
 
-  const tx: ContractTransaction = await contract.registerSubnet(
+  const tx = await subnetRegistrator.registerSubnet(
     subnetChainId,
     subnetCurrencySymbol,
     subnetEndpointHttp,
@@ -133,10 +130,10 @@ const sanitizeHexString = function (hexString: string) {
 }
 
 const verifyIfSubnetAlreadyRegistered = function (
-  contract: Contract,
+  subnetRegistrator: SubnetRegistrator,
   subnetId: string
 ) {
-  return contract.subnets(subnetId) as Promise<{ name: string }>
+  return subnetRegistrator.subnets(subnetId)
 }
 
 const args = process.argv.slice(2)

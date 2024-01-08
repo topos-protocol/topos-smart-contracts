@@ -23,7 +23,9 @@ contract EternalStorage {
         return _stringStorage[key];
     }
 
-    function getAddress(bytes32 key) public view returns (address) {
+    // Renamed getAddress to getAddressStorage to prevent overriding ethers v6
+    // getAddress BaseContract method
+    function getAddressStorage(bytes32 key) public view returns (address) {
         return _addressStorage[key];
     }
 

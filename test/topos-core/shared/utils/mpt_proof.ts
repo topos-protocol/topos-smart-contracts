@@ -1,21 +1,21 @@
-import { ethers } from 'ethers'
 import { RLP } from '@ethereumjs/rlp'
 import { Trie } from '@ethereumjs/trie'
-import { BlockWithTransactions } from '@ethersproject/abstract-provider'
+import { HardhatEthersProvider } from '@nomicfoundation/hardhat-ethers/internal/hardhat-ethers-provider'
+import { Block, hexlify, TransactionResponse } from 'ethers'
 
 export async function getReceiptMptProof(
-  tx: ethers.providers.TransactionResponse,
-  provider: ethers.providers.JsonRpcProvider
+  tx: TransactionResponse,
+  provider: HardhatEthersProvider
 ) {
-  const receipt = await provider.getTransactionReceipt(tx.hash)
-  const block = await provider.getBlockWithTransactions(receipt.blockHash)
+  const prefetchTxs = true
+  const block = await provider.getBlock(tx.blockHash!, prefetchTxs)
   const rawBlock = await provider.send('eth_getBlockByHash', [
-    receipt.blockHash,
-    true,
+    tx.blockHash,
+    prefetchTxs,
   ])
 
   const receiptsRoot = rawBlock.receiptsRoot
-  const trie = await createTrie(block, provider)
+  const trie = await createTrie(block!)
   const trieRoot = trie.root()
   if ('0x' + trieRoot.toString('hex') !== receiptsRoot) {
     throw new Error(
@@ -30,32 +30,32 @@ export async function getReceiptMptProof(
     )
   }
 
-  const indexOfTx = block.transactions.findIndex((_tx) => _tx.hash === tx.hash)
+  const indexOfTx = block!.prefetchedTransactions.findIndex(
+    (_tx) => _tx.hash === tx.hash
+  )
   const key = Buffer.from(RLP.encode(indexOfTx))
 
   const { stack: _stack } = await trie.findPath(key)
   const stack = _stack.map((node) => node.raw())
-  const proofBlob = ethers.utils.hexlify(RLP.encode([1, indexOfTx, stack]))
+  const proofBlob = hexlify(RLP.encode([1, indexOfTx, stack]))
   return { proofBlob, receiptsRoot }
 }
 
-async function createTrie(
-  block: BlockWithTransactions,
-  provider: ethers.providers.JsonRpcProvider
-) {
+async function createTrie(block: Block) {
   const trie = new Trie()
   await Promise.all(
-    block.transactions.map(async (tx, index) => {
-      const { /*type,*/ cumulativeGasUsed, logs, logsBloom, status } =
-        await provider.getTransactionReceipt(tx.hash)
+    block.prefetchedTransactions.map(async (tx, index) => {
+      const receipt = await tx.wait()
+      const { cumulativeGasUsed, logs, logsBloom, status } = receipt!
+
       return trie.put(
         Buffer.from(RLP.encode(index)),
         Buffer.from(
           RLP.encode([
             status,
-            cumulativeGasUsed.toNumber(),
+            Number(cumulativeGasUsed),
             logsBloom,
-            logs.map((l) => [l.address, l.topics, l.data]),
+            logs.map((l) => [l.address, l.topics as string[], l.data]),
           ])
         )
       )

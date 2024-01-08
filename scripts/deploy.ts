@@ -1,4 +1,4 @@
-import { providers, utils, Wallet } from 'ethers'
+import { isHexString, JsonRpcProvider, Wallet } from 'ethers'
 import fs from 'fs'
 
 import {
@@ -9,10 +9,10 @@ import {
 
 const main = async function (..._args: Arg[]) {
   const [providerEndpoint, contractJsonPath, salt, gasLimit, ...args] = _args
-  const provider = new providers.JsonRpcProvider(<string>providerEndpoint)
+  const provider = new JsonRpcProvider(<string>providerEndpoint)
   const privateKey = process.env.PRIVATE_KEY
 
-  if (!privateKey || !utils.isHexString(privateKey, 32)) {
+  if (!privateKey || !isHexString(privateKey, 32)) {
     console.error('ERROR: Please provide a valid private key! (PRIVATE_KEY)')
     return
   }

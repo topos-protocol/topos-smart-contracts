@@ -119,7 +119,7 @@ contract AdminMultisigBase is EternalStorage {
     }
 
     function _getAdmin(uint256 adminEpoch, uint256 index) internal view returns (address) {
-        return getAddress(_getAdminKey(adminEpoch, index));
+        return getAddressStorage(_getAdminKey(adminEpoch, index));
     }
 
     function _getAdminCount(uint256 adminEpoch) internal view returns (uint256) {

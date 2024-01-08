@@ -1,9 +1,8 @@
-import { Contract, ContractTransaction, providers, utils, Wallet } from 'ethers'
+import { isHexString, JsonRpcProvider, Wallet } from 'ethers'
 
 import tokenDeployerJSON from '../artifacts/contracts/topos-core/TokenDeployer.sol/TokenDeployer.json'
 import toposCoreJSON from '../artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json'
 import toposCoreProxyJSON from '../artifacts/contracts/topos-core/ToposCoreProxy.sol/ToposCoreProxy.json'
-import toposCoreInterfaceJSON from '../artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json'
 import erc20MessagingJSON from '../artifacts/contracts/examples/ERC20Messaging.sol/ERC20Messaging.json'
 import {
   Arg,
@@ -11,10 +10,12 @@ import {
   deployContractConstant,
   predictContractConstant,
 } from './const-addr-deployer'
+import { ToposCore__factory } from '../typechain-types/factories/contracts/topos-core/ToposCore__factory'
+import { ToposCore } from '../typechain-types/contracts/topos-core/ToposCore'
 
 const main = async function (...args: string[]) {
   const [providerEndpoint, _sequencerPrivateKey] = args
-  const provider = new providers.JsonRpcProvider(providerEndpoint)
+  const provider = new JsonRpcProvider(providerEndpoint)
   const toposDeployerPrivateKey = sanitizeHexString(
     process.env.PRIVATE_KEY || ''
   )
@@ -30,20 +31,17 @@ const main = async function (...args: string[]) {
 
   const sequencerPrivateKey = sanitizeHexString(_sequencerPrivateKey)
 
-  if (!utils.isHexString(sequencerPrivateKey, 32)) {
+  if (!isHexString(sequencerPrivateKey, 32)) {
     console.error('ERROR: The sequencer private key is not a valid key!')
     process.exit(1)
   }
 
-  const isCompressed = true
-  const sequencerPublicKey = utils.computePublicKey(
-    sequencerPrivateKey,
-    isCompressed
-  )
+  const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
+  const sequencerPublicKey = sequencerWallet.signingKey.compressedPublicKey
 
   const subnetId = sanitizeHexString(sequencerPublicKey.substring(4))
 
-  if (!utils.isHexString(toposDeployerPrivateKey, 32)) {
+  if (!isHexString(toposDeployerPrivateKey, 32)) {
     console.error(
       'ERROR: Please provide a valid toposDeployer private key! (PRIVATE_KEY)'
     )
@@ -55,10 +53,10 @@ const main = async function (...args: string[]) {
   verifySalt('ToposCoreProxy', 'TOPOS_CORE_PROXY_SALT', toposCoreProxySalt)
   verifySalt('ERC20Messaging', 'ERC20_MESSAGING_SALT', erc20MessagingSalt)
 
-  const wallet = new Wallet(toposDeployerPrivateKey, provider)
+  const toposDeployerWallet = new Wallet(toposDeployerPrivateKey, provider)
 
   const tokenDeployerAddress = await processContract(
-    wallet,
+    toposDeployerWallet,
     tokenDeployerJSON,
     tokenDeployerSalt!,
     [],
@@ -66,7 +64,7 @@ const main = async function (...args: string[]) {
   )
 
   const toposCoreAddress = await processContract(
-    wallet,
+    toposDeployerWallet,
     toposCoreJSON,
     toposCoreSalt!,
     [],
@@ -74,37 +72,39 @@ const main = async function (...args: string[]) {
   )
 
   const toposCoreProxyAddress = await processContract(
-    wallet,
+    toposDeployerWallet,
     toposCoreProxyJSON,
     toposCoreProxySalt!,
     [toposCoreAddress],
     4_000_000
   )
 
-  const sequencerWallet = new Wallet(sequencerPrivateKey, provider)
-  const toposCoreInterface = new Contract(
+  const toposCoreConnectedToSequencer = ToposCore__factory.connect(
     toposCoreProxyAddress,
-    toposCoreInterfaceJSON.abi,
     sequencerWallet
   )
   const adminThreshold = 1
-  await initialize(toposCoreInterface, sequencerWallet, adminThreshold)
+  await initialize(
+    toposCoreConnectedToSequencer,
+    sequencerWallet,
+    adminThreshold
+  )
 
-  const erc20MessagingAddresss = await processContract(
-    wallet,
+  const erc20MessagingAddress = await processContract(
+    toposDeployerWallet,
     erc20MessagingJSON,
     erc20MessagingSalt!,
     [tokenDeployerAddress, toposCoreProxyAddress],
     4_000_000
   )
 
-  setSubnetId(toposCoreInterface, subnetId)
+  setSubnetId(toposCoreConnectedToSequencer, subnetId)
 
   console.log(`
 export TOPOS_CORE_CONTRACT_ADDRESS=${toposCoreAddress}
 export TOPOS_CORE_PROXY_CONTRACT_ADDRESS=${toposCoreProxyAddress}
 export TOKEN_DEPLOYER_CONTRACT_ADDRESS=${tokenDeployerAddress}
-export ERC20_MESSAGING_CONTRACT_ADDRESS=${erc20MessagingAddresss}
+export ERC20_MESSAGING_CONTRACT_ADDRESS=${erc20MessagingAddress}
   `)
 }
 
@@ -126,14 +126,14 @@ const verifySalt = function (
 }
 
 const processContract = async function (
-  wallet: Wallet,
+  toposDeployerWallet: Wallet,
   contractJson: ContractOutputJSON,
   salt: string,
   args: Arg[] = [],
   gasLimit: number | null = null
 ) {
   const predictedContractAddress = await predictContractConstant(
-    wallet,
+    toposDeployerWallet,
     contractJson,
     salt,
     args
@@ -142,7 +142,7 @@ const processContract = async function (
     process.exit(1)
   })
 
-  const codeAtPredictedAddress = await wallet.provider.getCode(
+  const codeAtPredictedAddress = await toposDeployerWallet?.provider?.getCode(
     predictedContractAddress
   )
 
@@ -152,13 +152,13 @@ const processContract = async function (
     return predictedContractAddress
   } else {
     const newContractAddress = await deployContractConstant(
-      wallet,
+      toposDeployerWallet,
       contractJson,
       salt,
       args,
       gasLimit
     )
-      .then((contract) => contract.address)
+      .then(async (contract) => await contract.getAddress())
       .catch((error) => {
         console.error(error)
         process.exit(1)
@@ -168,13 +168,10 @@ const processContract = async function (
   }
 }
 
-const setSubnetId = async function (
-  toposCoreInterface: Contract,
-  subnetId: string
-) {
-  await toposCoreInterface
+const setSubnetId = async function (toposCore: ToposCore, subnetId: string) {
+  await toposCore
     .setNetworkSubnetId(subnetId, { gasLimit: 4_000_000 })
-    .then(async (tx: ContractTransaction) => {
+    .then(async (tx) => {
       await tx.wait().catch((error) => {
         console.error(
           `Error: Failed (wait) to set ${subnetId} subnetId on ToposCore via proxy!`
@@ -191,17 +188,19 @@ const setSubnetId = async function (
       process.exit(1)
     })
 
-  await toposCoreInterface.networkSubnetId()
+  await toposCore.networkSubnetId()
 }
 
 async function initialize(
-  toposCoreInterface: Contract,
+  toposCore: ToposCore,
   wallet: Wallet,
   adminThreshold: number
 ) {
-  await toposCoreInterface
-    .initialize([wallet.address], adminThreshold, { gasLimit: 4_000_000 })
-    .then(async (tx: ContractTransaction) => {
+  await toposCore
+    .initialize([wallet.address], adminThreshold, {
+      gasLimit: 8_000_000,
+    })
+    .then(async (tx) => {
       await tx.wait().catch((error) => {
         console.error(`Error: Failed (wait) to initialize ToposCore via proxy!`)
         console.error(error)
