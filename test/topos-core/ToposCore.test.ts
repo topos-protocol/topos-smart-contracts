@@ -37,10 +37,7 @@ describe('ToposCore', () => {
     )
     const toposCoreProxyAddress = await toposCoreProxy.getAddress()
 
-    const toposCore = await ToposCore__factory.connect(
-      toposCoreProxyAddress,
-      admin
-    )
+    const toposCore = ToposCore__factory.connect(toposCoreProxyAddress, admin)
     await toposCore.initialize(adminAddresses, adminThreshold)
 
     const altToposCoreImplementation = await new ToposCore__factory(
@@ -55,7 +52,7 @@ describe('ToposCore', () => {
     )
     await altToposCoreProxy.waitForDeployment()
     const altToposCoreProxyAddress = await altToposCoreProxy.getAddress()
-    const altToposCore = await ToposCore__factory.connect(
+    const altToposCore = ToposCore__factory.connect(
       altToposCoreProxyAddress,
       admin
     )
@@ -311,6 +308,45 @@ describe('ToposCore', () => {
       await expect(
         toposCore.upgrade(altToposCoreAddress, emptyCodeHash)
       ).to.be.revertedWithCustomError(toposCore, 'InvalidCodeHash')
+    })
+
+    it('fetches the certificates from the contract after upgrade', async () => {
+      const {
+        admin,
+        altToposCoreImplementationAddress,
+        defaultCert,
+        toposCore,
+      } = await loadFixture(deployToposCoreFixture)
+      const oldImplementationAddress = await toposCore.implementation()
+      await toposCore.pushCertificate(defaultCert, cc.CERT_POS_1)
+
+      const CodeHash = await new CodeHash__factory(admin).deploy()
+      const codeHash = await CodeHash.waitForDeployment()
+      const implementationCodeHash = await codeHash.getCodeHash(
+        altToposCoreImplementationAddress
+      )
+
+      await toposCore.upgrade(
+        altToposCoreImplementationAddress,
+        implementationCodeHash
+      )
+      expect(await toposCore.implementation()).to.not.equal(
+        oldImplementationAddress
+      )
+      const certificate = await toposCore.getCertificate(cc.CERT_ID_1)
+      const encodedCert = testUtils.encodeCertParam(
+        certificate.prevId,
+        certificate.sourceSubnetId,
+        certificate.stateRoot,
+        certificate.txRoot,
+        certificate.receiptRoot,
+        certificate.targetSubnets,
+        Number(certificate.verifier),
+        certificate.certId,
+        certificate.starkProof,
+        certificate.signature
+      )
+      expect(encodedCert).to.equal(defaultCert)
     })
 
     it('emits an upgraded event', async () => {
