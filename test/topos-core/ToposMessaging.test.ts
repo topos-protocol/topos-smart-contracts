@@ -82,10 +82,7 @@ describe('ToposMessaging', () => {
     await toposCoreProxy.waitForDeployment()
     const toposCoreProxyAddress = await toposCoreProxy.getAddress()
 
-    const toposCore = await ToposCore__factory.connect(
-      toposCoreProxyAddress,
-      admin
-    )
+    const toposCore = ToposCore__factory.connect(toposCoreProxyAddress, admin)
     await toposCore.initialize(adminAddresses, adminThreshold)
 
     const erc20Messaging = await new ERC20Messaging__factory(admin).deploy(
@@ -214,7 +211,7 @@ describe('ToposMessaging', () => {
         (l) => (l as EventLog).eventName === 'TokenDeployed'
       ) as EventLog
       const tokenAddress = log.args.tokenAddress
-      const erc20 = await ERC20__factory.connect(tokenAddress, admin)
+      const erc20 = ERC20__factory.connect(tokenAddress, admin)
       await erc20.approve(erc20MessagingAddress, tc.SEND_AMOUNT_50)
 
       const sendToken = await sendTokenTx(
@@ -499,7 +496,7 @@ describe('ToposMessaging', () => {
       const deployedToken = await erc20Messaging.getTokenBySymbol(
         tc.TOKEN_SYMBOL_X
       )
-      const erc20 = await ERC20__factory.connect(deployedToken.addr, admin)
+      const erc20 = ERC20__factory.connect(deployedToken.addr, admin)
       await erc20.approve(erc20MessagingAddress, tc.SEND_AMOUNT_50)
 
       const sendToken = await sendTokenTx(
@@ -549,7 +546,7 @@ describe('ToposMessaging', () => {
       const deployedToken = await erc20Messaging.getTokenBySymbol(
         tc.TOKEN_SYMBOL_X
       )
-      const erc20 = await ERC20__factory.connect(deployedToken.addr, admin)
+      const erc20 = ERC20__factory.connect(deployedToken.addr, admin)
       await erc20.approve(erc20MessagingAddress, tc.SEND_AMOUNT_50)
 
       const sendToken = await sendTokenTx(
@@ -757,7 +754,7 @@ describe('ToposMessaging', () => {
         (l) => (l as EventLog).eventName === 'TokenDeployed'
       ) as EventLog
       const tokenAddress = log.args.tokenAddress
-      const erc20 = await ERC20__factory.connect(tokenAddress, admin)
+      const erc20 = ERC20__factory.connect(tokenAddress, admin)
       await erc20.approve(erc20MessagingAddress, tc.SEND_AMOUNT_50)
 
       await expect(
@@ -796,7 +793,7 @@ describe('ToposMessaging', () => {
       (l) => (l as EventLog).eventName === 'TokenDeployed'
     ) as EventLog
     const tokenAddress = log.args.tokenAddress
-    const erc20 = await ERC20__factory.connect(tokenAddress, admin)
+    const erc20 = ERC20__factory.connect(tokenAddress, admin)
     await erc20.approve(erc20MessagingAddress, tc.SEND_AMOUNT_50)
 
     const receiverAddress = await receiver.getAddress()
