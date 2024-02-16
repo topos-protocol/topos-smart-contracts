@@ -37,11 +37,11 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
         if (!IToposCore(_toposCoreAddr).certificateExists(certId)) revert CertNotPresent();
 
         // the raw receipt bytes are taken out of the proof
-        bytes memory receiptRaw = validateMerkleProof(proofBlob, receiptRoot);
-        if (receiptRaw.length == uint256(0)) revert InvalidMerkleProof();
+        bytes memory receiptTrieNodeRaw = validateMerkleProof(proofBlob, receiptRoot);
+        if (receiptTrieNodeRaw.length == uint256(0)) revert InvalidMerkleProof();
 
-        bytes32 receiptHash = keccak256(abi.encodePacked(receiptRaw));
-        if (_isTxExecuted(receiptHash, receiptRoot)) revert TransactionAlreadyExecuted();
+        bytes32 receiptTrieNodeHash = keccak256(abi.encodePacked(receiptTrieNodeRaw));
+        if (_isTxExecuted(receiptTrieNodeHash, receiptRoot)) revert TransactionAlreadyExecuted();
 
         (
             uint256 status, // uint256 cumulativeGasUsed // bytes memory logsBloom
@@ -50,7 +50,7 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
             address[] memory logsAddress,
             bytes32[][] memory logsTopics,
             bytes[] memory logsData
-        ) = _decodeReceipt(receiptRaw);
+        ) = _decodeReceipt(receiptTrieNodeRaw);
         if (status != 1) revert InvalidTransactionStatus();
 
         // verify that provided indexes are within the range of the number of event logs
@@ -61,7 +61,7 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
         SubnetId networkSubnetId = IToposCore(_toposCoreAddr).networkSubnetId();
 
         // prevent re-entrancy
-        _setTxExecuted(receiptHash, receiptRoot);
+        _setTxExecuted(receiptTrieNodeHash, receiptRoot);
         _execute(logIndexes, logsAddress, logsData, logsTopics, networkSubnetId);
     }
 
@@ -76,10 +76,10 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     function validateMerkleProof(
         bytes memory proofBlob,
         bytes32 receiptRoot
-    ) public pure override returns (bytes memory receiptRaw) {
+    ) public pure override returns (bytes memory receiptTrieNodeRaw) {
         Proof memory proof = _decodeProofBlob(proofBlob);
         if (proof.kind != 1) revert UnsupportedProofKind();
-        receiptRaw = MerklePatriciaProofVerifier.extractProofValue(receiptRoot, proof.mptKey, proof.stack);
+        receiptTrieNodeRaw = MerklePatriciaProofVerifier.extractProofValue(receiptRoot, proof.mptKey, proof.stack);
     }
 
     /// @notice Execute the message on a target subnet
@@ -103,18 +103,18 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     }
 
     /// @notice Set a flag to indicate that the asset transfer transaction has been executed
-    /// @param receiptHash receipt hash
+    /// @param receiptTrieNodeHash receipt hash
     /// @param receiptRoot receipt root
-    function _setTxExecuted(bytes32 receiptHash, bytes32 receiptRoot) internal {
-        bytes32 suffix = keccak256(abi.encodePacked(receiptHash, receiptRoot));
+    function _setTxExecuted(bytes32 receiptTrieNodeHash, bytes32 receiptRoot) internal {
+        bytes32 suffix = keccak256(abi.encodePacked(receiptTrieNodeHash, receiptRoot));
         _setBool(_getTxExecutedKey(suffix), true);
     }
 
     /// @notice Get the flag to indicate that the transaction has been executed
-    /// @param receiptHash receipt hash
+    /// @param receiptTrieNodeHash receipt hash
     /// @param receiptRoot receipt root
-    function _isTxExecuted(bytes32 receiptHash, bytes32 receiptRoot) internal view returns (bool) {
-        bytes32 suffix = keccak256(abi.encodePacked(receiptHash, receiptRoot));
+    function _isTxExecuted(bytes32 receiptTrieNodeHash, bytes32 receiptRoot) internal view returns (bool) {
+        bytes32 suffix = keccak256(abi.encodePacked(receiptTrieNodeHash, receiptRoot));
         return getBool(_getTxExecutedKey(suffix));
     }
 
@@ -171,9 +171,9 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
     }
 
     /// @notice Decode the receipt into its components
-    /// @param receiptRaw RLP encoded receipt
+    /// @param receiptTrieNodeRaw RLP encoded receipt
     function _decodeReceipt(
-        bytes memory receiptRaw
+        bytes memory receiptTrieNodeRaw
     )
         internal
         pure
@@ -186,7 +186,7 @@ contract ToposMessaging is IToposMessaging, EternalStorage {
             bytes[] memory logsData
         )
     {
-        RLPReader.RLPItem[] memory receipt = receiptRaw.toRlpItem().toList();
+        RLPReader.RLPItem[] memory receipt = receiptTrieNodeRaw.toRlpItem().toList();
 
         status = receipt[0].toUint();
         cumulativeGasUsed = receipt[1].toUint();

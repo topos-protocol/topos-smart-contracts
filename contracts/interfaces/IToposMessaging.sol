@@ -27,7 +27,7 @@ interface IToposMessaging {
     function validateMerkleProof(
         bytes memory proofBlob,
         bytes32 receiptRoot
-    ) external returns (bytes memory receiptRaw);
+    ) external returns (bytes memory receiptTrieNodeRaw);
 
     function toposCore() external view returns (address);
 }
