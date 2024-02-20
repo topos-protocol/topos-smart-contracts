@@ -7,7 +7,7 @@ contract CodeHash {
     function getCodeHash(address contractAddr) public view returns (bytes32 codeHash) {
         // does not fail with wallet addresses
         if (contractAddr.codehash.length != 0) {
-            codeHash =  contractAddr.codehash;
+            codeHash = contractAddr.codehash;
         }
     }
 }
