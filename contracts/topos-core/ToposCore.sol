@@ -18,6 +18,10 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
     /// @notice The subnet ID of the subnet this contract is to be deployed on
     SubnetId public networkSubnetId;
 
+    /// @notice Nonce for cross subnet message, meant to be used in combination with `sourceSubnetId`
+    /// so that the message can be uniquely identified per subnet
+    uint256 private nonce;
+
     /// @notice Set of certificate IDs
     Bytes32SetsLib.Set certificateSet;
 
@@ -113,7 +117,8 @@ contract ToposCore is IToposCore, AdminMultisigBase, Initializable {
     /// @notice Emits an event to signal a cross subnet message has been sent
     /// @param targetSubnetId The subnet ID of the target subnet
     function emitCrossSubnetMessage(SubnetId targetSubnetId) external {
-        emit CrossSubnetMessageSent(targetSubnetId);
+        nonce += 1;
+        emit CrossSubnetMessageSent(targetSubnetId, networkSubnetId, nonce);
     }
 
     /// @notice Returns the admin epoch

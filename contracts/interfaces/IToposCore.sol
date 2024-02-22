@@ -25,7 +25,7 @@ interface IToposCore {
 
     event CertStored(CertificateId certId, bytes32 receiptRoot);
 
-    event CrossSubnetMessageSent(SubnetId indexed targetSubnetId);
+    event CrossSubnetMessageSent(SubnetId indexed targetSubnetId, SubnetId sourceSubnetId, uint256 nonce);
 
     event Upgraded(address indexed implementation);
 
