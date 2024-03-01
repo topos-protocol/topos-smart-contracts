@@ -1,8 +1,8 @@
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
 
-import { Bytes32SetsTest__factory } from '../../typechain-types/factories/contracts/topos-core/Bytes32Sets.sol/Bytes32SetsTest__factory'
-import { Bytes32SetsTest } from '../../typechain-types/contracts/topos-core/Bytes32Sets.sol/Bytes32SetsTest'
+import { Bytes32SetsTest__factory } from '../../typechain-types/ethers-v6/factories/contracts/topos-core/Bytes32Sets.sol/Bytes32SetsTest__factory'
+import { Bytes32SetsTest } from '../../typechain-types/ethers-v6/contracts/topos-core/Bytes32Sets.sol/Bytes32SetsTest'
 
 describe('Bytes32Sets', () => {
   let bytes32SetsTest: Bytes32SetsTest

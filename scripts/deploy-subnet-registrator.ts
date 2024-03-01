@@ -1,7 +1,7 @@
 import { computeAddress, isHexString, JsonRpcProvider, Wallet } from 'ethers'
 
 import subnetRegistratorJSON from '../artifacts/contracts/topos-core/SubnetRegistrator.sol/SubnetRegistrator.json'
-import { SubnetRegistrator__factory } from '../typechain-types/factories/contracts/topos-core/SubnetRegistrator__factory'
+import { SubnetRegistrator__factory } from '../typechain-types/ethers-v6/factories/contracts/topos-core/SubnetRegistrator__factory'
 import { Arg, deployContractConstant } from './const-addr-deployer'
 
 const main = async function (..._args: Arg[]) {

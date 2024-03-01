@@ -1,10 +1,10 @@
 import { isHexString, JsonRpcProvider, Wallet } from 'ethers'
 
-import { TokenDeployer__factory } from '../typechain-types/factories/contracts/topos-core/TokenDeployer__factory'
-import { ToposCore__factory } from '../typechain-types/factories/contracts/topos-core/ToposCore__factory'
-import { ToposCoreProxy__factory } from '../typechain-types/factories/contracts/topos-core/ToposCoreProxy__factory'
-import { ERC20Messaging__factory } from '../typechain-types/factories/contracts/examples/ERC20Messaging__factory'
-import { ToposCore } from '../typechain-types/contracts/topos-core/ToposCore'
+import { TokenDeployer__factory } from '../typechain-types/ethers-v6/factories/contracts/topos-core/TokenDeployer__factory'
+import { ToposCore__factory } from '../typechain-types/ethers-v6/factories/contracts/topos-core/ToposCore__factory'
+import { ToposCoreProxy__factory } from '../typechain-types/ethers-v6/factories/contracts/topos-core/ToposCoreProxy__factory'
+import { ERC20Messaging__factory } from '../typechain-types/ethers-v6/factories/contracts/examples/ERC20Messaging__factory'
+import { ToposCore } from '../typechain-types/ethers-v6/contracts/topos-core/ToposCore'
 
 const main = async function (...args: string[]) {
   const [providerEndpoint, _sequencerPrivateKey] = args

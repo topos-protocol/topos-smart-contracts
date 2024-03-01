@@ -2,8 +2,8 @@ import { EventLog } from 'ethers'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
-import { BurnableMintableCappedERC20__factory } from '../../typechain-types/factories/contracts/topos-core/BurnableMintableCappedERC20__factory'
-import { TokenDeployer__factory } from '../../typechain-types/factories/contracts/topos-core/TokenDeployer__factory'
+import { BurnableMintableCappedERC20__factory } from '../../typechain-types/ethers-v6/factories/contracts/topos-core/BurnableMintableCappedERC20__factory'
+import { TokenDeployer__factory } from '../../typechain-types/ethers-v6/factories/contracts/topos-core/TokenDeployer__factory'
 import * as tc from './shared/constants/tokens'
 
 describe('BurnableMintableCappedERC20', () => {
