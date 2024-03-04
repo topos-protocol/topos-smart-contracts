@@ -57,7 +57,7 @@ $ npm run build
 To build different Typechain target:
 
 ```
-npx hardhat typechain --typechain-target target
+npx hardhat compile --typechain-target target
 ```
 
 Where `target` can be `ethers-v6`, `web3-v1`etc.
@@ -73,7 +73,7 @@ export TYPECHAIN_TARGET=web3-v1
 ```
 - By setting the `--typechain-target` command line option
 ```bash
-npx hardhat typechain --typechain-target web3-v1
+npx hardhat compile --typechain-target web3-v1
 ```
 - By setting the `typechain` field in `hardhat.config.ts`
 ```typescript
