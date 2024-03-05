@@ -1,7 +1,9 @@
 import { isHexString, JsonRpcProvider, Wallet } from 'ethers'
 
-import { SubnetRegistrator__factory } from '../typechain-types/ethers-v6/factories/contracts/topos-core/SubnetRegistrator__factory'
-import { SubnetRegistrator } from '../typechain-types/ethers-v6/contracts/topos-core/SubnetRegistrator'
+import {
+  SubnetRegistrator,
+  SubnetRegistrator__factory,
+} from '../typechain-types/ethers-v6'
 
 const main = async function (...args: string[]) {
   const [

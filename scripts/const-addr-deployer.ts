@@ -8,7 +8,7 @@ import {
   Wallet,
 } from 'ethers'
 
-import { ConstAddressDeployer__factory } from '../typechain-types/ethers-v6/factories/contracts/topos-core/ConstAddressDeployer__factory'
+import { ConstAddressDeployer__factory } from '../typechain-types/ethers-v6'
 
 export type Arg = string | number
 

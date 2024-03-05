@@ -1,8 +1,10 @@
 import { isHexString, JsonRpcProvider, Wallet } from 'ethers'
 
-import { ToposCore__factory } from '../typechain-types/ethers-v6/factories/contracts/topos-core/ToposCore__factory'
-import { ToposCoreProxy__factory } from '../typechain-types/ethers-v6/factories/contracts/topos-core/ToposCoreProxy__factory'
-import { ToposCore } from '../typechain-types/ethers-v6/contracts/topos-core/ToposCore'
+import {
+  ToposCore,
+  ToposCore__factory,
+  ToposCoreProxy__factory,
+} from '../typechain-types/ethers-v6'
 
 const main = async function (...args: string[]) {
   const [_providerEndpoint, _sequencerPrivateKey, _gasLimit] = args
