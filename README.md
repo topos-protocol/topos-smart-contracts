@@ -60,7 +60,7 @@ To build different Typechain target:
 npx hardhat compile --typechain-target target
 ```
 
-Where `target` can be `ethers-v6`, `web3-v1`etc.
+Where `target` can be `ethers-v6`, `web3-v1`, etc.
 
 *Note: you need to install the appropriate package for the target you want to build for. For example, to build for `web3-v1`, you need to install `@typechain/web3-v1` package.*
 
