@@ -2,8 +2,10 @@ import { Signer } from 'ethers'
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
 
-import { SubnetRegistrator__factory } from '../../typechain-types/factories/contracts/topos-core/SubnetRegistrator__factory'
-import { SubnetRegistrator } from '../../typechain-types'
+import {
+  SubnetRegistrator__factory,
+  SubnetRegistrator,
+} from '../../typechain-types/ethers-v6'
 
 describe('SubnetRegistrator', () => {
   const chainId = 1

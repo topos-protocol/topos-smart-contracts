@@ -2,10 +2,13 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
 
-import { ToposCore__factory } from '../../typechain-types/factories/contracts/topos-core/ToposCore__factory'
-import { ToposCoreProxy__factory } from '../../typechain-types/factories/contracts/topos-core/ToposCoreProxy__factory'
-import { CodeHash__factory } from '../../typechain-types/factories/contracts/topos-core/CodeHash__factory'
-import { ToposCoreProxy } from '../../typechain-types/contracts/topos-core/ToposCoreProxy'
+import {
+  CodeHash__factory,
+  ToposCore__factory,
+  ToposCoreProxy,
+  ToposCoreProxy__factory,
+} from '../../typechain-types/ethers-v6'
+
 import * as cc from './shared/constants/certificates'
 import * as testUtils from './shared/utils/common'
 
