@@ -8,10 +8,8 @@ import {
   Wallet,
 } from 'ethers'
 
-import {
-  ToposCore__factory,
-  CodeHash__factory,
-} from '../typechain-types/ethers-v6'
+import { ToposCore__factory } from '../typechain-types/factories/contracts/topos-core/ToposCore__factory'
+import { CodeHash__factory } from '../typechain-types/factories/contracts/topos-core/CodeHash__factory'
 
 import toposCoreJSON from '../artifacts/contracts/topos-core/ToposCore.sol/ToposCore.json'
 

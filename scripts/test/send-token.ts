@@ -1,10 +1,7 @@
 import { isHexString, JsonRpcProvider, Wallet } from 'ethers'
-
-import {
-  BurnableMintableCappedERC20__factory,
-  ERC20Messaging,
-  ERC20Messaging__factory,
-} from '../../typechain-types/ethers-v6'
+import { ERC20Messaging__factory } from '../../typechain-types/factories/contracts/examples/ERC20Messaging__factory'
+import { BurnableMintableCappedERC20__factory } from '../../typechain-types/factories/contracts/topos-core/BurnableMintableCappedERC20__factory'
+import { ERC20Messaging } from '../../typechain-types/contracts/examples/ERC20Messaging'
 import * as cc from '../../test/topos-core/shared/constants/certificates'
 import * as tc from '../../test/topos-core/shared/constants/tokens'
 import * as testUtils from '../../test/topos-core/shared/utils/common'
