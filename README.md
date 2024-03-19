@@ -52,6 +52,38 @@ To build:
 $ npm run build
 ```
 
+## Build contracts with different Typechain target
+
+To build different Typechain target:
+
+```
+npx hardhat compile --typechain-target target
+```
+
+Where `target` can be `ethers-v6`, `web3-v1`, etc.
+
+*Note: you need to install the appropriate package for the target you want to build for. For example, to build for `web3-v1`, you need to install `@typechain/web3-v1` package.*
+
+Default target is `ethers-v6` and it is output to `typechain-types/ethers-v6` directory.
+
+You can specify the target in several ways:
+- By setting the `TYPECHAIN_TARGET` environment variable
+```bash
+export TYPECHAIN_TARGET=web3-v1
+```
+- By setting the `--typechain-target` command line option
+```bash
+npx hardhat compile --typechain-target web3-v1
+```
+- By setting the `typechain` field in `hardhat.config.ts`
+```typescript
+module.exports = {
+  typechain: {
+    target: 'web3-v1'
+  }
+}
+```
+
 ## Tests
 
 To run the tests:
