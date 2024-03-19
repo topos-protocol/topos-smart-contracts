@@ -15,7 +15,7 @@ import {
   ToposCoreProxy__factory,
   ERC20Messaging__factory,
   ERC20Messaging,
-} from '../../typechain-types/ethers-v6'
+} from '../../typechain-types'
 import * as cc from './shared/constants/certificates'
 import * as testUtils from './shared/utils/common'
 import { getReceiptMptProof } from './shared/utils/mpt_proof'

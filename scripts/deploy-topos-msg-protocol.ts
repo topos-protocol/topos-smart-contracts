@@ -10,7 +10,8 @@ import {
   deployContractConstant,
   predictContractConstant,
 } from './const-addr-deployer'
-import { ToposCore__factory, ToposCore } from '../typechain-types/ethers-v6'
+import { ToposCore__factory } from '../typechain-types/factories/contracts/topos-core/ToposCore__factory'
+import { ToposCore } from '../typechain-types/contracts/topos-core/ToposCore'
 
 const main = async function (...args: string[]) {
   const [providerEndpoint, _sequencerPrivateKey] = args
