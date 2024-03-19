@@ -14,6 +14,13 @@ jobs:
           scope: '@topos-protocol'
       - run: npm ci
       - run: npm run build
+
+      - run: npm publish --access public --tag next
+        if: "github.event.release.prerelease"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - run: npm publish --access public
+        if: "!github.event.release.prerelease"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
